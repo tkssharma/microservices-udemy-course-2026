@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event-Driven Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+        min-height: 100vh;
+        color: #e0e0e0;
+        padding: 2rem;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 1rem;
+        color: #fff;
+      }
+      h2 {
+        margin: 2rem 0 1rem;
+        color: #a78bfa;
+        border-bottom: 1px solid #333;
+        padding-bottom: 0.5rem;
+      }
+      .diagram-container {
+        background: #1e1e2e;
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      .mermaid {
+        display: flex;
+        justify-content: center;
+      }
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      .tab {
+        padding: 0.5rem 1rem;
+        background: #2d2d44;
+        border: none;
+        border-radius: 8px;
+        color: #e0e0e0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .tab:hover,
+      .tab.active {
+        background: #6366f1;
+        color: #fff;
+      }
+      .diagram-section {
+        display: none;
+      }
+      .diagram-section.active {
+        display: block;
+      }
+      .flow-dot {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, #fff 0%, #00f5d4 40%, #00bbf9 70%, transparent 100%);
+        border-radius: 50%;
+        box-shadow:
+          0 0 20px #00f5d4,
+          0 0 40px #00bbf9,
+          0 0 60px #00f5d4;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0;
+      }
+      .flow-dot.active {
+        animation: pulse 0.5s ease-in-out infinite alternate;
+      }
+      @keyframes pulse {
+        from {
+          transform: scale(1);
+          box-shadow:
+            0 0 20px #00f5d4,
+            0 0 40px #00bbf9;
+        }
+        to {
+          transform: scale(1.5);
+          box-shadow:
+            0 0 35px #00f5d4,
+            0 0 60px #00bbf9,
+            0 0 80px #00f5d4;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>📨 Event-Driven Architecture</h1>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('overview')">Event Bus Overview</button>
+      <button class="tab" onclick="showTab('pubsub')">Pub/Sub Pattern</button>
+      <button class="tab" onclick="showTab('kafka')">Kafka Architecture</button>
+      <button class="tab" onclick="showTab('flow')">Event Flow</button>
+    </div>
+
+    <div id="overview" class="diagram-section active">
+      <h2>Event-Driven Overview</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Producers["Event Producers"]
+        P1[Order Service]
+        P2[Payment Service]
+        P3[User Service]
+    end
+    
+    subgraph EventBus["Event Bus / Message Broker"]
+        direction LR
+        T1[order-events]
+        T2[payment-events]
+        T3[user-events]
+    end
+    
+    subgraph Consumers["Event Consumers"]
+        C1[Notification Service]
+        C2[Analytics Service]
+        C3[Inventory Service]
+        C4[Email Service]
+    end
+    
+    P1 -->|OrderCreated| T1
+    P1 -->|OrderCancelled| T1
+    P2 -->|PaymentProcessed| T2
+    P2 -->|PaymentFailed| T2
+    P3 -->|UserRegistered| T3
+    
+    T1 --> C1
+    T1 --> C2
+    T1 --> C3
+    T2 --> C1
+    T2 --> C2
+    T3 --> C1
+    T3 --> C4
+    
+    style EventBus fill:#7c3aed
+      </pre
+        >
+      </div>
+    </div>
+
+    <div id="pubsub" class="diagram-section">
+      <h2>Publish/Subscribe Pattern</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant OS as Order Service
+    participant EB as Event Bus
+    participant IS as Inventory Service
+    participant NS as Notification Service
+    participant AS as Analytics Service
+    
+    OS->>EB: Publish: OrderCreated
+    
+    par Parallel Processing
+        EB->>IS: Deliver Event
+        IS->>IS: Reserve Stock
+    and
+        EB->>NS: Deliver Event
+        NS->>NS: Send Confirmation Email
+    and
+        EB->>AS: Deliver Event
+        AS->>AS: Update Metrics
+    end
+    
+    IS-->>EB: ACK
+    NS-->>EB: ACK
+    AS-->>EB: ACK
+    
+    Note over EB: Events are processed independently
+      </pre
+        >
+      </div>
+    </div>
+
+    <div id="kafka" class="diagram-section">
+      <h2>Apache Kafka Architecture</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Producers
+        P1[Producer 1]
+        P2[Producer 2]
+    end
+    
+    subgraph KafkaCluster["Kafka Cluster"]
+        subgraph Topic["orders-topic"]
+            P0[Partition 0]
+            P1P[Partition 1]
+            P2P[Partition 2]
+        end
+        
+        subgraph Brokers
+            B1[Broker 1]
+            B2[Broker 2]
+            B3[Broker 3]
+        end
+    end
+    
+    subgraph ConsumerGroup["Consumer Group"]
+        C1[Consumer 1]
+        C2[Consumer 2]
+        C3[Consumer 3]
+    end
+    
+    P1 --> P0
+    P1 --> P1P
+    P2 --> P2P
+    
+    P0 --> B1
+    P1P --> B2
+    P2P --> B3
+    
+    B1 --> C1
+    B2 --> C2
+    B3 --> C3
+    
+    style KafkaCluster fill:#7c3aed
+    style Topic fill:#6366f1
+      </pre
+        >
+      </div>
+    </div>
+
+    <div id="flow" class="diagram-section">
+      <h2>Complete Event Flow</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    A[User Action] --> B[API Gateway]
+    B --> C[Order Service]
+    C --> D[(Order DB)]
+    C -->|OrderCreated| E[Kafka]
+    
+    E --> F[Payment Service]
+    F --> G[(Payment DB)]
+    F -->|PaymentProcessed| E
+    
+    E --> H[Inventory Service]
+    H --> I[(Inventory DB)]
+    H -->|StockReserved| E
+    
+    E --> J[Notification Service]
+    J -->|Send Email| K[Email Provider]
+    
+    E --> L[Analytics Service]
+    L --> M[(Analytics DB)]
+    
+    style E fill:#7c3aed
+    style A fill:#10b981
+    style K fill:#f59e0b
+      </pre
+        >
+      </div>
+    </div>
+
+    <script>
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'dark',
+        themeVariables: {
+          primaryColor: '#6366f1',
+          primaryTextColor: '#fff',
+          primaryBorderColor: '#818cf8',
+          lineColor: '#a78bfa',
+          secondaryColor: '#1e1e2e',
+          tertiaryColor: '#2d2d44',
+        },
+      });
+
+      const renderedTabs = new Set();
+      let activeAnimations = [];
+
+      async function showTab(tabId) {
+        activeAnimations.forEach((id) => cancelAnimationFrame(id));
+        activeAnimations = [];
+        document.querySelectorAll('.flow-dot').forEach((d) => d.remove());
+        document.querySelectorAll('.diagram-section').forEach((s) => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+        if (!renderedTabs.has(tabId)) {
+          const section = document.getElementById(tabId);
+          const pre = section.querySelector('pre.mermaid');
+          if (pre && !pre.dataset.processed) {
+            await mermaid.run({ nodes: [pre] });
+            pre.dataset.processed = 'true';
+          }
+          renderedTabs.add(tabId);
+        }
+        setTimeout(() => startFlowAnimation(tabId), 300);
+      }
+
+      function startFlowAnimation(tabId) {
+        const section = document.getElementById(tabId);
+        if (!section) return;
+        const svg = section.querySelector('svg');
+        if (!svg) return;
+        const container = section.querySelector('.diagram-container');
+        container.style.position = 'relative';
+        const paths = svg.querySelectorAll(
+          '.edge-pattern-normal, .flowchart-link, [class*="edge"] path, .messageLine0, .messageLine1',
+        );
+        if (paths.length === 0) return;
+        paths.forEach((path, index) => {
+          const dot = document.createElement('div');
+          dot.className = 'flow-dot active';
+          container.appendChild(dot);
+          animateDotAlongPath(dot, path, svg, container, index * 400);
+        });
+      }
+
+      function animateDotAlongPath(dot, path, svg, container, delay) {
+        const duration = 2500;
+        let pathLength;
+        try {
+          pathLength = path.getTotalLength();
+          if (!pathLength || pathLength < 10) return;
+        } catch (e) {
+          return;
+        }
+        function animate() {
+          const startTime = performance.now();
+          function step(currentTime) {
+            if (!document.body.contains(dot)) return;
+            const elapsed = currentTime - startTime;
+            const progress = (elapsed % duration) / duration;
+            try {
+              const point = path.getPointAtLength(progress * pathLength);
+              const ctm = svg.getScreenCTM();
+              const containerRect = container.getBoundingClientRect();
+              if (ctm && point.x !== undefined && point.y !== undefined) {
+                const screenX = point.x * ctm.a + ctm.e;
+                const screenY = point.y * ctm.d + ctm.f;
+                dot.style.left = screenX - containerRect.left - 6 + 'px';
+                dot.style.top = screenY - containerRect.top - 6 + 'px';
+                dot.style.opacity = Math.sin(progress * Math.PI) * 0.9;
+              }
+            } catch (e) {
+              return;
+            }
+            const animId = requestAnimationFrame(step);
+            activeAnimations.push(animId);
+          }
+          requestAnimationFrame(step);
+        }
+        setTimeout(animate, delay);
+      }
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        const firstTab = document.getElementById('overview');
+        const pre = firstTab.querySelector('pre.mermaid');
+        await mermaid.run({ nodes: [pre] });
+        pre.dataset.processed = 'true';
+        renderedTabs.add('overview');
+        setTimeout(() => startFlowAnimation('overview'), 500);
+      });
+    </script>
+  </body>
+</html>

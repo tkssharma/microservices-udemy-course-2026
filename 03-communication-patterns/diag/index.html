@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Communication Patterns</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+        min-height: 100vh;
+        color: #e0e0e0;
+        padding: 2rem;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 1rem;
+        color: #fff;
+      }
+      h2 {
+        margin: 2rem 0 1rem;
+        color: #a78bfa;
+        border-bottom: 1px solid #333;
+        padding-bottom: 0.5rem;
+      }
+      .diagram-container {
+        background: #1e1e2e;
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      .mermaid {
+        display: flex;
+        justify-content: center;
+      }
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      .tab {
+        padding: 0.5rem 1rem;
+        background: #2d2d44;
+        border: none;
+        border-radius: 8px;
+        color: #e0e0e0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .tab:hover,
+      .tab.active {
+        background: #6366f1;
+        color: #fff;
+      }
+      .diagram-section {
+        display: none;
+      }
+      .diagram-section.active {
+        display: block;
+      }
+      .flow-dot {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, #fff 0%, #00f5d4 40%, #00bbf9 70%, transparent 100%);
+        border-radius: 50%;
+        box-shadow:
+          0 0 20px #00f5d4,
+          0 0 40px #00bbf9,
+          0 0 60px #00f5d4;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0;
+      }
+      .flow-dot.active {
+        animation: pulse 0.5s ease-in-out infinite alternate;
+      }
+      @keyframes pulse {
+        from {
+          transform: scale(1);
+          box-shadow:
+            0 0 20px #00f5d4,
+            0 0 40px #00bbf9;
+        }
+        to {
+          transform: scale(1.5);
+          box-shadow:
+            0 0 35px #00f5d4,
+            0 0 60px #00bbf9,
+            0 0 80px #00f5d4;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>📡 Communication Patterns</h1>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('rest')">REST/HTTP</button>
+      <button class="tab" onclick="showTab('grpc')">gRPC</button>
+      <button class="tab" onclick="showTab('graphql')">GraphQL</button>
+      <button class="tab" onclick="showTab('kafka')">Kafka</button>
+      <button class="tab" onclick="showTab('rabbitmq')">RabbitMQ</button>
+      <button class="tab" onclick="showTab('websocket')">WebSocket</button>
+      <button class="tab" onclick="showTab('sse')">SSE</button>
+      <button class="tab" onclick="showTab('webhook')">Webhooks</button>
+      <button class="tab" onclick="showTab('sqs')">AWS SQS</button>
+      <button class="tab" onclick="showTab('sns')">AWS SNS</button>
+      <button class="tab" onclick="showTab('eventbridge')">EventBridge</button>
+      <button class="tab" onclick="showTab('comparison')">Comparison</button>
+    </div>
+
+    <div id="rest" class="diagram-section active">
+      <h2>REST/HTTP Communication</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Clients["Clients"]
+        WEB[Web App]
+        MOB[Mobile App]
+        CLI[CLI Tool]
+    end
+    
+    subgraph Frameworks["REST Frameworks"]
+        EXP[Express.js<br/>Node.js]
+        FAST[FastAPI<br/>Python]
+        SPRING[Spring Boot<br/>Java]
+        GIN[Gin<br/>Go]
+    end
+    
+    subgraph Methods["HTTP Methods"]
+        GET[GET - Read]
+        POST[POST - Create]
+        PUT[PUT - Update]
+        DEL[DELETE - Remove]
+        PATCH[PATCH - Partial]
+    end
+    
+    subgraph Features["Features"]
+        JSON[JSON/XML]
+        AUTH[JWT/OAuth2]
+        CACHE[HTTP Caching]
+        HATEOAS[HATEOAS Links]
+    end
+    
+    WEB --> EXP
+    MOB --> FAST
+    CLI --> SPRING
+    
+    EXP --> Methods
+    FAST --> Methods
+    SPRING --> Methods
+    GIN --> Methods
+    
+    Methods --> Features
+    
+    style Frameworks fill:#6366f1
+    style Methods fill:#10b981
+        </pre>
+      </div>
+    </div>
+
+    <div id="grpc" class="diagram-section">
+      <h2>gRPC Communication (Protocol Buffers)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Definition["Proto Definition"]
+        PROTO[".proto files"]
+        MSG[Messages]
+        SVC[Services]
+    end
+    
+    subgraph Generation["Code Generation"]
+        PROTOC[protoc compiler]
+        GO[Go Stubs]
+        JAVA[Java Stubs]
+        NODE[Node.js Stubs]
+        PY[Python Stubs]
+    end
+    
+    subgraph Patterns["gRPC Patterns"]
+        UNARY[Unary RPC]
+        SSTREAM[Server Streaming]
+        CSTREAM[Client Streaming]
+        BIDI[Bidirectional]
+    end
+    
+    subgraph Transport["Transport"]
+        HTTP2[HTTP/2]
+        TLS[TLS/mTLS]
+        LB[Load Balancing]
+    end
+    
+    PROTO --> MSG
+    PROTO --> SVC
+    SVC --> PROTOC
+    
+    PROTOC --> GO
+    PROTOC --> JAVA
+    PROTOC --> NODE
+    PROTOC --> PY
+    
+    GO --> Patterns
+    JAVA --> Patterns
+    
+    Patterns --> HTTP2
+    HTTP2 --> TLS
+    TLS --> LB
+    
+    style Definition fill:#10b981
+    style Patterns fill:#6366f1
+    style Transport fill:#f59e0b
+        </pre>
+      </div>
+    </div>
+
+    <div id="graphql" class="diagram-section">
+      <h2>GraphQL Communication</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Client["GraphQL Client"]
+        APOLLO_C[Apollo Client]
+        RELAY[Relay]
+        URQL[URQL]
+    end
+    
+    subgraph Operations["Operations"]
+        QUERY[Query<br/>Read Data]
+        MUTATION[Mutation<br/>Write Data]
+        SUB[Subscription<br/>Real-time]
+    end
+    
+    subgraph Server["GraphQL Server"]
+        APOLLO_S[Apollo Server]
+        YOGA[GraphQL Yoga]
+        HASURA[Hasura]
+        SCHEMA[Schema & Resolvers]
+    end
+    
+    subgraph DataSources["Data Sources"]
+        DB[(Database)]
+        REST_API[REST APIs]
+        GRPC_SVC[gRPC Services]
+    end
+    
+    APOLLO_C --> QUERY
+    RELAY --> MUTATION
+    URQL --> SUB
+    
+    QUERY --> APOLLO_S
+    MUTATION --> YOGA
+    SUB --> HASURA
+    
+    APOLLO_S --> SCHEMA
+    YOGA --> SCHEMA
+    
+    SCHEMA --> DB
+    SCHEMA --> REST_API
+    SCHEMA --> GRPC_SVC
+    
+    style Operations fill:#e535ab
+    style Server fill:#6366f1
+        </pre>
+      </div>
+    </div>
+
+    <div id="kafka" class="diagram-section">
+      <h2>Apache Kafka (Event Streaming)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Producers["Producers"]
+        P1[Order Service]
+        P2[Payment Service]
+        P3[User Service]
+    end
+    
+    subgraph KafkaCluster["Kafka Cluster"]
+        subgraph Broker1["Broker 1"]
+            T1P0[orders-topic P0]
+            T2P0[payments-topic P0]
+        end
+        subgraph Broker2["Broker 2"]
+            T1P1[orders-topic P1]
+            T2P1[payments-topic P1]
+        end
+        subgraph Broker3["Broker 3"]
+            T1P2[orders-topic P2]
+            T3P0[users-topic P0]
+        end
+        ZK[Zookeeper/KRaft]
+        SR[Schema Registry]
+    end
+    
+    subgraph ConsumerGroup["Consumer Groups"]
+        CG1[Analytics Group]
+        CG2[Notification Group]
+        CG3[Search Group]
+    end
+    
+    P1 --> T1P0
+    P1 --> T1P1
+    P2 --> T2P0
+    P3 --> T3P0
+    
+    T1P0 --> CG1
+    T1P1 --> CG1
+    T2P0 --> CG2
+    T3P0 --> CG3
+    
+    ZK --> Broker1
+    SR --> Producers
+    
+    style KafkaCluster fill:#231f20
+    style Broker1 fill:#6366f1
+    style Broker2 fill:#6366f1
+    style Broker3 fill:#6366f1
+        </pre>
+      </div>
+    </div>
+
+    <div id="rabbitmq" class="diagram-section">
+      <h2>RabbitMQ (Message Broker)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Publishers["Publishers"]
+        PUB1[Order Service]
+        PUB2[Payment Service]
+    end
+    
+    subgraph RabbitMQ["RabbitMQ"]
+        subgraph Exchanges["Exchanges"]
+            DIRECT[Direct Exchange]
+            TOPIC[Topic Exchange]
+            FANOUT[Fanout Exchange]
+            HEADERS[Headers Exchange]
+        end
+        
+        subgraph Queues["Queues"]
+            Q1[order.created]
+            Q2[order.#]
+            Q3[notifications]
+            Q4[analytics]
+        end
+    end
+    
+    subgraph Consumers["Consumers"]
+        C1[Inventory Service]
+        C2[Email Service]
+        C3[Analytics Service]
+        C4[Audit Service]
+    end
+    
+    PUB1 --> DIRECT
+    PUB1 --> TOPIC
+    PUB2 --> FANOUT
+    
+    DIRECT -->|routing key| Q1
+    TOPIC -->|pattern match| Q2
+    FANOUT -->|broadcast| Q3
+    FANOUT -->|broadcast| Q4
+    
+    Q1 --> C1
+    Q2 --> C2
+    Q3 --> C3
+    Q4 --> C4
+    
+    style Exchanges fill:#ff6600
+    style Queues fill:#6366f1
+        </pre>
+      </div>
+    </div>
+
+    <div id="websocket" class="diagram-section">
+      <h2>WebSocket (Bi-directional)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant WS as WebSocket Server
+    participant S as Backend Services
+    
+    C->>WS: HTTP Upgrade Request
+    WS-->>C: 101 Switching Protocols
+    
+    Note over C,WS: WebSocket Connection Established
+    
+    par Bi-directional Communication
+        C->>WS: Send Message
+        WS->>S: Process
+        S-->>WS: Result
+        WS-->>C: Push Update
+    and Server Push
+        S->>WS: New Event
+        WS-->>C: Push Notification
+    and Client Events
+        C->>WS: User Action
+        WS->>S: Handle Action
+    end
+    
+    Note over C,WS: Tools: Socket.io, ws, SignalR
+        </pre>
+      </div>
+    </div>
+
+    <div id="sse" class="diagram-section">
+      <h2>Server-Sent Events (SSE)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Client["Browser Client"]
+        ES[EventSource API]
+        JS[JavaScript Handler]
+    end
+    
+    subgraph Server["SSE Server"]
+        EP[/events endpoint]
+        STREAM[Event Stream]
+    end
+    
+    subgraph Events["Event Types"]
+        E1[Stock Updates]
+        E2[Notifications]
+        E3[Live Scores]
+        E4[Progress Updates]
+    end
+    
+    subgraph UseCases["Use Cases"]
+        U1[📈 Real-time Dashboards]
+        U2[🔔 Notifications]
+        U3[📊 Live Analytics]
+        U4[⏳ Progress Bars]
+    end
+    
+    ES -->|GET /events| EP
+    EP -->|text/event-stream| STREAM
+    STREAM --> E1
+    STREAM --> E2
+    STREAM --> E3
+    STREAM --> E4
+    
+    E1 --> U1
+    E2 --> U2
+    E3 --> U3
+    E4 --> U4
+    
+    STREAM --> JS
+    
+    style Server fill:#6366f1
+    style Events fill:#10b981
+        </pre>
+      </div>
+    </div>
+
+    <div id="webhook" class="diagram-section">
+      <h2>Webhooks (HTTP Callbacks)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant APP as Your App
+    participant SVC as External Service
+    participant WH as Webhook Endpoint
+    
+    APP->>SVC: Register Webhook URL
+    SVC-->>APP: Webhook Registered
+    
+    Note over SVC: Event Occurs
+    
+    SVC->>WH: POST /webhook (Event Payload)
+    WH->>WH: Verify Signature
+    WH->>WH: Process Event
+    WH-->>SVC: 200 OK
+    
+    Note over APP,SVC: Examples: Stripe, GitHub, Twilio
+    
+    rect rgb(99, 102, 241, 0.2)
+        Note over WH: Retry Logic
+        SVC->>WH: Retry 1 (if failed)
+        SVC->>WH: Retry 2 (exponential backoff)
+        SVC->>WH: Retry 3 (final attempt)
+    end
+        </pre>
+      </div>
+    </div>
+
+    <div id="servicebus" class="diagram-section">
+      <h2>Azure Service Bus / AWS SQS/SNS</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Cloud["Cloud Message Services"]
+        subgraph Azure["Azure Service Bus"]
+            ASB_Q[Queues]
+            ASB_T[Topics]
+            ASB_S[Subscriptions]
+        end
+        
+        subgraph AWS["AWS Messaging"]
+            SQS[SQS Queues]
+            SNS[SNS Topics]
+            EB[EventBridge]
+        end
+        
+        subgraph GCP["Google Cloud"]
+            PUBSUB[Pub/Sub]
+            TASKS[Cloud Tasks]
+        end
+    end
+    
+    subgraph Features["Enterprise Features"]
+        DLQ[Dead Letter Queue]
+        SCHED[Scheduled Messages]
+        SESS[Sessions/FIFO]
+        DEDUP[Deduplication]
+        TTL[Message TTL]
+    end
+    
+    subgraph Patterns["Patterns"]
+        P1[Point-to-Point]
+        P2[Pub/Sub]
+        P3[Request/Reply]
+        P4[Competing Consumers]
+    end
+    
+    ASB_Q --> P1
+    ASB_T --> P2
+    SNS --> P2
+    SQS --> P4
+    PUBSUB --> P2
+    
+    Azure --> Features
+    AWS --> Features
+    GCP --> Features
+    
+    style Azure fill:#0078d4
+    style AWS fill:#ff9900
+    style GCP fill:#4285f4
+        </pre>
+      </div>
+    </div>
+
+    <div id="sqs" class="diagram-section">
+      <h2>AWS SQS (Simple Queue Service)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Producers["Producers"]
+        P1[Order Service]
+        P2[Payment Service]
+        P3[User Service]
+    end
+    
+    subgraph SQS["AWS SQS"]
+        subgraph Standard["Standard Queue"]
+            SQ1[order-queue]
+            SQ2[payment-queue]
+        end
+        
+        subgraph FIFO["FIFO Queue"]
+            FQ1[order-processing.fifo]
+            FQ2[payment-processing.fifo]
+        end
+        
+        DLQ[Dead Letter Queue]
+    end
+    
+    subgraph Consumers["Consumers"]
+        C1[Worker 1]
+        C2[Worker 2]
+        C3[Worker 3]
+        LAMBDA[Lambda Function]
+    end
+    
+    P1 -->|SendMessage| SQ1
+    P2 -->|SendMessage| FQ1
+    P3 -->|SendMessage| SQ2
+    
+    SQ1 -->|ReceiveMessage| C1
+    SQ1 -->|ReceiveMessage| C2
+    FQ1 -->|Poll| C3
+    SQ2 -->|Trigger| LAMBDA
+    
+    SQ1 -.->|Failed Messages| DLQ
+    FQ1 -.->|Failed Messages| DLQ
+    
+    style SQS fill:#ff9900
+    style Standard fill:#6366f1
+    style FIFO fill:#10b981
+    style DLQ fill:#ef4444
+        </pre>
+      </div>
+    </div>
+
+    <div id="sns" class="diagram-section">
+      <h2>AWS SNS (Simple Notification Service)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Publishers["Publishers"]
+        PUB1[Order Service]
+        PUB2[Payment Service]
+    end
+    
+    subgraph SNS["AWS SNS Topics"]
+        T1[order-events]
+        T2[payment-events]
+        T3[notification-events]
+    end
+    
+    subgraph Subscriptions["Subscriptions"]
+        subgraph SQS_SUB["SQS Subscribers"]
+            Q1[Analytics Queue]
+            Q2[Audit Queue]
+        end
+        
+        subgraph Lambda_SUB["Lambda Subscribers"]
+            L1[Process Order]
+            L2[Send Email]
+        end
+        
+        subgraph HTTP_SUB["HTTP/HTTPS"]
+            H1[Webhook Endpoint]
+        end
+        
+        subgraph Other["Other"]
+            EMAIL[Email]
+            SMS[SMS]
+        end
+    end
+    
+    PUB1 -->|Publish| T1
+    PUB2 -->|Publish| T2
+    PUB1 -->|Publish| T3
+    
+    T1 -->|Fan-out| Q1
+    T1 -->|Fan-out| L1
+    T1 -->|Fan-out| H1
+    
+    T2 -->|Fan-out| Q2
+    T2 -->|Fan-out| L2
+    
+    T3 -->|Fan-out| EMAIL
+    T3 -->|Fan-out| SMS
+    
+    style SNS fill:#ff9900
+    style SQS_SUB fill:#6366f1
+    style Lambda_SUB fill:#10b981
+        </pre>
+      </div>
+    </div>
+
+    <div id="eventbridge" class="diagram-section">
+      <h2>AWS EventBridge (Event Bus)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Sources["Event Sources"]
+        AWS_SVC[AWS Services<br/>S3, EC2, RDS]
+        CUSTOM[Custom Apps]
+        SAAS[SaaS Partners<br/>Zendesk, Datadog]
+        SCHED[Scheduled Events]
+    end
+    
+    subgraph EventBridge["AWS EventBridge"]
+        EB[Event Bus]
+        
+        subgraph Rules["Event Rules"]
+            R1[Rule: order.*]
+            R2[Rule: payment.success]
+            R3[Rule: user.created]
+            R4[Rule: schedule/rate]
+        end
+        
+        SCHEMA[Schema Registry]
+        ARCHIVE[Event Archive]
+        REPLAY[Event Replay]
+    end
+    
+    subgraph Targets["Targets"]
+        LAMBDA[Lambda Functions]
+        SQS[SQS Queues]
+        SNS_T[SNS Topics]
+        STEP[Step Functions]
+        API_DEST[API Destinations]
+        KINESIS[Kinesis Streams]
+    end
+    
+    AWS_SVC --> EB
+    CUSTOM -->|PutEvents| EB
+    SAAS --> EB
+    SCHED --> EB
+    
+    EB --> R1
+    EB --> R2
+    EB --> R3
+    EB --> R4
+    
+    R1 --> LAMBDA
+    R2 --> SQS
+    R3 --> SNS_T
+    R4 --> STEP
+    
+    EB --> SCHEMA
+    EB --> ARCHIVE
+    ARCHIVE --> REPLAY
+    
+    style EventBridge fill:#ff9900
+    style Rules fill:#6366f1
+    style Targets fill:#10b981
+        </pre>
+      </div>
+    </div>
+
+    <div id="comparison" class="diagram-section">
+      <h2>Pattern Comparison & When to Use</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Sync["⚡ Synchronous"]
+        REST[REST<br/>Simple CRUD]
+        GRPC[gRPC<br/>High Performance]
+        GQL[GraphQL<br/>Flexible Queries]
+    end
+    
+    subgraph Async["📨 Asynchronous"]
+        KAFKA[Kafka<br/>Event Streaming]
+        RABBIT[RabbitMQ<br/>Message Routing]
+        SQS_SNS[SQS/SNS<br/>Cloud Native]
+    end
+    
+    subgraph Realtime["🔴 Real-time"]
+        WS[WebSocket<br/>Bi-directional]
+        SSE_P[SSE<br/>Server Push]
+        HOOK[Webhooks<br/>Event Callbacks]
+    end
+    
+    subgraph Decision["When to Use?"]
+        D1[Need Response? → Sync]
+        D2[Fire & Forget? → Async]
+        D3[Live Updates? → Real-time]
+        D4[High Throughput? → Kafka]
+        D5[Complex Routing? → RabbitMQ]
+        D6[Internal Services? → gRPC]
+    end
+    
+    REST --> D1
+    GRPC --> D6
+    KAFKA --> D4
+    RABBIT --> D5
+    WS --> D3
+    
+    style Sync fill:#6366f1
+    style Async fill:#10b981
+    style Realtime fill:#f59e0b
+    style Decision fill:#7c3aed
+        </pre>
+      </div>
+    </div>
+
+    <script>
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'dark',
+        themeVariables: {
+          primaryColor: '#6366f1',
+          primaryTextColor: '#fff',
+          primaryBorderColor: '#818cf8',
+          lineColor: '#a78bfa',
+          secondaryColor: '#1e1e2e',
+          tertiaryColor: '#2d2d44',
+        },
+      });
+
+      const renderedTabs = new Set();
+      let activeAnimations = [];
+
+      async function showTab(tabId) {
+        activeAnimations.forEach((id) => cancelAnimationFrame(id));
+        activeAnimations = [];
+        document.querySelectorAll('.flow-dot').forEach((d) => d.remove());
+        document.querySelectorAll('.diagram-section').forEach((s) => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+        if (!renderedTabs.has(tabId)) {
+          const section = document.getElementById(tabId);
+          const pre = section.querySelector('pre.mermaid');
+          if (pre && !pre.dataset.processed) {
+            await mermaid.run({ nodes: [pre] });
+            pre.dataset.processed = 'true';
+          }
+          renderedTabs.add(tabId);
+        }
+        setTimeout(() => startFlowAnimation(tabId), 300);
+      }
+
+      function startFlowAnimation(tabId) {
+        const section = document.getElementById(tabId);
+        if (!section) return;
+        const svg = section.querySelector('svg');
+        if (!svg) return;
+        const container = section.querySelector('.diagram-container');
+        container.style.position = 'relative';
+        const paths = svg.querySelectorAll(
+          '.edge-pattern-normal, .flowchart-link, [class*="edge"] path, .messageLine0, .messageLine1',
+        );
+        if (paths.length === 0) return;
+        paths.forEach((path, index) => {
+          const dot = document.createElement('div');
+          dot.className = 'flow-dot active';
+          container.appendChild(dot);
+          animateDotAlongPath(dot, path, svg, container, index * 400);
+        });
+      }
+
+      function animateDotAlongPath(dot, path, svg, container, delay) {
+        const duration = 2500;
+        let pathLength;
+        try {
+          pathLength = path.getTotalLength();
+          if (!pathLength || pathLength < 10) return;
+        } catch (e) {
+          return;
+        }
+        function animate() {
+          const startTime = performance.now();
+          function step(currentTime) {
+            if (!document.body.contains(dot)) return;
+            const elapsed = currentTime - startTime;
+            const progress = (elapsed % duration) / duration;
+            try {
+              const point = path.getPointAtLength(progress * pathLength);
+              const ctm = svg.getScreenCTM();
+              const containerRect = container.getBoundingClientRect();
+              if (ctm && point.x !== undefined && point.y !== undefined) {
+                const screenX = point.x * ctm.a + ctm.e;
+                const screenY = point.y * ctm.d + ctm.f;
+                dot.style.left = screenX - containerRect.left - 6 + 'px';
+                dot.style.top = screenY - containerRect.top - 6 + 'px';
+                dot.style.opacity = Math.sin(progress * Math.PI) * 0.9;
+              }
+            } catch (e) {
+              return;
+            }
+            const animId = requestAnimationFrame(step);
+            activeAnimations.push(animId);
+          }
+          requestAnimationFrame(step);
+        }
+        setTimeout(animate, delay);
+      }
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        const firstTab = document.getElementById('rest');
+        const pre = firstTab.querySelector('pre.mermaid');
+        await mermaid.run({ nodes: [pre] });
+        pre.dataset.processed = 'true';
+        renderedTabs.add('rest');
+        setTimeout(() => startFlowAnimation('rest'), 500);
+      });
+    </script>
+  </body>
+</html>

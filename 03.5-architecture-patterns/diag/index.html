@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Architecture Patterns</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+        min-height: 100vh;
+        color: #e0e0e0;
+        padding: 2rem;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 1rem;
+        color: #fff;
+      }
+      h2 {
+        margin: 2rem 0 1rem;
+        color: #a78bfa;
+        border-bottom: 1px solid #333;
+        padding-bottom: 0.5rem;
+      }
+      .diagram-container {
+        background: #1e1e2e;
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      .mermaid {
+        display: flex;
+        justify-content: center;
+      }
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      .tab {
+        padding: 0.5rem 1rem;
+        background: #2d2d44;
+        border: none;
+        border-radius: 8px;
+        color: #e0e0e0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .tab:hover,
+      .tab.active {
+        background: #6366f1;
+        color: #fff;
+      }
+      .diagram-section {
+        display: none;
+      }
+      .diagram-section.active {
+        display: block;
+      }
+      .flow-dot {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, #fff 0%, #00f5d4 40%, #00bbf9 70%, transparent 100%);
+        border-radius: 50%;
+        box-shadow:
+          0 0 20px #00f5d4,
+          0 0 40px #00bbf9,
+          0 0 60px #00f5d4;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0;
+      }
+      .flow-dot.active {
+        animation: pulse 0.5s ease-in-out infinite alternate;
+      }
+      @keyframes pulse {
+        from {
+          transform: scale(1);
+          box-shadow:
+            0 0 20px #00f5d4,
+            0 0 40px #00bbf9;
+        }
+        to {
+          transform: scale(1.5);
+          box-shadow:
+            0 0 35px #00f5d4,
+            0 0 60px #00bbf9,
+            0 0 80px #00f5d4;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🏛️ Architecture Patterns</h1>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('clean')">Clean</button>
+      <button class="tab" onclick="showTab('hexagonal')">Hexagonal</button>
+      <button class="tab" onclick="showTab('layered')">Layered</button>
+      <button class="tab" onclick="showTab('ddd')">DDD</button>
+      <button class="tab" onclick="showTab('serverless')">Serverless</button>
+      <button class="tab" onclick="showTab('servicemesh')">Service Mesh</button>
+      <button class="tab" onclick="showTab('container')">Container</button>
+      <button class="tab" onclick="showTab('eventdriven')">Event-Driven</button>
+      <button class="tab" onclick="showTab('saga')">Saga</button>
+      <button class="tab" onclick="showTab('gateway')">API Gateway</button>
+    </div>
+
+    <div id="clean" class="diagram-section active">
+      <h2>Clean Architecture</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph External["External Layer"]
+        UI[UI/Controllers]
+        DB[(Database)]
+        API[External APIs]
+        MQ[Message Queue]
+    end
+    
+    subgraph Adapters["Interface Adapters"]
+        CTRL[Controllers]
+        REPO[Repositories]
+        PRES[Presenters]
+        GW[Gateways]
+    end
+    
+    subgraph UseCases["Application Layer"]
+        UC1[Create Order]
+        UC2[Process Payment]
+        UC3[Send Notification]
+    end
+    
+    subgraph Domain["Domain Layer (Core)"]
+        ENT[Entities]
+        VO[Value Objects]
+        DS[Domain Services]
+    end
+    
+    UI --> CTRL
+    CTRL --> UC1
+    CTRL --> UC2
+    UC1 --> ENT
+    UC2 --> DS
+    UC3 --> VO
+    REPO --> DB
+    GW --> API
+    GW --> MQ
+    UC1 --> REPO
+    UC2 --> GW
+    
+    style Domain fill:#6366f1
+    style UseCases fill:#8b5cf6
+    style Adapters fill:#a78bfa
+    style External fill:#2d2d44
+      </pre
+        >
+      </div>
+    </div>
+
+    <div id="hexagonal" class="diagram-section">
+      <h2>Hexagonal Architecture (Ports & Adapters)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Driving["Driving Adapters (Primary)"]
+        REST[REST API]
+        GRPC[gRPC]
+        CLI[CLI]
+        WEB[Web UI]
+    end
+    
+    subgraph Ports1["Input Ports"]
+        IP1[OrderService]
+        IP2[PaymentService]
+    end
+    
+    subgraph Core["Application Core"]
+        DOM[Domain Model]
+        BL[Business Logic]
+    end
+    
+    subgraph Ports2["Output Ports"]
+        OP1[OrderRepository]
+        OP2[PaymentGateway]
+        OP3[NotificationPort]
+    end
+    
+    subgraph Driven["Driven Adapters (Secondary)"]
+        PG[(PostgreSQL)]
+        STRIPE[Stripe API]
+        SMTP[SMTP Server]
+        KAFKA[Kafka]
+    end
+    
+    REST --> IP1
+    GRPC --> IP1
+    CLI --> IP2
+    WEB --> IP1
+    
+    IP1 --> DOM
+    IP2 --> BL
+    
+    DOM --> OP1
+    BL --> OP2
+    BL --> OP3
+    
+    OP1 --> PG
+    OP2 --> STRIPE
+    OP3 --> SMTP
+    OP3 --> KAFKA
+    
+    style Core fill:#6366f1
+    style Ports1 fill:#10b981
+    style Ports2 fill:#f59e0b
+      </pre
+        >
+      </div>
+    </div>
+
+    <div id="layered" class="diagram-section">
+      <h2>Layered Architecture</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Presentation["Presentation Layer"]
+        API[REST Controllers]
+        GQL[GraphQL Resolvers]
+        WS[WebSocket Handlers]
+    end
+    
+    subgraph Application["Application Layer"]
+        SVC[Application Services]
+        DTO[DTOs]
+        MAP[Mappers]
+    end
+    
+    subgraph Domain["Domain Layer"]
+        ENT[Entities]
+        REPO[Repository Interfaces]
+        DOM[Domain Services]
+    end
+    
+    subgraph Infrastructure["Infrastructure Layer"]
+        DB[(Database)]
+        CACHE[Redis Cache]
+        MQ[Message Broker]
+        EXT[External Services]
+    end
+    
+    API --> SVC
+    GQL --> SVC
+    WS --> SVC
+    
+    SVC --> DTO
+    SVC --> MAP
+    SVC --> ENT
+    SVC --> DOM
+    
+    DOM --> REPO
+    
+    REPO -.->|implements| DB
+    REPO -.->|implements| CACHE
+    DOM -.-> MQ
+    DOM -.-> EXT
+    
+    style Presentation fill:#6366f1
+    style Application fill:#8b5cf6
+    style Domain fill:#10b981
+    style Infrastructure fill:#f59e0b
+      </pre
+        >
+      </div>
+    </div>
+
+    <div id="ddd" class="diagram-section">
+      <h2>Domain-Driven Design Structure</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph BoundedContext1["Order Context"]
+        AGG1[Order Aggregate]
+        ENT1[OrderItem Entity]
+        VO1[Money Value Object]
+        EVT1[OrderPlaced Event]
+    end
+    
+    subgraph BoundedContext2["Payment Context"]
+        AGG2[Payment Aggregate]
+        ENT2[Transaction Entity]
+        VO2[Currency Value Object]
+        EVT2[PaymentProcessed Event]
+    end
+    
+    subgraph BoundedContext3["Shipping Context"]
+        AGG3[Shipment Aggregate]
+        ENT3[Package Entity]
+        VO3[Address Value Object]
+        EVT3[ShipmentCreated Event]
+    end
+    
+    subgraph SharedKernel["Shared Kernel"]
+        ID[Entity IDs]
+        TIME[Timestamps]
+    end
+    
+    EVT1 -->|domain event| AGG2
+    EVT2 -->|domain event| AGG3
+    
+    AGG1 --> ENT1
+    AGG1 --> VO1
+    AGG2 --> ENT2
+    AGG2 --> VO2
+    AGG3 --> ENT3
+    AGG3 --> VO3
+    
+    SharedKernel --> BoundedContext1
+    SharedKernel --> BoundedContext2
+    SharedKernel --> BoundedContext3
+    
+    style BoundedContext1 fill:#6366f1
+    style BoundedContext2 fill:#10b981
+    style BoundedContext3 fill:#f59e0b
+    style SharedKernel fill:#7c3aed
+      </pre
+        >
+      </div>
+    </div>
+
+    <div id="serverless" class="diagram-section">
+      <h2>Serverless Architecture</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Client["Client Layer"]
+        WEB[Web App]
+        MOB[Mobile App]
+    end
+    
+    subgraph Gateway["API Gateway"]
+        APIGW[AWS API Gateway / Azure API Mgmt]
+    end
+    
+    subgraph Functions["Serverless Functions"]
+        F1[Auth Function]
+        F2[Order Function]
+        F3[Payment Function]
+        F4[Notification Function]
+    end
+    
+    subgraph Events["Event Triggers"]
+        SQS[SQS Queue]
+        SNS[SNS Topic]
+        S3[S3 Events]
+        CRON[CloudWatch Events]
+    end
+    
+    subgraph Backend["Backend Services"]
+        DDB[(DynamoDB)]
+        RDS[(Aurora)]
+        S3B[S3 Bucket]
+    end
+    
+    WEB --> APIGW
+    MOB --> APIGW
+    APIGW --> F1
+    APIGW --> F2
+    
+    SQS --> F3
+    SNS --> F4
+    S3 --> F2
+    CRON --> F1
+    
+    F1 --> DDB
+    F2 --> RDS
+    F3 --> DDB
+    F4 --> S3B
+    
+    F2 -->|publish| SNS
+    F3 -->|publish| SQS
+    
+    style Functions fill:#f59e0b
+    style Events fill:#7c3aed
+    style Gateway fill:#6366f1
+        </pre>
+      </div>
+    </div>
+
+    <div id="servicemesh" class="diagram-section">
+      <h2>Service Mesh Architecture (Istio/Linkerd)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph ControlPlane["Control Plane"]
+        PILOT[Pilot / Config]
+        CITADEL[Citadel / Security]
+        GALLEY[Galley / Validation]
+        MIXER[Mixer / Telemetry]
+    end
+    
+    subgraph DataPlane["Data Plane"]
+        subgraph Pod1["Service A Pod"]
+            S1[Service A]
+            P1[Envoy Proxy]
+        end
+        
+        subgraph Pod2["Service B Pod"]
+            S2[Service B]
+            P2[Envoy Proxy]
+        end
+        
+        subgraph Pod3["Service C Pod"]
+            S3[Service C]
+            P3[Envoy Proxy]
+        end
+    end
+    
+    PILOT -->|config| P1
+    PILOT -->|config| P2
+    PILOT -->|config| P3
+    
+    CITADEL -->|mTLS certs| P1
+    CITADEL -->|mTLS certs| P2
+    CITADEL -->|mTLS certs| P3
+    
+    P1 <-->|mTLS| P2
+    P2 <-->|mTLS| P3
+    P1 <-->|mTLS| P3
+    
+    P1 -->|telemetry| MIXER
+    P2 -->|telemetry| MIXER
+    P3 -->|telemetry| MIXER
+    
+    S1 --> P1
+    S2 --> P2
+    S3 --> P3
+    
+    style ControlPlane fill:#6366f1
+    style DataPlane fill:#10b981
+        </pre>
+      </div>
+    </div>
+
+    <div id="container" class="diagram-section">
+      <h2>Container-Based Architecture (Kubernetes)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph External["External"]
+        LB[Load Balancer]
+        DNS[DNS]
+    end
+    
+    subgraph K8sCluster["Kubernetes Cluster"]
+        ING[Ingress Controller]
+        
+        subgraph NS1["Namespace: Production"]
+            subgraph Deploy1["Deployment: API"]
+                P1[Pod 1]
+                P2[Pod 2]
+                P3[Pod 3]
+            end
+            SVC1[Service: api-svc]
+            CM1[ConfigMap]
+            SEC1[Secret]
+        end
+        
+        subgraph NS2["Namespace: Database"]
+            SS[StatefulSet: DB]
+            PVC[PersistentVolumeClaim]
+            SVC2[Service: db-svc]
+        end
+    end
+    
+    subgraph Storage["Storage"]
+        PV[Persistent Volume]
+    end
+    
+    DNS --> LB
+    LB --> ING
+    ING --> SVC1
+    SVC1 --> P1
+    SVC1 --> P2
+    SVC1 --> P3
+    
+    P1 --> SVC2
+    P2 --> SVC2
+    SVC2 --> SS
+    
+    CM1 --> Deploy1
+    SEC1 --> Deploy1
+    PVC --> PV
+    SS --> PVC
+    
+    style K8sCluster fill:#326ce5
+    style NS1 fill:#6366f1
+    style NS2 fill:#10b981
+        </pre>
+      </div>
+    </div>
+
+    <div id="eventdriven" class="diagram-section">
+      <h2>Event-Driven Architecture</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Producers["Event Producers"]
+        P1[Order Service]
+        P2[User Service]
+        P3[Payment Service]
+    end
+    
+    subgraph EventBus["Event Bus / Broker"]
+        subgraph Topics["Kafka Topics"]
+            T1[order-events]
+            T2[user-events]
+            T3[payment-events]
+        end
+        SR[Schema Registry]
+    end
+    
+    subgraph Consumers["Event Consumers"]
+        C1[Notification Service]
+        C2[Analytics Service]
+        C3[Search Service]
+        C4[Audit Service]
+    end
+    
+    subgraph EventStore["Event Store"]
+        ES[(Event Log)]
+    end
+    
+    P1 -->|OrderCreated| T1
+    P2 -->|UserRegistered| T2
+    P3 -->|PaymentProcessed| T3
+    
+    T1 --> C1
+    T1 --> C2
+    T1 --> C4
+    T2 --> C1
+    T2 --> C3
+    T3 --> C1
+    T3 --> C2
+    
+    T1 --> ES
+    T2 --> ES
+    T3 --> ES
+    
+    SR --> Topics
+    
+    style EventBus fill:#7c3aed
+    style EventStore fill:#f59e0b
+        </pre>
+      </div>
+    </div>
+
+    <div id="saga" class="diagram-section">
+      <h2>Saga Pattern (Distributed Transactions)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Orchestrator["Saga Orchestrator"]
+        SO[Saga Coordinator]
+    end
+    
+    subgraph Steps["Saga Steps"]
+        S1[1. Create Order]
+        S2[2. Reserve Stock]
+        S3[3. Process Payment]
+        S4[4. Ship Order]
+    end
+    
+    subgraph Compensations["Compensation Actions"]
+        C1[Cancel Order]
+        C2[Release Stock]
+        C3[Refund Payment]
+        C4[Cancel Shipment]
+    end
+    
+    SO -->|execute| S1
+    S1 -->|success| S2
+    S2 -->|success| S3
+    S3 -->|success| S4
+    S4 -->|complete| SO
+    
+    S4 -.->|failure| C4
+    C4 -.-> C3
+    C3 -.-> C2
+    C2 -.-> C1
+    C1 -.->|rollback complete| SO
+    
+    style Orchestrator fill:#6366f1
+    style Steps fill:#10b981
+    style Compensations fill:#ef4444
+        </pre>
+      </div>
+    </div>
+
+    <div id="gateway" class="diagram-section">
+      <h2>API Gateway Pattern</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Clients["Clients"]
+        WEB[Web App]
+        MOB[Mobile App]
+        IOT[IoT Devices]
+        PART[Partners]
+    end
+    
+    subgraph Gateway["API Gateway"]
+        AUTH[Authentication]
+        RATE[Rate Limiting]
+        CACHE[Response Cache]
+        TRANS[Request Transform]
+        ROUTE[Routing]
+        LB[Load Balancing]
+        CB[Circuit Breaker]
+        LOG[Logging & Metrics]
+    end
+    
+    subgraph Services["Backend Services"]
+        S1[User Service]
+        S2[Order Service]
+        S3[Product Service]
+        S4[Payment Service]
+    end
+    
+    subgraph Support["Supporting Services"]
+        IDP[Identity Provider]
+        MONITOR[Monitoring]
+    end
+    
+    WEB --> Gateway
+    MOB --> Gateway
+    IOT --> Gateway
+    PART --> Gateway
+    
+    AUTH --> RATE
+    RATE --> CACHE
+    CACHE --> TRANS
+    TRANS --> ROUTE
+    ROUTE --> LB
+    LB --> CB
+    CB --> LOG
+    
+    LOG --> S1
+    LOG --> S2
+    LOG --> S3
+    LOG --> S4
+    
+    AUTH --> IDP
+    LOG --> MONITOR
+    
+    style Gateway fill:#6366f1
+    style Services fill:#10b981
+        </pre>
+      </div>
+    </div>
+
+    <script>
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'dark',
+        themeVariables: {
+          primaryColor: '#6366f1',
+          primaryTextColor: '#fff',
+          primaryBorderColor: '#818cf8',
+          lineColor: '#a78bfa',
+          secondaryColor: '#1e1e2e',
+          tertiaryColor: '#2d2d44',
+        },
+      });
+
+      const renderedTabs = new Set();
+      let activeAnimations = [];
+
+      async function showTab(tabId) {
+        activeAnimations.forEach((id) => cancelAnimationFrame(id));
+        activeAnimations = [];
+        document.querySelectorAll('.flow-dot').forEach((d) => d.remove());
+        document.querySelectorAll('.diagram-section').forEach((s) => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+        if (!renderedTabs.has(tabId)) {
+          const section = document.getElementById(tabId);
+          const pre = section.querySelector('pre.mermaid');
+          if (pre && !pre.dataset.processed) {
+            await mermaid.run({ nodes: [pre] });
+            pre.dataset.processed = 'true';
+          }
+          renderedTabs.add(tabId);
+        }
+        setTimeout(() => startFlowAnimation(tabId), 300);
+      }
+
+      function startFlowAnimation(tabId) {
+        const section = document.getElementById(tabId);
+        if (!section) return;
+        const svg = section.querySelector('svg');
+        if (!svg) return;
+        const container = section.querySelector('.diagram-container');
+        container.style.position = 'relative';
+        const paths = svg.querySelectorAll('.edge-pattern-normal, .flowchart-link, [class*="edge"] path');
+        if (paths.length === 0) return;
+        paths.forEach((path, index) => {
+          const dot = document.createElement('div');
+          dot.className = 'flow-dot active';
+          container.appendChild(dot);
+          animateDotAlongPath(dot, path, svg, container, index * 400);
+        });
+      }
+
+      function animateDotAlongPath(dot, path, svg, container, delay) {
+        const duration = 2500;
+        let pathLength;
+        try {
+          pathLength = path.getTotalLength();
+          if (!pathLength || pathLength < 10) return;
+        } catch (e) {
+          return;
+        }
+        function animate() {
+          const startTime = performance.now();
+          function step(currentTime) {
+            if (!document.body.contains(dot)) return;
+            const elapsed = currentTime - startTime;
+            const progress = (elapsed % duration) / duration;
+            try {
+              const point = path.getPointAtLength(progress * pathLength);
+              const ctm = svg.getScreenCTM();
+              const containerRect = container.getBoundingClientRect();
+              if (ctm && point.x !== undefined && point.y !== undefined) {
+                const screenX = point.x * ctm.a + ctm.e;
+                const screenY = point.y * ctm.d + ctm.f;
+                dot.style.left = screenX - containerRect.left - 6 + 'px';
+                dot.style.top = screenY - containerRect.top - 6 + 'px';
+                dot.style.opacity = Math.sin(progress * Math.PI) * 0.9;
+              }
+            } catch (e) {
+              return;
+            }
+            const animId = requestAnimationFrame(step);
+            activeAnimations.push(animId);
+          }
+          requestAnimationFrame(step);
+        }
+        setTimeout(animate, delay);
+      }
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        const firstTab = document.getElementById('clean');
+        const pre = firstTab.querySelector('pre.mermaid');
+        await mermaid.run({ nodes: [pre] });
+        pre.dataset.processed = 'true';
+        renderedTabs.add('clean');
+        setTimeout(() => startFlowAnimation('clean'), 500);
+      });
+    </script>
+  </body>
+</html>

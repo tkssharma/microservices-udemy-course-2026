@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CQRS & Event Sourcing</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+        min-height: 100vh;
+        color: #e0e0e0;
+        padding: 2rem;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 1rem;
+        color: #fff;
+      }
+      h2 {
+        margin: 2rem 0 1rem;
+        color: #a78bfa;
+        border-bottom: 1px solid #333;
+        padding-bottom: 0.5rem;
+      }
+      .diagram-container {
+        background: #1e1e2e;
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      .mermaid {
+        display: flex;
+        justify-content: center;
+      }
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      .tab {
+        padding: 0.5rem 1rem;
+        background: #2d2d44;
+        border: none;
+        border-radius: 8px;
+        color: #e0e0e0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .tab:hover,
+      .tab.active {
+        background: #6366f1;
+        color: #fff;
+      }
+      .diagram-section {
+        display: none;
+      }
+      .diagram-section.active {
+        display: block;
+      }
+      .flow-dot {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, #fff 0%, #00f5d4 40%, #00bbf9 70%, transparent 100%);
+        border-radius: 50%;
+        box-shadow:
+          0 0 20px #00f5d4,
+          0 0 40px #00bbf9,
+          0 0 60px #00f5d4;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0;
+      }
+      .flow-dot.active {
+        animation: pulse 0.5s ease-in-out infinite alternate;
+      }
+      @keyframes pulse {
+        from {
+          transform: scale(1);
+          box-shadow:
+            0 0 20px #00f5d4,
+            0 0 40px #00bbf9;
+        }
+        to {
+          transform: scale(1.5);
+          box-shadow:
+            0 0 35px #00f5d4,
+            0 0 60px #00bbf9,
+            0 0 80px #00f5d4;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>📊 CQRS & Event Sourcing</h1>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('cqrs')">CQRS Pattern</button>
+      <button class="tab" onclick="showTab('eventsourcing')">Event Sourcing</button>
+      <button class="tab" onclick="showTab('combined')">Combined Pattern</button>
+      <button class="tab" onclick="showTab('replay')">Event Replay</button>
+    </div>
+
+    <div id="cqrs" class="diagram-section active">
+      <h2>Command Query Responsibility Segregation</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    C[Client]
+    
+    subgraph Commands["Command Side (Write)"]
+        CMD[Command Handler]
+        CVAL[Validation]
+        CDOM[Domain Logic]
+        WDB[(Write Database)]
+    end
+    
+    subgraph Queries["Query Side (Read)"]
+        QRY[Query Handler]
+        PROJ[Projections]
+        RDB[(Read Database)]
+    end
+    
+    C -->|Commands| CMD
+    C -->|Queries| QRY
+    
+    CMD --> CVAL
+    CVAL --> CDOM
+    CDOM --> WDB
+    
+    WDB -->|sync| RDB
+    
+    QRY --> PROJ
+    PROJ --> RDB
+    
+    style Commands fill:#ef4444
+    style Queries fill:#10b981
+      </pre
+        >
+      </div>
+    </div>
+
+    <div id="eventsourcing" class="diagram-section">
+      <h2>Event Sourcing Pattern</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph EventStore["Event Store"]
+        E1[OrderCreated<br/>t1]
+        E2[ItemAdded<br/>t2]
+        E3[ItemAdded<br/>t3]
+        E4[ItemRemoved<br/>t4]
+        E5[OrderSubmitted<br/>t5]
+    end
+    
+    E1 --> E2
+    E2 --> E3
+    E3 --> E4
+    E4 --> E5
+    
+    E5 -->|replay events| AGG[Current State<br/>Order Aggregate]
+    
+    subgraph State["Reconstructed State"]
+        S1[orderId: 123]
+        S2[items: 2]
+        S3[status: submitted]
+        S4[total: $150]
+    end
+    
+    AGG --> State
+    
+    style EventStore fill:#7c3aed
+    style State fill:#10b981
+      </pre>
+      </div>
+    </div>
+
+    <div id="combined" class="diagram-section">
+      <h2>CQRS + Event Sourcing</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    C[Client]
+    
+    subgraph CommandSide["Command Side"]
+        CMD[Command Bus]
+        AGG[Aggregate]
+        ES[(Event Store)]
+    end
+    
+    subgraph EventBus["Event Bus"]
+        EB[Event Publisher]
+    end
+    
+    subgraph QuerySide["Query Side"]
+        PROJ1[Order Projection]
+        PROJ2[Analytics Projection]
+        PROJ3[Search Projection]
+        RDB1[(Read DB)]
+        RDB2[(Analytics DB)]
+        RDB3[(Elasticsearch)]
+    end
+    
+    C -->|CreateOrder| CMD
+    CMD --> AGG
+    AGG -->|OrderCreated| ES
+    ES --> EB
+    
+    EB --> PROJ1
+    EB --> PROJ2
+    EB --> PROJ3
+    
+    PROJ1 --> RDB1
+    PROJ2 --> RDB2
+    PROJ3 --> RDB3
+    
+    C -->|GetOrder| RDB1
+    C -->|GetStats| RDB2
+    C -->|Search| RDB3
+    
+    style CommandSide fill:#ef4444
+    style EventBus fill:#7c3aed
+    style QuerySide fill:#10b981
+      </pre
+        >
+      </div>
+    </div>
+
+    <div id="replay" class="diagram-section">
+      <h2>Event Replay & Projection Rebuild</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant ES as Event Store
+    participant PR as Projection Rebuilder
+    participant NP as New Projection
+    participant DB as New Read DB
+    
+    Note over PR: Deploy new projection version
+    
+    PR->>ES: Request all events from beginning
+    
+    loop For each event
+        ES->>PR: Event 1: OrderCreated
+        PR->>NP: Apply event
+        NP->>DB: Update projection
+        
+        ES->>PR: Event 2: ItemAdded
+        PR->>NP: Apply event
+        NP->>DB: Update projection
+        
+        ES->>PR: Event N: ...
+        PR->>NP: Apply event
+        NP->>DB: Update projection
+    end
+    
+    Note over DB: Projection rebuilt with new schema
+    
+    PR->>PR: Switch traffic to new projection
+      </pre
+        >
+      </div>
+    </div>
+
+    <script>
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'dark',
+        themeVariables: {
+          primaryColor: '#6366f1',
+          primaryTextColor: '#fff',
+          primaryBorderColor: '#818cf8',
+          lineColor: '#a78bfa',
+          secondaryColor: '#1e1e2e',
+          tertiaryColor: '#2d2d44',
+        },
+      });
+
+      const renderedTabs = new Set();
+      let activeAnimations = [];
+
+      async function showTab(tabId) {
+        activeAnimations.forEach((id) => cancelAnimationFrame(id));
+        activeAnimations = [];
+        document.querySelectorAll('.flow-dot').forEach((d) => d.remove());
+        document.querySelectorAll('.diagram-section').forEach((s) => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+        if (!renderedTabs.has(tabId)) {
+          const section = document.getElementById(tabId);
+          const pre = section.querySelector('pre.mermaid');
+          if (pre && !pre.dataset.processed) {
+            await mermaid.run({ nodes: [pre] });
+            pre.dataset.processed = 'true';
+          }
+          renderedTabs.add(tabId);
+        }
+        setTimeout(() => startFlowAnimation(tabId), 300);
+      }
+
+      function startFlowAnimation(tabId) {
+        const section = document.getElementById(tabId);
+        if (!section) return;
+        const svg = section.querySelector('svg');
+        if (!svg) return;
+        const container = section.querySelector('.diagram-container');
+        container.style.position = 'relative';
+        const paths = svg.querySelectorAll(
+          '.edge-pattern-normal, .flowchart-link, [class*="edge"] path, .messageLine0, .messageLine1',
+        );
+        if (paths.length === 0) return;
+        paths.forEach((path, index) => {
+          const dot = document.createElement('div');
+          dot.className = 'flow-dot active';
+          container.appendChild(dot);
+          animateDotAlongPath(dot, path, svg, container, index * 400);
+        });
+      }
+
+      function animateDotAlongPath(dot, path, svg, container, delay) {
+        const duration = 2500;
+        let pathLength;
+        try {
+          pathLength = path.getTotalLength();
+          if (!pathLength || pathLength < 10) return;
+        } catch (e) {
+          return;
+        }
+        function animate() {
+          const startTime = performance.now();
+          function step(currentTime) {
+            if (!document.body.contains(dot)) return;
+            const elapsed = currentTime - startTime;
+            const progress = (elapsed % duration) / duration;
+            try {
+              const point = path.getPointAtLength(progress * pathLength);
+              const ctm = svg.getScreenCTM();
+              const containerRect = container.getBoundingClientRect();
+              if (ctm && point.x !== undefined && point.y !== undefined) {
+                const screenX = point.x * ctm.a + ctm.e;
+                const screenY = point.y * ctm.d + ctm.f;
+                dot.style.left = screenX - containerRect.left - 6 + 'px';
+                dot.style.top = screenY - containerRect.top - 6 + 'px';
+                dot.style.opacity = Math.sin(progress * Math.PI) * 0.9;
+              }
+            } catch (e) {
+              return;
+            }
+            const animId = requestAnimationFrame(step);
+            activeAnimations.push(animId);
+          }
+          requestAnimationFrame(step);
+        }
+        setTimeout(animate, delay);
+      }
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        const firstTab = document.getElementById('cqrs');
+        const pre = firstTab.querySelector('pre.mermaid');
+        await mermaid.run({ nodes: [pre] });
+        pre.dataset.processed = 'true';
+        renderedTabs.add('cqrs');
+        setTimeout(() => startFlowAnimation('cqrs'), 500);
+      });
+    </script>
+  </body>
+</html>

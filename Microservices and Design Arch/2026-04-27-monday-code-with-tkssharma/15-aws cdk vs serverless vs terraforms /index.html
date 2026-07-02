@@ -1,0 +1,2186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AWS CDK vs Serverless vs Terraform - Complete IaC Guide</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+        min-height: 100vh;
+        color: #fff;
+      }
+      .bg-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+      }
+      .bg-animation span {
+        position: absolute;
+        display: block;
+        width: 20px;
+        height: 20px;
+        background: rgba(249, 115, 22, 0.1);
+        animation: move 25s linear infinite;
+        bottom: -150px;
+        border-radius: 50%;
+      }
+      .bg-animation span:nth-child(1) {
+        left: 25%;
+        width: 80px;
+        height: 80px;
+      }
+      .bg-animation span:nth-child(2) {
+        left: 10%;
+        width: 20px;
+        height: 20px;
+        animation-delay: 2s;
+      }
+      .bg-animation span:nth-child(3) {
+        left: 70%;
+        width: 30px;
+        height: 30px;
+        animation-delay: 4s;
+      }
+      .bg-animation span:nth-child(4) {
+        left: 40%;
+        width: 60px;
+        height: 60px;
+      }
+      @keyframes move {
+        0% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-1000px);
+          opacity: 0;
+        }
+      }
+      header {
+        text-align: center;
+        padding: 2rem 2rem 1rem;
+      }
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #f97316, #8b5cf6, #06b6d4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .subtitle {
+        color: #fdba74;
+        font-size: 1.2rem;
+        margin-top: 0.5rem;
+      }
+      .hook-banner {
+        background: linear-gradient(135deg, #f97316, #8b5cf6);
+        padding: 1rem 2rem;
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0 2rem 1.5rem;
+        border-radius: 16px;
+      }
+      .tabs {
+        display: flex;
+        justify-content: center;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        padding: 0 2rem;
+        margin-bottom: 2rem;
+      }
+      .tab {
+        padding: 0.7rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.85rem;
+      }
+      .tab:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+      }
+      .tab.active {
+        background: linear-gradient(135deg, #f97316, #8b5cf6);
+        border: none;
+      }
+      .content {
+        display: none;
+        padding: 0 2rem 3rem;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      .content.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .section-title {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 2rem;
+        color: #f97316;
+      }
+      .diagram-container {
+        background: rgba(15, 23, 42, 0.8);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(249, 115, 22, 0.3);
+        position: relative;
+      }
+      .diagram-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #f97316, #8b5cf6, #06b6d4);
+        border-radius: 20px 20px 0 0;
+      }
+      .diagram-title {
+        font-size: 1.2rem;
+        color: #fbbf24;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-weight: 700;
+      }
+      .comparison-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+      }
+      @media (max-width: 900px) {
+        .comparison-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .comparison-box {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 2px solid;
+        text-align: center;
+        transition: transform 0.3s ease;
+      }
+      .comparison-box:hover {
+        transform: translateY(-5px);
+      }
+      .comparison-box.cdk {
+        border-color: rgba(249, 115, 22, 0.5);
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.05));
+      }
+      .comparison-box.serverless {
+        border-color: rgba(239, 68, 68, 0.5);
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+      }
+      .comparison-box.terraform {
+        border-color: rgba(139, 92, 246, 0.5);
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+      }
+      .comparison-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+      .comparison-box h3 {
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+      }
+      .cdk h3 {
+        color: #f97316;
+      }
+      .serverless h3 {
+        color: #ef4444;
+      }
+      .terraform h3 {
+        color: #8b5cf6;
+      }
+      .comparison-box p {
+        color: #d1d5db;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+      }
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.25rem;
+        margin-top: 1.25rem;
+      }
+      .info-card {
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(139, 92, 246, 0.1));
+        border-radius: 14px;
+        padding: 1.25rem;
+        border: 1px solid rgba(249, 115, 22, 0.3);
+        transition: transform 0.3s ease;
+      }
+      .info-card:hover {
+        transform: translateY(-5px);
+      }
+      .info-card h4 {
+        color: #fdba74;
+        font-size: 1rem;
+        margin-bottom: 0.6rem;
+      }
+      .info-card p {
+        color: #d1d5db;
+        line-height: 1.5;
+        font-size: 0.85rem;
+      }
+      .feature-list {
+        list-style: none;
+        text-align: left;
+      }
+      .feature-list li {
+        padding: 0.4rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.85rem;
+      }
+      .feature-list li:last-child {
+        border-bottom: none;
+      }
+      .vs-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        font-size: 0.8rem;
+      }
+      .vs-table th,
+      .vs-table td {
+        padding: 0.6rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .vs-table th {
+        color: #fbbf24;
+        background: rgba(0, 0, 0, 0.2);
+      }
+      .vs-table td:nth-child(2) {
+        color: #f97316;
+      }
+      .vs-table td:nth-child(3) {
+        color: #ef4444;
+      }
+      .vs-table td:nth-child(4) {
+        color: #8b5cf6;
+      }
+      .arch-diagram {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1.5rem;
+      }
+      .arch-layer {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .arch-node {
+        padding: 0.75rem 1.25rem;
+        border-radius: 10px;
+        text-align: center;
+        min-width: 100px;
+        font-weight: 600;
+        font-size: 0.8rem;
+      }
+      .arch-arrow {
+        font-size: 1.3rem;
+        color: #a78bfa;
+      }
+      .code-block {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        overflow-x: auto;
+        font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+        font-size: 0.82rem;
+        line-height: 1.8;
+        margin-top: 1rem;
+        white-space: pre;
+        color: #a5d6ff;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        max-height: 500px;
+      }
+      .code-block::before {
+        content: '● ● ●';
+        display: block;
+        color: #ff5f56;
+        letter-spacing: 4px;
+        font-size: 0.6rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .usecase-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.25rem;
+      }
+      .usecase-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 14px;
+        padding: 1.25rem;
+        border-left: 4px solid;
+      }
+      .usecase-card.cdk-case {
+        border-color: #f97316;
+      }
+      .usecase-card.serverless-case {
+        border-color: #ef4444;
+      }
+      .usecase-card.terraform-case {
+        border-color: #8b5cf6;
+      }
+      .usecase-card h4 {
+        font-size: 1rem;
+        margin-bottom: 0.6rem;
+      }
+      .usecase-card p {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        line-height: 1.4;
+      }
+      .company-tag {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 3px 10px;
+        border-radius: 15px;
+        font-size: 0.7rem;
+        margin-top: 0.6rem;
+      }
+      .flow-decision {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .decision-box {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        color: #000;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 700;
+        text-align: center;
+        font-size: 0.9rem;
+      }
+      .decision-options {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .decision-path {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .decision-answer {
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8rem;
+      }
+      .yes {
+        background: #10b981;
+      }
+      .no {
+        background: #ef4444;
+      }
+      .result-box {
+        padding: 0.75rem 1.25rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+      .thumb-preview {
+        width: 100%;
+        max-width: 600px;
+        aspect-ratio: 16/9;
+        margin: 0 auto;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+      }
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 0.75rem;
+      }
+      .metric-card {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(109, 40, 217, 0.1));
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 10px;
+        padding: 0.75rem;
+        text-align: center;
+      }
+      .metric-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #10b981, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .metric-label {
+        color: #a78bfa;
+        font-size: 0.7rem;
+        margin-top: 0.2rem;
+      }
+      .workflow-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+        border-left: 3px solid #8b5cf6;
+      }
+      .step-number {
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+      }
+      .step-content h4 {
+        color: #f1f5f9;
+        margin-bottom: 0.3rem;
+        font-size: 0.95rem;
+      }
+      .step-content p {
+        color: #94a3b8;
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+    <header>
+      <h1>🛠️ CDK vs Serverless vs Terraform</h1>
+      <p class="subtitle">Which Infrastructure as Code Tool Should YOU Use?</p>
+    </header>
+    <div class="hook-banner">
+      🤯 Wrong IaC choice = Vendor lock-in, team frustration & maintenance nightmares! Choose wisely →
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="overview">📊 Overview</button>
+      <button class="tab" data-tab="whatisiac">📖 What is IaC</button>
+      <button class="tab" data-tab="cdklang">🔤 CDK Languages</button>
+      <button class="tab" data-tab="cdk">🔶 CDK</button>
+      <button class="tab" data-tab="serverless">⚡ Serverless</button>
+      <button class="tab" data-tab="terraform">🟣 Terraform</button>
+      <button class="tab" data-tab="howworks">⚙️ How It Works</button>
+      <button class="tab" data-tab="code">💻 Code</button>
+      <button class="tab" data-tab="usecases">💼 Use Cases</button>
+      <button class="tab" data-tab="decision">🎯 Decision</button>
+      <button class="tab" data-tab="comparison">⚔️ Compare</button>
+      <button class="tab" data-tab="thumbnail">🎨 Thumbnail</button>
+    </div>
+
+    <!-- What is IaC -->
+    <div id="whatisiac" class="content">
+      <h2 class="section-title">📖 What is Infrastructure as Code?</h2>
+
+      <!-- The Problem -->
+      <div class="diagram-container">
+        <div class="diagram-title">😰 The Problem: ClickOps</div>
+        <div class="info-grid">
+          <div class="info-card" style="border-color: #ef4444">
+            <h4>❌ No Version Control</h4>
+            <p>Who changed what? When? Why? No git history for manual changes.</p>
+          </div>
+          <div class="info-card" style="border-color: #ef4444">
+            <h4>❌ No Reproducibility</h4>
+            <p>"Works on my AWS account" - Can't reliably recreate environments.</p>
+          </div>
+          <div class="info-card" style="border-color: #ef4444">
+            <h4>❌ No Consistency</h4>
+            <p>Dev looks different from staging, staging looks different from prod.</p>
+          </div>
+          <div class="info-card" style="border-color: #ef4444">
+            <h4>❌ No Automation</h4>
+            <p>Manual deployments are slow, error-prone, and don't scale.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- The Solution -->
+      <div class="diagram-container">
+        <div class="diagram-title">✅ The Solution: Infrastructure as Code</div>
+        <div class="arch-diagram">
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #3b82f6, #2563eb)">
+              📝 Code (YAML/HCL/TypeScript)
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️ version controlled</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #f59e0b, #d97706)">🔧 Git Repository</div>
+          </div>
+          <div class="arch-arrow">⬇️ CI/CD pipeline</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #10b981, #059669)">
+              🚀 Automated Deployment
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️ creates</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">
+              ☁️ Cloud Resources
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Benefits -->
+      <div class="diagram-container">
+        <div class="diagram-title">🎯 IaC Benefits</div>
+        <div class="info-grid">
+          <div class="info-card" style="border-color: #10b981">
+            <h4>📜 Version Control</h4>
+            <p>Track every change with git. Review PRs for infrastructure changes.</p>
+          </div>
+          <div class="info-card" style="border-color: #10b981">
+            <h4>🔄 Reproducibility</h4>
+            <p>Same code = same infrastructure. Spin up identical environments in minutes.</p>
+          </div>
+          <div class="info-card" style="border-color: #10b981">
+            <h4>🤝 Collaboration</h4>
+            <p>Teams can review, comment, and approve infrastructure changes.</p>
+          </div>
+          <div class="info-card" style="border-color: #10b981">
+            <h4>🧪 Testability</h4>
+            <p>Unit test your infrastructure. Validate before deploy.</p>
+          </div>
+          <div class="info-card" style="border-color: #10b981">
+            <h4>📄 Documentation</h4>
+            <p>Code IS documentation. Always up-to-date, always accurate.</p>
+          </div>
+          <div class="info-card" style="border-color: #10b981">
+            <h4>⚡ Speed</h4>
+            <p>Deploy in seconds. Rollback instantly. No clicking around.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- IaC Tools Comparison -->
+      <div class="diagram-container">
+        <div class="diagram-title">🛠️ IaC Tool Categories</div>
+        <div class="comparison-grid">
+          <div class="comparison-box" style="border-color: #f97316">
+            <h3 style="color: #f97316">🔶 Imperative</h3>
+            <p>Step-by-step instructions</p>
+            <ul class="feature-list">
+              <li>AWS CDK</li>
+              <li>Pulumi</li>
+              <li>AWS SDK Scripts</li>
+            </ul>
+          </div>
+          <div class="comparison-box" style="border-color: #8b5cf6">
+            <h3 style="color: #8b5cf6">🟣 Declarative</h3>
+            <p>Describe desired state</p>
+            <ul class="feature-list">
+              <li>Terraform</li>
+              <li>CloudFormation</li>
+              <li>Serverless Framework</li>
+            </ul>
+          </div>
+          <div class="comparison-box" style="border-color: #10b981">
+            <h3 style="color: #10b981">☁️ Cloud-Specific</h3>
+            <p>One cloud provider</p>
+            <ul class="feature-list">
+              <li>AWS CDK / CloudFormation</li>
+              <li>Azure ARM / Bicep</li>
+              <li>Google Deployment Manager</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Concepts -->
+      <div class="diagram-container">
+        <div class="diagram-title">📚 Key IaC Concepts</div>
+        <div class="info-grid">
+          <div class="info-card" style="border-color: #3b82f6">
+            <h4>📊 State</h4>
+            <p>Record of what resources exist. Used to plan changes and detect drift.</p>
+          </div>
+          <div class="info-card" style="border-color: #3b82f6">
+            <h4>📋 Plan</h4>
+            <p>Preview of what will change before applying. Review before you break prod!</p>
+          </div>
+          <div class="info-card" style="border-color: #3b82f6">
+            <h4>🚀 Apply</h4>
+            <p>Execute the changes. Create, update, or delete resources.</p>
+          </div>
+          <div class="info-card" style="border-color: #3b82f6">
+            <h4>🔍 Drift Detection</h4>
+            <p>Find differences between code and actual infrastructure.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CDK Languages -->
+    <div id="cdklang" class="content">
+      <h2 class="section-title">🔤 AWS CDK Language Support</h2>
+
+      <!-- Supported Languages -->
+      <div class="diagram-container">
+        <div class="diagram-title">🌐 Supported Programming Languages</div>
+        <div class="info-grid">
+          <div class="info-card" style="border-color: #3178c6">
+            <h4>📘 TypeScript</h4>
+            <p>Most popular choice. Best docs, examples, and community support.</p>
+            <code style="color: #3178c6; font-size: 0.75rem">npm install aws-cdk-lib</code>
+          </div>
+          <div class="info-card" style="border-color: #3572a5">
+            <h4>🐍 Python</h4>
+            <p>Great for data teams and ML engineers. Pythonic constructs.</p>
+            <code style="color: #3572a5; font-size: 0.75rem">pip install aws-cdk-lib</code>
+          </div>
+          <div class="info-card" style="border-color: #b07219">
+            <h4>☕ Java</h4>
+            <p>Enterprise favorite. Strong typing, familiar ecosystem.</p>
+            <code style="color: #b07219; font-size: 0.75rem">Maven: aws-cdk-lib</code>
+          </div>
+          <div class="info-card" style="border-color: #00add8">
+            <h4>🔷 Go</h4>
+            <p>Fast, simple, efficient. Growing CDK community.</p>
+            <code style="color: #00add8; font-size: 0.75rem">go get github.com/aws/aws-cdk-go</code>
+          </div>
+          <div class="info-card" style="border-color: #178600">
+            <h4>💚 C# / .NET</h4>
+            <p>Microsoft ecosystem integration. Azure devs moving to AWS.</p>
+            <code style="color: #178600; font-size: 0.75rem">NuGet: Amazon.CDK.Lib</code>
+          </div>
+        </div>
+      </div>
+
+      <!-- Language Comparison -->
+      <div class="diagram-container">
+        <div class="diagram-title">📊 Language Feature Comparison</div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem">
+          <thead>
+            <tr style="background: rgba(139, 92, 246, 0.2)">
+              <th style="padding: 0.75rem; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.1)">
+                Feature
+              </th>
+              <th style="padding: 0.75rem; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1)">
+                TypeScript
+              </th>
+              <th style="padding: 0.75rem; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1)">
+                Python
+              </th>
+              <th style="padding: 0.75rem; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1)">
+                Java
+              </th>
+              <th style="padding: 0.75rem; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1)">
+                Go
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 0.5rem">Documentation</td>
+              <td style="padding: 0.5rem; text-align: center">⭐⭐⭐⭐⭐</td>
+              <td style="padding: 0.5rem; text-align: center">⭐⭐⭐⭐</td>
+              <td style="padding: 0.5rem; text-align: center">⭐⭐⭐</td>
+              <td style="padding: 0.5rem; text-align: center">⭐⭐⭐</td>
+            </tr>
+            <tr style="background: rgba(255, 255, 255, 0.03)">
+              <td style="padding: 0.5rem">Community Examples</td>
+              <td style="padding: 0.5rem; text-align: center">⭐⭐⭐⭐⭐</td>
+              <td style="padding: 0.5rem; text-align: center">⭐⭐⭐⭐</td>
+              <td style="padding: 0.5rem; text-align: center">⭐⭐⭐</td>
+              <td style="padding: 0.5rem; text-align: center">⭐⭐</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem">IDE Support</td>
+              <td style="padding: 0.5rem; text-align: center">⭐⭐⭐⭐⭐</td>
+              <td style="padding: 0.5rem; text-align: center">⭐⭐⭐⭐</td>
+              <td style="padding: 0.5rem; text-align: center">⭐⭐⭐⭐⭐</td>
+              <td style="padding: 0.5rem; text-align: center">⭐⭐⭐⭐</td>
+            </tr>
+            <tr style="background: rgba(255, 255, 255, 0.03)">
+              <td style="padding: 0.5rem">Lambda Native</td>
+              <td style="padding: 0.5rem; text-align: center">✅ Yes</td>
+              <td style="padding: 0.5rem; text-align: center">✅ Yes</td>
+              <td style="padding: 0.5rem; text-align: center">✅ Yes</td>
+              <td style="padding: 0.5rem; text-align: center">✅ Yes</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem">Learning Curve</td>
+              <td style="padding: 0.5rem; text-align: center">Low</td>
+              <td style="padding: 0.5rem; text-align: center">Low</td>
+              <td style="padding: 0.5rem; text-align: center">Medium</td>
+              <td style="padding: 0.5rem; text-align: center">Medium</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Code Examples for Each Language -->
+      <div class="diagram-container">
+        <div class="diagram-title">📘 TypeScript Example</div>
+        <pre class="code-block">
+import * as cdk from 'aws-cdk-lib';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+
+export class MyStack extends cdk.Stack {
+  constructor(scope: cdk.App, id: string) {
+    super(scope, id);
+    
+    new s3.Bucket(this, 'MyBucket', {
+      versioned: true,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+    });
+  }
+}</pre
+        >
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🐍 Python Example</div>
+        <pre class="code-block">
+from aws_cdk import Stack, aws_s3 as s3
+from constructs import Construct
+
+class MyStack(Stack):
+    def __init__(self, scope: Construct, id: str) -> None:
+        super().__init__(scope, id)
+        
+        s3.Bucket(self, "MyBucket",
+            versioned=True,
+            encryption=s3.BucketEncryption.S3_MANAGED
+        )</pre
+        >
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">☕ Java Example</div>
+        <pre class="code-block">
+import software.amazon.awscdk.Stack;
+import software.amazon.awscdk.services.s3.Bucket;
+import software.amazon.awscdk.services.s3.BucketEncryption;
+
+public class MyStack extends Stack {
+    public MyStack(final App scope, final String id) {
+        super(scope, id);
+        
+        Bucket.Builder.create(this, "MyBucket")
+            .versioned(true)
+            .encryption(BucketEncryption.S3_MANAGED)
+            .build();
+    }
+}</pre
+        >
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🔷 Go Example</div>
+        <pre class="code-block">
+package main
+
+import (
+    "github.com/aws/aws-cdk-go/awscdk/v2"
+    "github.com/aws/aws-cdk-go/awscdk/v2/awss3"
+)
+
+func NewMyStack(scope constructs.Construct, id string) awscdk.Stack {
+    stack := awscdk.NewStack(scope, &id, nil)
+    
+    awss3.NewBucket(stack, jsii.String("MyBucket"), &awss3.BucketProps{
+        Versioned:  jsii.Bool(true),
+        Encryption: awss3.BucketEncryption_S3_MANAGED,
+    })
+    
+    return stack
+}</pre
+        >
+      </div>
+
+      <!-- Which Language to Choose -->
+      <div class="diagram-container">
+        <div class="diagram-title">🎯 Which Language Should You Choose?</div>
+        <div class="usecase-grid">
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #3178c6">📘 Choose TypeScript If...</h4>
+            <p>You're starting fresh, want best docs/examples, or team knows JS/TS.</p>
+            <span class="company-tag">Recommended Default</span>
+          </div>
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #3572a5">🐍 Choose Python If...</h4>
+            <p>Data/ML team, existing Python codebase, Lambda functions in Python.</p>
+            <span class="company-tag">Data Teams</span>
+          </div>
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #b07219">☕ Choose Java If...</h4>
+            <p>Enterprise Java shop, strong typing requirements, existing Maven/Gradle.</p>
+            <span class="company-tag">Enterprise</span>
+          </div>
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #00add8">🔷 Choose Go If...</h4>
+            <p>Platform team, performance critical, already using Go for services.</p>
+            <span class="company-tag">Platform Engineering</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overview -->
+    <div id="overview" class="content active">
+      <h2 class="section-title">📊 IaC Tools Overview</h2>
+      <div class="diagram-container">
+        <div class="diagram-title">🛠️ Infrastructure as Code Landscape</div>
+        <div class="comparison-grid">
+          <div class="comparison-box cdk">
+            <div class="comparison-icon">🔶</div>
+            <h3>AWS CDK</h3>
+            <p>Define AWS infra using TypeScript, Python, Java</p>
+            <ul class="feature-list">
+              <li>✅ Real programming languages</li>
+              <li>✅ AWS native integration</li>
+              <li>✅ High-level constructs</li>
+              <li>✅ Unit testable</li>
+              <li>❌ AWS only</li>
+            </ul>
+          </div>
+          <div class="comparison-box serverless">
+            <div class="comparison-icon">⚡</div>
+            <h3>Serverless Framework</h3>
+            <p>Deploy serverless apps easily with YAML</p>
+            <ul class="feature-list">
+              <li>✅ Simple YAML config</li>
+              <li>✅ Multi-cloud support</li>
+              <li>✅ Rich plugin ecosystem</li>
+              <li>✅ Quick to learn</li>
+              <li>❌ Serverless focused only</li>
+            </ul>
+          </div>
+          <div class="comparison-box terraform">
+            <div class="comparison-icon">🟣</div>
+            <h3>Terraform</h3>
+            <p>Multi-cloud IaC with HCL language</p>
+            <ul class="feature-list">
+              <li>✅ True multi-cloud</li>
+              <li>✅ State management</li>
+              <li>✅ 1000+ providers</li>
+              <li>✅ Enterprise ready</li>
+              <li>❌ HCL learning curve</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="diagram-container">
+        <div class="diagram-title">📈 Popularity & Adoption</div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-value">CDK</div>
+            <div class="metric-label">AWS Native Choice</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">SLS</div>
+            <div class="metric-label">Lambda Quick Start</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">TF</div>
+            <div class="metric-label">Enterprise Standard</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">1000+</div>
+            <div class="metric-label">Terraform Providers</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CDK Deep Dive -->
+    <div id="cdk" class="content">
+      <h2 class="section-title">🔶 AWS CDK Deep Dive</h2>
+
+      <!-- Why CDK -->
+      <div class="diagram-container">
+        <div class="diagram-title">🤔 Why Choose AWS CDK?</div>
+        <div class="info-grid">
+          <div class="info-card" style="border-color: #f97316">
+            <h4>🧠 Programming Power</h4>
+            <p>Use loops, conditions, functions. No more copy-paste YAML. Write DRY infrastructure code.</p>
+          </div>
+          <div class="info-card" style="border-color: #f97316">
+            <h4>🧪 Testable Infrastructure</h4>
+            <p>Unit test your stacks with Jest/pytest. Catch misconfigurations before deploy.</p>
+          </div>
+          <div class="info-card" style="border-color: #f97316">
+            <h4>🔄 IDE Experience</h4>
+            <p>Autocomplete, type checking, refactoring. Your IDE knows your infrastructure.</p>
+          </div>
+          <div class="info-card" style="border-color: #f97316">
+            <h4>📦 Reusable Constructs</h4>
+            <p>Package patterns as npm/pip libraries. Share across teams and projects.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CDK How It Works -->
+      <div class="diagram-container">
+        <div class="diagram-title">⚙️ How CDK Works</div>
+        <div class="arch-diagram">
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #f97316, #ea580c)">
+              📝 Your Code (TypeScript/Python/Java/Go)
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️ cdk synth</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #3b82f6, #2563eb)">
+              🧱 CDK Constructs (L1/L2/L3)
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️ generates</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #10b981, #059669)">
+              📄 CloudFormation Template (JSON/YAML)
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️ cdk deploy</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">
+              ☁️ AWS Resources Created
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Architecture Example 1: Microservices -->
+      <div class="diagram-container">
+        <div class="diagram-title">🏗️ CDK Architecture: Microservices API</div>
+        <div class="arch-diagram">
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #06b6d4, #0891b2)">👤 Client</div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">🌐 API Gateway</div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #f97316, #ea580c)">⚡ Lambda (Users)</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #f97316, #ea580c)">
+              ⚡ Lambda (Orders)
+            </div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #f97316, #ea580c)">
+              ⚡ Lambda (Products)
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #3b82f6, #2563eb)">💾 DynamoDB</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #ef4444, #dc2626)">📨 SQS</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #10b981, #059669)">🗄️ S3</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Architecture Example 2: Event-Driven -->
+      <div class="diagram-container">
+        <div class="diagram-title">🔄 CDK Architecture: Event-Driven Processing</div>
+        <div class="arch-diagram">
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #10b981, #059669)">📤 S3 Upload</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #f59e0b, #d97706)">📅 EventBridge</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #ef4444, #dc2626)">📨 SQS Message</div>
+          </div>
+          <div class="arch-arrow">⬇️ triggers</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #f97316, #ea580c)">
+              ⚡ Lambda Processor
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️ writes</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #3b82f6, #2563eb)">💾 DynamoDB</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">📊 CloudWatch</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #06b6d4, #0891b2)">📧 SNS Notify</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Construct Levels -->
+      <div class="diagram-container">
+        <div class="diagram-title">📦 CDK Construct Levels</div>
+        <div class="info-grid">
+          <div class="info-card" style="border-color: #ef4444">
+            <h4>L1 - CFN Resources</h4>
+            <p>Direct CloudFormation mapping. Full control, most verbose.</p>
+            <code style="color: #ef4444; font-size: 0.75rem">CfnBucket, CfnFunction, CfnTable</code>
+          </div>
+          <div class="info-card" style="border-color: #f59e0b">
+            <h4>L2 - Curated Constructs</h4>
+            <p>Sensible defaults, best practices built-in. Most commonly used.</p>
+            <code style="color: #f59e0b; font-size: 0.75rem">Bucket, Function, Table</code>
+          </div>
+          <div class="info-card" style="border-color: #10b981">
+            <h4>L3 - Patterns</h4>
+            <p>Complete architectures. Multiple resources wired together.</p>
+            <code style="color: #10b981; font-size: 0.75rem">LambdaRestApi, FargateService</code>
+          </div>
+        </div>
+      </div>
+
+      <!-- CDK Code Example: Full Stack -->
+      <div class="diagram-container">
+        <div class="diagram-title">💻 CDK Example: Full-Stack Serverless App</div>
+        <pre class="code-block">
+// lib/fullstack-app.ts
+import * as cdk from 'aws-cdk-lib';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+
+export class FullStackApp extends cdk.Stack {
+  constructor(scope: cdk.App, id: string) {
+    super(scope, id);
+
+    // Auth - Cognito User Pool
+    const userPool = new cognito.UserPool(this, 'Users', {
+      selfSignUpEnabled: true,
+      signInAliases: { email: true },
+    });
+
+    // Database - DynamoDB
+    const table = new dynamodb.Table(this, 'Items', {
+      partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'sk', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    });
+
+    // Storage - S3
+    const bucket = new s3.Bucket(this, 'Uploads', {
+      cors: [{ allowedMethods: [s3.HttpMethods.PUT], allowedOrigins: ['*'] }],
+    });
+
+    // API - Lambda + API Gateway
+    const api = new apigateway.RestApi(this, 'Api', {
+      defaultCorsPreflightOptions: { allowOrigins: ['*'] },
+    });
+
+    // CRUD Functions with permissions
+    ['create', 'read', 'update', 'delete'].forEach(action => {
+      const fn = new lambda.Function(this, `${action}Fn`, {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        handler: `${action}.handler`,
+        code: lambda.Code.fromAsset('lambda'),
+        environment: {
+          TABLE_NAME: table.tableName,
+          BUCKET_NAME: bucket.bucketName,
+        },
+      });
+      table.grantReadWriteData(fn);
+      bucket.grantReadWrite(fn);
+      api.root.addResource(action).addMethod('POST', 
+        new apigateway.LambdaIntegration(fn));
+    });
+  }
+}</pre
+        >
+      </div>
+
+      <!-- CDK Use Cases -->
+      <div class="diagram-container">
+        <div class="diagram-title">💼 When to Use CDK - Real Use Cases</div>
+        <div class="usecase-grid">
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #f97316">🏢 Enterprise Multi-Account</h4>
+            <p>Deploy same stack to dev/staging/prod accounts. Use cdk.Stage for pipelines.</p>
+            <span class="company-tag">Banks, Insurance, Healthcare</span>
+          </div>
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #f97316">🧪 CI/CD Infrastructure</h4>
+            <p>CDK Pipelines for self-mutating deployments. Infrastructure tests in pipeline.</p>
+            <span class="company-tag">Netflix, Airbnb, Amazon</span>
+          </div>
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #f97316">📦 Reusable Patterns</h4>
+            <p>Package constructs as npm libraries. Share VPC, security, logging patterns.</p>
+            <span class="company-tag">Platform Teams</span>
+          </div>
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #f97316">🔄 Dynamic Infrastructure</h4>
+            <p>Loop through config to create resources. Conditional logic for environments.</p>
+            <span class="company-tag">SaaS Multi-Tenant</span>
+          </div>
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #f97316">🧪 Testable Compliance</h4>
+            <p>Assert encryption enabled, no public buckets. Fail deploy if non-compliant.</p>
+            <span class="company-tag">SOC2, HIPAA, PCI</span>
+          </div>
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #f97316">🏗️ Complex Microservices</h4>
+            <p>ECS/EKS clusters, service mesh, observability. L3 patterns simplify setup.</p>
+            <span class="company-tag">Large Engineering Teams</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CDK Workflow -->
+      <div class="diagram-container">
+        <div class="diagram-title">🔄 CDK Development Workflow</div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #f97316, #ea580c)">1</div>
+          <div class="step-content">
+            <h4>cdk init app --language typescript</h4>
+            <p>Bootstrap new CDK project with TypeScript template</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #f97316, #ea580c)">2</div>
+          <div class="step-content">
+            <h4>Write Stack Code</h4>
+            <p>Define resources using constructs in lib/my-stack.ts</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #f97316, #ea580c)">3</div>
+          <div class="step-content">
+            <h4>cdk synth</h4>
+            <p>Generate CloudFormation template, check for errors</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #f97316, #ea580c)">4</div>
+          <div class="step-content">
+            <h4>cdk diff</h4>
+            <p>Preview changes before deployment</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #f97316, #ea580c)">5</div>
+          <div class="step-content">
+            <h4>cdk deploy</h4>
+            <p>Deploy stack to AWS via CloudFormation</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pros & Cons -->
+      <div class="diagram-container">
+        <div class="diagram-title">✅ CDK Pros & Cons</div>
+        <div class="comparison-grid">
+          <div class="comparison-box" style="border-color: #10b981">
+            <h3 style="color: #10b981">✅ Pros</h3>
+            <ul class="feature-list">
+              <li>💻 Real programming languages</li>
+              <li>🧪 Unit testable infrastructure</li>
+              <li>🔄 IDE autocomplete & refactoring</li>
+              <li>📦 npm/pip package ecosystem</li>
+              <li>🏗️ High-level L3 patterns</li>
+              <li>🔐 grantXxx() for IAM</li>
+            </ul>
+          </div>
+          <div class="comparison-box" style="border-color: #ef4444">
+            <h3 style="color: #ef4444">❌ Cons</h3>
+            <ul class="feature-list">
+              <li>☁️ AWS only - no multi-cloud</li>
+              <li>📚 Requires programming knowledge</li>
+              <li>🔧 CFN limitations inherited</li>
+              <li>📊 Large dependency tree</li>
+              <li>🔄 Breaking changes in updates</li>
+              <li>⏱️ Slower than direct API</li>
+            </ul>
+          </div>
+          <div class="comparison-box" style="border-color: #f59e0b">
+            <h3 style="color: #f59e0b">🎯 Best For</h3>
+            <ul class="feature-list">
+              <li>AWS-only organizations</li>
+              <li>Complex multi-stack apps</li>
+              <li>Teams with dev background</li>
+              <li>Testable infrastructure</li>
+              <li>Reusable patterns/libraries</li>
+              <li>Enterprise compliance</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Serverless Framework -->
+    <div id="serverless" class="content">
+      <h2 class="section-title">⚡ Serverless Framework Deep Dive</h2>
+      <div class="diagram-container">
+        <div class="diagram-title">🏗️ Serverless Architecture</div>
+        <div class="arch-diagram">
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #ef4444, #dc2626)">
+              serverless.yml (YAML Config)
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️ sls deploy</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #f59e0b, #d97706)">Plugins</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #3b82f6, #2563eb)">Package Code</div>
+          </div>
+          <div class="arch-arrow">⬇️ generates</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #10b981, #059669)">
+              CloudFormation / Provider Template
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️ deploys</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #f97316, #ea580c)">Lambda</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">API Gateway</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #06b6d4, #0891b2)">Events</div>
+          </div>
+        </div>
+      </div>
+      <div class="diagram-container">
+        <div class="diagram-title">🔌 Popular Plugins</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>serverless-offline</h4>
+            <p>Local Lambda emulation. Test APIs locally before deploying.</p>
+          </div>
+          <div class="info-card">
+            <h4>serverless-webpack</h4>
+            <p>Bundle with webpack. Tree shaking, minification.</p>
+          </div>
+          <div class="info-card">
+            <h4>serverless-domain-manager</h4>
+            <p>Custom domains for API Gateway. SSL certificates.</p>
+          </div>
+          <div class="info-card">
+            <h4>serverless-iam-roles-per-function</h4>
+            <p>Least privilege IAM. Per-function permissions.</p>
+          </div>
+        </div>
+      </div>
+      <div class="diagram-container">
+        <div class="diagram-title">✅ Serverless Pros & Cons</div>
+        <div class="comparison-grid">
+          <div class="comparison-box" style="border-color: #10b981">
+            <h3 style="color: #10b981">✅ Pros</h3>
+            <ul class="feature-list">
+              <li>📝 Simple YAML syntax</li>
+              <li>🚀 Fastest time to deploy</li>
+              <li>🔌 Rich plugin ecosystem</li>
+              <li>☁️ Multi-cloud support</li>
+              <li>💻 Great local dev experience</li>
+            </ul>
+          </div>
+          <div class="comparison-box" style="border-color: #ef4444">
+            <h3 style="color: #ef4444">❌ Cons</h3>
+            <ul class="feature-list">
+              <li>⚡ Serverless resources only</li>
+              <li>📊 Complex apps = messy YAML</li>
+              <li>🔧 Limited non-serverless support</li>
+              <li>💾 No native state management</li>
+              <li>🔄 Plugin compatibility issues</li>
+            </ul>
+          </div>
+          <div class="comparison-box" style="border-color: #f59e0b">
+            <h3 style="color: #f59e0b">🎯 Best For</h3>
+            <ul class="feature-list">
+              <li>Lambda-first architectures</li>
+              <li>Quick MVPs & startups</li>
+              <li>Small to medium apps</li>
+              <li>Teams new to IaC</li>
+              <li>Rapid prototyping</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terraform -->
+    <div id="terraform" class="content">
+      <h2 class="section-title">🟣 Terraform Deep Dive</h2>
+      <div class="diagram-container">
+        <div class="diagram-title">🏗️ Terraform Architecture</div>
+        <div class="arch-diagram">
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">
+              main.tf, variables.tf (HCL)
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️ terraform init</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #3b82f6, #2563eb)">
+              Providers (AWS, GCP, Azure...)
+            </div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #f59e0b, #d97706)">Modules</div>
+          </div>
+          <div class="arch-arrow">⬇️ terraform plan</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #06b6d4, #0891b2)">
+              Execution Plan (Preview)
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️ terraform apply</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #10b981, #059669)">
+              State File (terraform.tfstate)
+            </div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #f97316, #ea580c)">Cloud Resources</div>
+          </div>
+        </div>
+      </div>
+      <div class="diagram-container">
+        <div class="diagram-title">💾 State Management</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>Local State</h4>
+            <p>terraform.tfstate file. Good for learning, bad for teams.</p>
+          </div>
+          <div class="info-card">
+            <h4>Remote State (S3)</h4>
+            <p>S3 + DynamoDB locking. Team collaboration, versioning.</p>
+          </div>
+          <div class="info-card">
+            <h4>Terraform Cloud</h4>
+            <p>HashiCorp hosted. State, runs, policies, team management.</p>
+          </div>
+          <div class="info-card">
+            <h4>State Locking</h4>
+            <p>Prevents concurrent modifications. DynamoDB or TF Cloud.</p>
+          </div>
+        </div>
+      </div>
+      <div class="diagram-container">
+        <div class="diagram-title">✅ Terraform Pros & Cons</div>
+        <div class="comparison-grid">
+          <div class="comparison-box" style="border-color: #10b981">
+            <h3 style="color: #10b981">✅ Pros</h3>
+            <ul class="feature-list">
+              <li>🌐 True multi-cloud support</li>
+              <li>💾 Built-in state management</li>
+              <li>📊 Plan before apply</li>
+              <li>📦 1000+ providers</li>
+              <li>🏢 Enterprise ready</li>
+            </ul>
+          </div>
+          <div class="comparison-box" style="border-color: #ef4444">
+            <h3 style="color: #ef4444">❌ Cons</h3>
+            <ul class="feature-list">
+              <li>📚 HCL learning curve</li>
+              <li>💾 State file management</li>
+              <li>🔁 Drift can occur</li>
+              <li>📊 Verbose for simple tasks</li>
+              <li>💰 TF Cloud costs for teams</li>
+            </ul>
+          </div>
+          <div class="comparison-box" style="border-color: #f59e0b">
+            <h3 style="color: #f59e0b">🎯 Best For</h3>
+            <ul class="feature-list">
+              <li>Multi-cloud strategies</li>
+              <li>Enterprise organizations</li>
+              <li>Full infrastructure (not just serverless)</li>
+              <li>Strict compliance needs</li>
+              <li>Large platform teams</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- How They Work -->
+    <div id="howworks" class="content">
+      <h2 class="section-title">⚙️ How Each Tool Works</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🔶 AWS CDK Workflow</div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #f97316, #ea580c)">1</div>
+          <div class="step-content">
+            <h4>Write Infrastructure Code</h4>
+            <p>TypeScript/Python classes defining AWS resources with CDK constructs</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #f97316, #ea580c)">2</div>
+          <div class="step-content">
+            <h4>cdk synth</h4>
+            <p>Synthesize code into CloudFormation template (JSON/YAML)</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #f97316, #ea580c)">3</div>
+          <div class="step-content">
+            <h4>cdk diff</h4>
+            <p>Preview changes between current and desired state</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #f97316, #ea580c)">4</div>
+          <div class="step-content">
+            <h4>cdk deploy</h4>
+            <p>Deploy CloudFormation stack to AWS account</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">⚡ Serverless Framework Workflow</div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #ef4444, #dc2626)">1</div>
+          <div class="step-content">
+            <h4>Define serverless.yml</h4>
+            <p>YAML config: service name, functions, events, resources</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #ef4444, #dc2626)">2</div>
+          <div class="step-content">
+            <h4>sls package</h4>
+            <p>Bundle code, process plugins, generate CloudFormation</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #ef4444, #dc2626)">3</div>
+          <div class="step-content">
+            <h4>sls deploy</h4>
+            <p>Upload to S3, deploy CloudFormation stack</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #ef4444, #dc2626)">4</div>
+          <div class="step-content">
+            <h4>sls invoke / sls logs</h4>
+            <p>Test functions, view CloudWatch logs</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🟣 Terraform Workflow</div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">1</div>
+          <div class="step-content">
+            <h4>Write HCL Files</h4>
+            <p>main.tf (resources), variables.tf (inputs), outputs.tf (exports)</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">2</div>
+          <div class="step-content">
+            <h4>terraform init</h4>
+            <p>Download providers, initialize backend, prepare workspace</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">3</div>
+          <div class="step-content">
+            <h4>terraform plan</h4>
+            <p>Compare state vs desired, show execution plan</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-number" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">4</div>
+          <div class="step-content">
+            <h4>terraform apply</h4>
+            <p>Execute plan, create/update/delete resources, update state</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code Examples -->
+    <div id="code" class="content">
+      <h2 class="section-title">💻 Code Examples</h2>
+
+      <!-- CDK Examples -->
+      <div class="diagram-container">
+        <div class="diagram-title">🔶 CDK Example 1: Lambda + API Gateway + DynamoDB</div>
+        <pre class="code-block">
+// lib/api-stack.ts
+import * as cdk from 'aws-cdk-lib';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+
+export class ApiStack extends cdk.Stack {
+  constructor(scope: cdk.App, id: string) {
+    super(scope, id);
+
+    // DynamoDB Table
+    const table = new dynamodb.Table(this, 'UsersTable', {
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    });
+
+    // Lambda Function
+    const handler = new lambda.Function(this, 'UserHandler', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset('lambda'),
+      handler: 'users.handler',
+      environment: { TABLE_NAME: table.tableName },
+    });
+
+    table.grantReadWriteData(handler);
+
+    // API Gateway
+    const api = new apigateway.RestApi(this, 'UsersApi');
+    const users = api.root.addResource('users');
+    users.addMethod('GET', new apigateway.LambdaIntegration(handler));
+    users.addMethod('POST', new apigateway.LambdaIntegration(handler));
+  }
+}</pre
+        >
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🔶 CDK Example 2: S3 + CloudFront Static Site</div>
+        <pre class="code-block">
+// lib/static-site-stack.ts
+import * as cdk from 'aws-cdk-lib';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+
+export class StaticSiteStack extends cdk.Stack {
+  constructor(scope: cdk.App, id: string) {
+    super(scope, id);
+
+    const bucket = new s3.Bucket(this, 'SiteBucket', {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+    });
+
+    const distribution = new cloudfront.Distribution(this, 'CDN', {
+      defaultBehavior: {
+        origin: new origins.S3Origin(bucket),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
+      defaultRootObject: 'index.html',
+    });
+
+    new cdk.CfnOutput(this, 'URL', {
+      value: `https://${distribution.distributionDomainName}`,
+    });
+  }
+}</pre
+        >
+      </div>
+
+      <!-- Serverless Examples -->
+      <div class="diagram-container">
+        <div class="diagram-title">⚡ Serverless Example 1: REST API with DynamoDB</div>
+        <pre class="code-block">
+# serverless.yml
+service: users-api
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  environment:
+    USERS_TABLE: ${self:service}-users
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: [dynamodb:*]
+          Resource: !GetAtt UsersTable.Arn
+
+functions:
+  createUser:
+    handler: src/users.create
+    events:
+      - http: { path: users, method: post, cors: true }
+
+  getUser:
+    handler: src/users.get
+    events:
+      - http: { path: users/{id}, method: get, cors: true }
+
+  listUsers:
+    handler: src/users.list
+    events:
+      - http: { path: users, method: get, cors: true }
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.USERS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - { AttributeName: id, AttributeType: S }
+        KeySchema:
+          - { AttributeName: id, KeyType: HASH }</pre
+        >
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">⚡ Serverless Example 2: Event-Driven (S3 + SQS)</div>
+        <pre class="code-block">
+# serverless.yml
+service: image-processor
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+functions:
+  processImage:
+    handler: src/process.handler
+    timeout: 60
+    events:
+      - s3:
+          bucket: uploads-bucket
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .jpg
+
+  sendNotification:
+    handler: src/notify.handler
+    events:
+      - sqs:
+          arn: !GetAtt NotificationQueue.Arn
+
+  cleanup:
+    handler: src/cleanup.handler
+    events:
+      - schedule: rate(1 day)
+
+plugins:
+  - serverless-offline
+  - serverless-webpack
+
+resources:
+  Resources:
+    NotificationQueue:
+      Type: AWS::SQS::Queue</pre
+        >
+      </div>
+
+      <!-- Terraform Example -->
+      <div class="diagram-container">
+        <div class="diagram-title">🟣 Terraform Example: VPC + ECS Fargate</div>
+        <pre class="code-block">
+# main.tf
+terraform {
+  required_providers {
+    aws = { source = "hashicorp/aws", version = "~> 5.0" }
+  }
+}
+
+provider "aws" { region = var.region }
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  name    = "${var.project}-vpc"
+  cidr    = "10.0.0.0/16"
+  azs     = ["us-east-1a", "us-east-1b"]
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
+  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
+  enable_nat_gateway = true
+}
+
+resource "aws_ecs_cluster" "main" {
+  name = "${var.project}-cluster"
+}
+
+resource "aws_ecs_service" "app" {
+  name            = "${var.project}-service"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.app.arn
+  desired_count   = 2
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets         = module.vpc.private_subnets
+    security_groups = [aws_security_group.ecs.id]
+  }
+}
+
+# variables.tf
+variable "project" { default = "my-app" }
+variable "region"  { default = "us-east-1" }</pre
+        >
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📊 Code Comparison Summary</div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-value">CDK</div>
+            <div class="metric-label">Best IDE Support</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">SLS</div>
+            <div class="metric-label">Fastest to Deploy</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">TF</div>
+            <div class="metric-label">Most Portable</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">All</div>
+            <div class="metric-label">Production Ready</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Use Cases -->
+    <div id="usecases" class="content">
+      <h2 class="section-title">💼 Real-World Use Cases</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🔶 When to Use CDK</div>
+        <div class="usecase-grid">
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #f97316">🏢 Enterprise AWS Shops</h4>
+            <p>Organizations standardized on AWS. Need reusable constructs, patterns, testing.</p>
+            <span class="company-tag">Netflix, Airbnb</span>
+          </div>
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #f97316">🧪 Testable Infrastructure</h4>
+            <p>Unit testing infrastructure. CI/CD pipelines with infrastructure tests.</p>
+            <span class="company-tag">Banks, Healthcare</span>
+          </div>
+          <div class="usecase-card cdk-case">
+            <h4 style="color: #f97316">🏗️ Complex Architectures</h4>
+            <p>Multi-stack apps, cross-account deployments, custom constructs.</p>
+            <span class="company-tag">SaaS Platforms</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">⚡ When to Use Serverless</div>
+        <div class="usecase-grid">
+          <div class="usecase-card serverless-case">
+            <h4 style="color: #ef4444">🚀 Startups & MVPs</h4>
+            <p>Fast deployment, minimal config. Get to market quickly.</p>
+            <span class="company-tag">Early-stage startups</span>
+          </div>
+          <div class="usecase-card serverless-case">
+            <h4 style="color: #ef4444">⚡ Lambda-First Apps</h4>
+            <p>Event-driven architectures, APIs, webhooks. Serverless-native.</p>
+            <span class="company-tag">Vercel, Netlify</span>
+          </div>
+          <div class="usecase-card serverless-case">
+            <h4 style="color: #ef4444">👨‍💻 Small Teams</h4>
+            <p>Teams without dedicated DevOps. Simple deployments.</p>
+            <span class="company-tag">Indie developers</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🟣 When to Use Terraform</div>
+        <div class="usecase-grid">
+          <div class="usecase-card terraform-case">
+            <h4 style="color: #8b5cf6">🌐 Multi-Cloud Strategy</h4>
+            <p>AWS + GCP + Azure. Avoid vendor lock-in. Consistent tooling.</p>
+            <span class="company-tag">Uber, Spotify</span>
+          </div>
+          <div class="usecase-card terraform-case">
+            <h4 style="color: #8b5cf6">🏢 Enterprise Platform</h4>
+            <p>Full infrastructure. VPCs, databases, K8s, networking.</p>
+            <span class="company-tag">Fortune 500</span>
+          </div>
+          <div class="usecase-card terraform-case">
+            <h4 style="color: #8b5cf6">📊 Compliance & Audit</h4>
+            <p>State tracking, drift detection, change history. SOC2, HIPAA.</p>
+            <span class="company-tag">Healthcare, Finance</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision -->
+    <div id="decision" class="content">
+      <h2 class="section-title">🎯 Decision Flowchart</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🤔 Which Tool Should You Choose?</div>
+        <div class="flow-decision">
+          <div class="decision-box">Is it AWS only?</div>
+          <div class="decision-options">
+            <div class="decision-path">
+              <div class="decision-answer yes">YES</div>
+              <div class="arch-arrow">⬇️</div>
+              <div class="decision-box" style="font-size: 0.85rem">Serverless-focused?</div>
+              <div class="decision-options" style="margin-top: 0.5rem">
+                <div class="decision-path">
+                  <div class="decision-answer yes">YES</div>
+                  <div class="arch-arrow">⬇️</div>
+                  <div class="result-box" style="background: linear-gradient(135deg, #ef4444, #dc2626)">
+                    ⚡ Serverless Framework
+                  </div>
+                </div>
+                <div class="decision-path">
+                  <div class="decision-answer no">NO</div>
+                  <div class="arch-arrow">⬇️</div>
+                  <div class="result-box" style="background: linear-gradient(135deg, #f97316, #ea580c)">🔶 AWS CDK</div>
+                </div>
+              </div>
+            </div>
+            <div class="decision-path">
+              <div class="decision-answer no">NO (Multi-cloud)</div>
+              <div class="arch-arrow">⬇️</div>
+              <div class="result-box" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">🟣 Terraform</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📋 Quick Decision Matrix</div>
+        <table class="vs-table">
+          <tr>
+            <th>Scenario</th>
+            <th>Best Choice</th>
+            <th>Why?</th>
+          </tr>
+          <tr>
+            <td>Quick Lambda API</td>
+            <td style="color: #ef4444">⚡ Serverless</td>
+            <td>Fastest to deploy, simplest config</td>
+          </tr>
+          <tr>
+            <td>Complex AWS app</td>
+            <td style="color: #f97316">🔶 CDK</td>
+            <td>Real code, testable, constructs</td>
+          </tr>
+          <tr>
+            <td>AWS + GCP</td>
+            <td style="color: #8b5cf6">🟣 Terraform</td>
+            <td>Only true multi-cloud option</td>
+          </tr>
+          <tr>
+            <td>Full VPC + K8s</td>
+            <td style="color: #8b5cf6">🟣 Terraform</td>
+            <td>All infrastructure types</td>
+          </tr>
+          <tr>
+            <td>Startup MVP</td>
+            <td style="color: #ef4444">⚡ Serverless</td>
+            <td>Fast iteration, low learning</td>
+          </tr>
+          <tr>
+            <td>Enterprise AWS</td>
+            <td style="color: #f97316">🔶 CDK</td>
+            <td>Reusable patterns, testing</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">👥 Team Size Recommendations</div>
+        <div class="info-grid">
+          <div class="info-card" style="border-color: #ef4444">
+            <h4 style="color: #ef4444">1-5 Developers</h4>
+            <p><strong>Serverless Framework</strong><br />Simple YAML, quick deploys, minimal DevOps.</p>
+          </div>
+          <div class="info-card" style="border-color: #f97316">
+            <h4 style="color: #f97316">5-20 Developers</h4>
+            <p><strong>AWS CDK</strong><br />Shared constructs, code review, testing.</p>
+          </div>
+          <div class="info-card" style="border-color: #8b5cf6">
+            <h4 style="color: #8b5cf6">20+ Developers</h4>
+            <p><strong>Terraform</strong><br />Platform team, modules, enterprise features.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison -->
+    <div id="comparison" class="content">
+      <h2 class="section-title">⚔️ Detailed Comparison</h2>
+      <div class="diagram-container">
+        <div class="diagram-title">📊 Feature Comparison</div>
+        <table class="vs-table">
+          <tr>
+            <th>Feature</th>
+            <th>🔶 CDK</th>
+            <th>⚡ Serverless</th>
+            <th>🟣 Terraform</th>
+          </tr>
+          <tr>
+            <td>Language</td>
+            <td>TS/Py/Java/C#/Go</td>
+            <td>YAML</td>
+            <td>HCL</td>
+          </tr>
+          <tr>
+            <td>Cloud Support</td>
+            <td>AWS only ❌</td>
+            <td>Multi (limited)</td>
+            <td>Multi ✅</td>
+          </tr>
+          <tr>
+            <td>Resource Types</td>
+            <td>All AWS ✅</td>
+            <td>Serverless only</td>
+            <td>All types ✅</td>
+          </tr>
+          <tr>
+            <td>State Mgmt</td>
+            <td>CloudFormation</td>
+            <td>CloudFormation</td>
+            <td>Built-in ✅</td>
+          </tr>
+          <tr>
+            <td>Testing</td>
+            <td>Unit tests ✅</td>
+            <td>Plugin needed</td>
+            <td>Terratest</td>
+          </tr>
+          <tr>
+            <td>Learning Curve</td>
+            <td>Medium</td>
+            <td>Easy ✅</td>
+            <td>Medium</td>
+          </tr>
+          <tr>
+            <td>Local Dev</td>
+            <td>cdk synth</td>
+            <td>sls offline ✅</td>
+            <td>plan only</td>
+          </tr>
+          <tr>
+            <td>IDE Support</td>
+            <td>Excellent ✅</td>
+            <td>Basic</td>
+            <td>Good</td>
+          </tr>
+          <tr>
+            <td>Drift Detection</td>
+            <td>Via CFN</td>
+            <td>Via CFN</td>
+            <td>Built-in ✅</td>
+          </tr>
+          <tr>
+            <td>Best For</td>
+            <td>AWS devs</td>
+            <td>Quick Lambda</td>
+            <td>Enterprise</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Thumbnail -->
+    <div id="thumbnail" class="content">
+      <h2 class="section-title">🎨 Video Thumbnails</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">Option 1: Tool Battle</div>
+        <div
+          class="thumb-preview"
+          style="background: linear-gradient(135deg, #0a0a0a, #1a1a2e); display: flex; position: relative"
+        >
+          <div
+            style="
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              border-right: 2px solid #f97316;
+            "
+          >
+            <div style="font-size: 3rem">🔶</div>
+            <div style="font-size: 1.5rem; font-weight: 900; color: #f97316">CDK</div>
+          </div>
+          <div
+            style="
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              border-right: 2px solid #ef4444;
+            "
+          >
+            <div style="font-size: 3rem">⚡</div>
+            <div style="font-size: 1.5rem; font-weight: 900; color: #ef4444">Serverless</div>
+          </div>
+          <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center">
+            <div style="font-size: 3rem">🟣</div>
+            <div style="font-size: 1.5rem; font-weight: 900; color: #8b5cf6">Terraform</div>
+          </div>
+          <div
+            style="
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              background: #fbbf24;
+              color: #000;
+              padding: 8px 20px;
+              border-radius: 20px;
+              font-weight: 900;
+              font-size: 1.2rem;
+            "
+          >
+            VS
+          </div>
+          <div
+            style="
+              position: absolute;
+              bottom: 12px;
+              left: 50%;
+              transform: translateX(-50%);
+              font-size: 1.1rem;
+              font-weight: 800;
+            "
+          >
+            Which One Wins? 🏆
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">Option 2: Decision Helper</div>
+        <div
+          class="thumb-preview"
+          style="
+            background: linear-gradient(180deg, #1e1b4b, #312e81);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+          "
+        >
+          <div style="font-size: 1.2rem; color: #fbbf24; margin-bottom: 10px">🤔 IaC DECISION GUIDE</div>
+          <div style="display: flex; gap: 20px">
+            <div style="text-align: center">
+              <div style="font-size: 2.5rem">🔶</div>
+              <div style="font-weight: 700; color: #f97316">CDK</div>
+              <div style="font-size: 0.7rem; color: #94a3b8">AWS Native</div>
+            </div>
+            <div style="text-align: center">
+              <div style="font-size: 2.5rem">⚡</div>
+              <div style="font-weight: 700; color: #ef4444">SLS</div>
+              <div style="font-size: 0.7rem; color: #94a3b8">Quick Start</div>
+            </div>
+            <div style="text-align: center">
+              <div style="font-size: 2.5rem">🟣</div>
+              <div style="font-weight: 700; color: #8b5cf6">TF</div>
+              <div style="font-size: 0.7rem; color: #94a3b8">Multi-Cloud</div>
+            </div>
+          </div>
+          <div
+            style="
+              margin-top: 15px;
+              background: linear-gradient(90deg, #f97316, #8b5cf6);
+              padding: 8px 25px;
+              border-radius: 20px;
+              font-weight: 900;
+            "
+          >
+            Complete Guide 2024
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">Option 3: Wrong Choice Warning</div>
+        <div
+          class="thumb-preview"
+          style="
+            background: linear-gradient(135deg, #7f1d1d, #991b1b);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+          "
+        >
+          <div
+            style="
+              position: absolute;
+              top: 12px;
+              right: 12px;
+              background: #fbbf24;
+              color: #000;
+              padding: 6px 12px;
+              border-radius: 15px;
+              font-weight: 900;
+              font-size: 0.8rem;
+            "
+          >
+            ⚠️ WARNING
+          </div>
+          <div style="font-size: 1.8rem; font-weight: 900; text-align: center; margin-bottom: 15px">
+            Wrong IaC Tool =<br /><span style="color: #fbbf24">Vendor Lock-in!</span>
+          </div>
+          <div style="display: flex; gap: 15px">
+            <div
+              style="background: rgba(255, 255, 255, 0.1); padding: 10px 15px; border-radius: 10px; text-align: center"
+            >
+              <div style="font-size: 1.5rem">🔶</div>
+              <div style="font-weight: 600; font-size: 0.8rem">CDK</div>
+            </div>
+            <div
+              style="background: rgba(255, 255, 255, 0.1); padding: 10px 15px; border-radius: 10px; text-align: center"
+            >
+              <div style="font-size: 1.5rem">⚡</div>
+              <div style="font-weight: 600; font-size: 0.8rem">SLS</div>
+            </div>
+            <div
+              style="background: rgba(255, 255, 255, 0.1); padding: 10px 15px; border-radius: 10px; text-align: center"
+            >
+              <div style="font-size: 1.5rem">🟣</div>
+              <div style="font-weight: 600; font-size: 0.8rem">TF</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.querySelectorAll('.tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+          document.querySelectorAll('.content').forEach((c) => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+      });
+    </script>
+  </body>
+</html>

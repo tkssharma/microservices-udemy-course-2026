@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 2: Why We Need Workflow Orchestration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <header class="gradient-bg text-white py-12">
+        <div class="container mx-auto px-6">
+            <p class="text-red-200 mb-2">Module 2</p>
+            <h1 class="text-4xl font-bold">Why We Need Workflow Orchestration</h1>
+            <p class="mt-4 text-xl opacity-90">The problems it solves and benefits it brings</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <!-- The Problem -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">❌ The Problem: Distributed System Chaos</h2>
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="font-bold text-red-600 mb-4">What Happens When Payment Fails After Inventory Reserved?</h3>
+                <div class="grid md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-green-100 border-2 border-green-500 rounded-lg p-4 text-center">
+                        <span class="text-2xl">✅</span>
+                        <p class="font-bold mt-2">Order Created</p>
+                    </div>
+                    <div class="bg-green-100 border-2 border-green-500 rounded-lg p-4 text-center">
+                        <span class="text-2xl">✅</span>
+                        <p class="font-bold mt-2">Inventory Reserved</p>
+                    </div>
+                    <div class="bg-red-100 border-2 border-red-500 rounded-lg p-4 text-center">
+                        <span class="text-2xl">❌</span>
+                        <p class="font-bold mt-2">Payment FAILED</p>
+                    </div>
+                    <div class="bg-gray-100 border-2 border-gray-300 rounded-lg p-4 text-center">
+                        <span class="text-2xl">❓</span>
+                        <p class="font-bold mt-2">NOW WHAT?</p>
+                    </div>
+                </div>
+                <div class="bg-red-50 border-l-4 border-red-500 p-4">
+                    <ul class="space-y-2 text-sm">
+                        <li>• Inventory is still reserved (blocking other customers!)</li>
+                        <li>• Order status is inconsistent</li>
+                        <li>• Customer sees "processing" forever</li>
+                        <li>• No automatic cleanup</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 10 Problems Grid -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🔥 10 Critical Problems Without Orchestration</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                    <h4 class="font-bold text-red-600">1. No Centralized State</h4>
+                    <p class="text-sm text-gray-600">State scattered across databases</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                    <h4 class="font-bold text-red-600">2. Manual Failure Recovery</h4>
+                    <p class="text-sm text-gray-600">Every failure = support ticket</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                    <h4 class="font-bold text-red-600">3. No Automatic Retries</h4>
+                    <p class="text-sm text-gray-600">Temporary failures cause permanent errors</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                    <h4 class="font-bold text-red-600">4. Long-Running Impossible</h4>
+                    <p class="text-sm text-gray-600">Can't maintain state across days</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                    <h4 class="font-bold text-red-600">5. No Compensation (Saga)</h4>
+                    <p class="text-sm text-gray-600">Rollback logic is manual</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                    <h4 class="font-bold text-red-600">6. No Visibility</h4>
+                    <p class="text-sm text-gray-600">Where is order X right now?</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                    <h4 class="font-bold text-red-600">7. No Audit Trail</h4>
+                    <p class="text-sm text-gray-600">Compliance nightmare</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                    <h4 class="font-bold text-red-600">8. Parallel Execution Complex</h4>
+                    <p class="text-sm text-gray-600">Fork/join logic is hard</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                    <h4 class="font-bold text-red-600">9. Timer/Scheduling Hard</h4>
+                    <p class="text-sm text-gray-600">Cron jobs everywhere</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                    <h4 class="font-bold text-red-600">10. Testing Nightmare</h4>
+                    <p class="text-sm text-gray-600">How to test failure paths?</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Benefits -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">✅ Benefits of Workflow Orchestration</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+                    <h3 class="font-bold text-green-700 text-lg mb-4">Single Source of Truth</h3>
+                    <div class="bg-white rounded-lg p-4 font-mono text-sm">
+                        <p class="text-gray-600">Order #123</p>
+                        <p>├── Status: <span class="text-blue-600">PROCESSING</span></p>
+                        <p>├── Current Step: <span class="text-yellow-600">PAYMENT</span></p>
+                        <p>├── Completed: <span class="text-green-600">[ORDER, INVENTORY]</span></p>
+                        <p>└── Started: 2024-01-15 10:30:00</p>
+                    </div>
+                </div>
+                <div class="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+                    <h3 class="font-bold text-green-700 text-lg mb-4">Automatic Retry & Recovery</h3>
+                    <svg viewBox="0 0 300 100" class="w-full">
+                        <rect x="10" y="35" width="60" height="30" rx="5" fill="#fee2e2" stroke="#ef4444"/>
+                        <text x="40" y="55" text-anchor="middle" font-size="9" fill="#b91c1c">Failed</text>
+                        <path d="M70,50 L100,50" stroke="#666" stroke-width="2" marker-end="url(#ar)"/>
+                        <rect x="100" y="20" width="80" height="60" rx="5" fill="#dbeafe" stroke="#3b82f6"/>
+                        <text x="140" y="45" text-anchor="middle" font-size="9" fill="#1d4ed8">Retry Policy</text>
+                        <text x="140" y="60" text-anchor="middle" font-size="8" fill="#3b82f6">1s → 5s → 30s</text>
+                        <path d="M180,50 L210,50" stroke="#666" stroke-width="2" marker-end="url(#ar)"/>
+                        <rect x="210" y="35" width="70" height="30" rx="5" fill="#d1fae5" stroke="#10b981"/>
+                        <text x="245" y="55" text-anchor="middle" font-size="9" fill="#047857">Success!</text>
+                        <defs><marker id="ar" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#666"/></marker></defs>
+                    </svg>
+                </div>
+                <div class="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+                    <h3 class="font-bold text-green-700 text-lg mb-4">Long-Running Process Support</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2"><span class="text-green-500">Day 1:</span> Application Submitted</div>
+                        <div class="flex items-center gap-2"><span class="text-blue-500">→</span> [STATE PERSISTED]</div>
+                        <div class="flex items-center gap-2"><span class="text-green-500">Day 3:</span> Documents Verified</div>
+                        <div class="flex items-center gap-2"><span class="text-blue-500">→</span> [STATE PERSISTED]</div>
+                        <div class="flex items-center gap-2"><span class="text-green-500">Day 7:</span> Loan Disbursed</div>
+                    </div>
+                </div>
+                <div class="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+                    <h3 class="font-bold text-green-700 text-lg mb-4">Built-in Saga / Compensation</h3>
+                    <div class="bg-white rounded-lg p-4 font-mono text-sm">
+                        <p>reserve_inventory <span class="text-gray-400">→ release_inventory</span></p>
+                        <p>charge_payment <span class="text-gray-400">→ refund_payment</span></p>
+                        <p>create_shipment <span class="text-gray-400">→ cancel_shipment</span></p>
+                        <p class="mt-2 text-green-600"># Auto-runs on failure!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- When You Need It -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🎯 When You Need Orchestration</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-green-100 rounded-xl p-6 border-2 border-green-300">
+                    <h3 class="font-bold text-green-700 mb-4">✅ You NEED it when:</h3>
+                    <ul class="space-y-2">
+                        <li>• Multi-step business processes</li>
+                        <li>• Failure recovery is critical</li>
+                        <li>• Long-running (hours/days/weeks)</li>
+                        <li>• Audit/compliance requirements</li>
+                        <li>• Human approval steps</li>
+                        <li>• Complex conditional logic</li>
+                        <li>• SLA/timeout requirements</li>
+                    </ul>
+                </div>
+                <div class="bg-yellow-100 rounded-xl p-6 border-2 border-yellow-300">
+                    <h3 class="font-bold text-yellow-700 mb-4">⚠️ You might NOT need when:</h3>
+                    <ul class="space-y-2">
+                        <li>• Simple CRUD operations</li>
+                        <li>• Fire-and-forget events</li>
+                        <li>• Real-time streaming</li>
+                        <li>• Single service operations</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Insight -->
+        <section class="mb-12">
+            <div class="bg-gray-900 text-white rounded-2xl p-8 text-center">
+                <p class="text-xl mb-2">💡 Key Insight</p>
+                <p class="text-2xl font-bold">"The question isn't whether you need orchestration. The question is whether you want to build it yourself or use a proven engine."</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto px-6 text-center">
+            <p>Module 2: Why We Need Workflow Orchestration | Code with TK Sharma</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Database Patterns</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+        min-height: 100vh;
+        color: #e0e0e0;
+        padding: 2rem;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 1rem;
+        color: #fff;
+      }
+      h2 {
+        margin: 2rem 0 1rem;
+        color: #a78bfa;
+        border-bottom: 1px solid #333;
+        padding-bottom: 0.5rem;
+      }
+      .diagram-container {
+        background: #1e1e2e;
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      .mermaid {
+        display: flex;
+        justify-content: center;
+      }
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      .tab {
+        padding: 0.5rem 1rem;
+        background: #2d2d44;
+        border: none;
+        border-radius: 8px;
+        color: #e0e0e0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .tab:hover,
+      .tab.active {
+        background: #6366f1;
+        color: #fff;
+      }
+      .diagram-section {
+        display: none;
+      }
+      .diagram-section.active {
+        display: block;
+      }
+      .flow-dot {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, #fff 0%, #00f5d4 40%, #00bbf9 70%, transparent 100%);
+        border-radius: 50%;
+        box-shadow:
+          0 0 20px #00f5d4,
+          0 0 40px #00bbf9,
+          0 0 60px #00f5d4;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0;
+      }
+      .flow-dot.active {
+        animation: pulse 0.5s ease-in-out infinite alternate;
+      }
+      @keyframes pulse {
+        from {
+          transform: scale(1);
+          box-shadow:
+            0 0 20px #00f5d4,
+            0 0 40px #00bbf9;
+        }
+        to {
+          transform: scale(1.5);
+          box-shadow:
+            0 0 35px #00f5d4,
+            0 0 60px #00bbf9,
+            0 0 80px #00f5d4;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🗄️ Database Patterns</h1>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('dbperservice')">Database per Service</button>
+      <button class="tab" onclick="showTab('shared')">Shared Database</button>
+      <button class="tab" onclick="showTab('polyglot')">Polyglot Persistence</button>
+      <button class="tab" onclick="showTab('sync')">Data Synchronization</button>
+    </div>
+
+    <div id="dbperservice" class="diagram-section active">
+      <h2>Database per Service Pattern</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Services
+        US[👤 User Service]
+        OS[📦 Order Service]
+        PS[💳 Payment Service]
+        IS[📊 Inventory Service]
+    end
+    
+    subgraph Databases["Private Databases"]
+        DB1[(User DB<br/>PostgreSQL)]
+        DB2[(Order DB<br/>MongoDB)]
+        DB3[(Payment DB<br/>PostgreSQL)]
+        DB4[(Inventory DB<br/>Redis)]
+    end
+    
+    US --> DB1
+    OS --> DB2
+    PS --> DB3
+    IS --> DB4
+    
+    US <-->|API calls| OS
+    OS <-->|Events| PS
+    OS <-->|Events| IS
+    
+    style DB1 fill:#6366f1
+    style DB2 fill:#10b981
+    style DB3 fill:#f59e0b
+    style DB4 fill:#ec4899
+      </pre>
+      </div>
+    </div>
+
+    <div id="shared" class="diagram-section">
+      <h2>Shared Database (Anti-Pattern)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Services
+        S1[Service A]
+        S2[Service B]
+        S3[Service C]
+    end
+    
+    subgraph SharedDB["⚠️ Shared Database"]
+        T1[users table]
+        T2[orders table]
+        T3[payments table]
+    end
+    
+    S1 --> T1
+    S1 --> T2
+    S2 --> T1
+    S2 --> T2
+    S2 --> T3
+    S3 --> T2
+    S3 --> T3
+    
+    style SharedDB fill:#ef4444
+    
+    Note1[❌ Tight Coupling]
+    Note2[❌ Schema Changes Affect All]
+    Note3[❌ Single Point of Failure]
+      </pre
+        >
+      </div>
+    </div>
+
+    <div id="polyglot" class="diagram-section">
+      <h2>Polyglot Persistence</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Services
+        US[User Service]
+        PS[Product Service]
+        SS[Search Service]
+        AS[Analytics Service]
+        CS[Cache Service]
+    end
+    
+    subgraph Databases["Right Tool for the Job"]
+        PG[(PostgreSQL<br/>Relational Data)]
+        MONGO[(MongoDB<br/>Documents)]
+        ES[(Elasticsearch<br/>Full-text Search)]
+        CH[(ClickHouse<br/>Analytics)]
+        REDIS[(Redis<br/>Caching)]
+    end
+    
+    US --> PG
+    PS --> MONGO
+    SS --> ES
+    AS --> CH
+    CS --> REDIS
+    
+    PS -.->|sync| ES
+    US -.->|events| CH
+    PG -.->|cache| REDIS
+    
+    style PG fill:#6366f1
+    style MONGO fill:#10b981
+    style ES fill:#f59e0b
+    style CH fill:#ec4899
+    style REDIS fill:#8b5cf6
+      </pre>
+      </div>
+    </div>
+
+    <div id="sync" class="diagram-section">
+      <h2>Data Synchronization Patterns</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Pattern1["Event-Driven Sync"]
+        S1[Order Service]
+        EV1[OrderCreated Event]
+        S2[Inventory Service]
+        DB1[(Order DB)]
+        DB2[(Inventory DB)]
+    end
+    
+    S1 -->|write| DB1
+    S1 -->|publish| EV1
+    EV1 -->|consume| S2
+    S2 -->|update| DB2
+    
+    subgraph Pattern2["Change Data Capture"]
+        SRC[(Source DB)]
+        CDC[CDC Connector<br/>Debezium]
+        KAFKA[Kafka]
+        TGT[(Target DB)]
+    end
+    
+    SRC -->|binlog| CDC
+    CDC -->|stream| KAFKA
+    KAFKA -->|replicate| TGT
+    
+    style EV1 fill:#7c3aed
+    style KAFKA fill:#7c3aed
+    style CDC fill:#10b981
+      </pre>
+      </div>
+    </div>
+
+    <script>
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'dark',
+        themeVariables: {
+          primaryColor: '#6366f1',
+          primaryTextColor: '#fff',
+          primaryBorderColor: '#818cf8',
+          lineColor: '#a78bfa',
+          secondaryColor: '#1e1e2e',
+          tertiaryColor: '#2d2d44',
+        },
+      });
+
+      const renderedTabs = new Set();
+      let activeAnimations = [];
+
+      async function showTab(tabId) {
+        activeAnimations.forEach((id) => cancelAnimationFrame(id));
+        activeAnimations = [];
+        document.querySelectorAll('.flow-dot').forEach((d) => d.remove());
+        document.querySelectorAll('.diagram-section').forEach((s) => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+        if (!renderedTabs.has(tabId)) {
+          const section = document.getElementById(tabId);
+          const pre = section.querySelector('pre.mermaid');
+          if (pre && !pre.dataset.processed) {
+            await mermaid.run({ nodes: [pre] });
+            pre.dataset.processed = 'true';
+          }
+          renderedTabs.add(tabId);
+        }
+        setTimeout(() => startFlowAnimation(tabId), 300);
+      }
+
+      function startFlowAnimation(tabId) {
+        const section = document.getElementById(tabId);
+        if (!section) return;
+        const svg = section.querySelector('svg');
+        if (!svg) return;
+        const container = section.querySelector('.diagram-container');
+        container.style.position = 'relative';
+        const paths = svg.querySelectorAll('.edge-pattern-normal, .flowchart-link, [class*="edge"] path');
+        if (paths.length === 0) return;
+        paths.forEach((path, index) => {
+          const dot = document.createElement('div');
+          dot.className = 'flow-dot active';
+          container.appendChild(dot);
+          animateDotAlongPath(dot, path, svg, container, index * 400);
+        });
+      }
+
+      function animateDotAlongPath(dot, path, svg, container, delay) {
+        const duration = 2500;
+        let pathLength;
+        try {
+          pathLength = path.getTotalLength();
+          if (!pathLength || pathLength < 10) return;
+        } catch (e) {
+          return;
+        }
+        function animate() {
+          const startTime = performance.now();
+          function step(currentTime) {
+            if (!document.body.contains(dot)) return;
+            const elapsed = currentTime - startTime;
+            const progress = (elapsed % duration) / duration;
+            try {
+              const point = path.getPointAtLength(progress * pathLength);
+              const ctm = svg.getScreenCTM();
+              const containerRect = container.getBoundingClientRect();
+              if (ctm && point.x !== undefined && point.y !== undefined) {
+                const screenX = point.x * ctm.a + ctm.e;
+                const screenY = point.y * ctm.d + ctm.f;
+                dot.style.left = screenX - containerRect.left - 6 + 'px';
+                dot.style.top = screenY - containerRect.top - 6 + 'px';
+                dot.style.opacity = Math.sin(progress * Math.PI) * 0.9;
+              }
+            } catch (e) {
+              return;
+            }
+            const animId = requestAnimationFrame(step);
+            activeAnimations.push(animId);
+          }
+          requestAnimationFrame(step);
+        }
+        setTimeout(animate, delay);
+      }
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        const firstTab = document.getElementById('dbperservice');
+        const pre = firstTab.querySelector('pre.mermaid');
+        await mermaid.run({ nodes: [pre] });
+        pre.dataset.processed = 'true';
+        renderedTabs.add('dbperservice');
+        setTimeout(() => startFlowAnimation('dbperservice'), 500);
+      });
+    </script>
+  </body>
+</html>

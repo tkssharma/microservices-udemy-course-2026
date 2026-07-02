@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swiggy System Design</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #1a0505 0%, #4a1c1c 50%, #1a0505 100%); min-height: 100vh; color: #fff; }
+    .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+    .bg-animation span { position: absolute; display: block; width: 20px; height: 20px; background: rgba(249,115,22,0.1); animation: move 25s linear infinite; bottom: -150px; border-radius: 50%; }
+    .bg-animation span:nth-child(1) { left: 25%; width: 80px; height: 80px; }
+    .bg-animation span:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; }
+    .bg-animation span:nth-child(3) { left: 70%; width: 30px; height: 30px; animation-delay: 4s; }
+    .bg-animation span:nth-child(4) { left: 40%; width: 60px; height: 60px; }
+    @keyframes move { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-1000px); opacity: 0; } }
+    header { text-align: center; padding: 3rem 2rem; }
+    h1 { font-size: 3rem; font-weight: 700; background: linear-gradient(90deg, #f97316, #ef4444, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: #fdba74; font-size: 1.2rem; margin-top: 0.5rem; }
+    .tabs { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; padding: 0 2rem; margin-bottom: 2rem; }
+    .tab { padding: 1rem 1.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    .tab:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+    .tab.active { background: linear-gradient(135deg, #f97316, #ef4444); border: none; }
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 2rem; color: #f97316; }
+    .diagram-container { background: rgba(26,5,5,0.8); border-radius: 24px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(249,115,22,0.3); position: relative; }
+    .diagram-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #f97316, #ef4444, #f59e0b); }
+    .diagram-title { font-size: 1.5rem; color: #fbbf24; margin-bottom: 1.5rem; }
+    .flow-visual { display: flex; justify-content: center; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding: 2rem; }
+    .node { padding: 1rem 1.5rem; border-radius: 12px; font-weight: 600; text-align: center; transition: transform 0.3s ease; min-width: 100px; }
+    .node:hover { transform: scale(1.05); }
+    .node-icon { font-size: 2rem; margin-bottom: 0.5rem; display: block; }
+    .node-orange { background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 10px 30px rgba(249,115,22,0.4); }
+    .node-red { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 10px 30px rgba(239,68,68,0.4); }
+    .node-green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 30px rgba(16,185,129,0.4); }
+    .node-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 30px rgba(59,130,246,0.4); }
+    .node-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 30px rgba(139,92,246,0.4); }
+    .node-yellow { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 30px rgba(245,158,11,0.4); }
+    .arrow { font-size: 1.5rem; color: #f97316; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .info-card { background: linear-gradient(135deg, rgba(249,115,22,0.2), rgba(239,68,68,0.1)); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(249,115,22,0.3); transition: transform 0.3s ease; }
+    .info-card:hover { transform: translateY(-5px); }
+    .info-card h4 { color: #fbbf24; font-size: 1.2rem; margin-bottom: 0.75rem; }
+    .info-card p { color: #d1d5db; line-height: 1.6; }
+    .feature-list { list-style: none; }
+    .feature-list li { padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 0.5rem; }
+    .feature-list li:last-child { border-bottom: none; }
+    .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .service-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s ease; }
+    .service-card:hover { transform: translateY(-5px); border-color: #f97316; }
+    .service-card h4 { color: #fff; margin-bottom: 0.5rem; }
+    .service-card p { color: #94a3b8; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+  <header>
+    <h1>🍔 Swiggy System Design</h1>
+    <p class="subtitle">Food Delivery Platform at Scale</p>
+  </header>
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="architecture">Architecture</button>
+    <button class="tab" data-tab="services">Microservices</button>
+    <button class="tab" data-tab="challenges">Challenges</button>
+    <button class="tab" data-tab="scale">Scale</button>
+  </div>
+
+  <div id="overview" class="content active">
+    <h2 class="section-title">🎯 System Requirements</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📋 Functional Requirements</div>
+      <ul class="feature-list">
+        <li>🔍 <strong>Search:</strong> Search restaurants by name, cuisine, location</li>
+        <li>📍 <strong>Location:</strong> Show nearby restaurants based on user location</li>
+        <li>🛒 <strong>Cart & Order:</strong> Add items, place orders, track delivery</li>
+        <li>💳 <strong>Payments:</strong> Multiple payment options, refunds</li>
+        <li>🚴 <strong>Delivery:</strong> Real-time tracking, driver assignment</li>
+        <li>⭐ <strong>Reviews:</strong> Rate restaurants and delivery partners</li>
+      </ul>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Non-Functional Requirements</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>📈 High Availability</h4><p>99.99% uptime. Orders must not fail during peak hours.</p></div>
+        <div class="info-card"><h4>⚡ Low Latency</h4><p>Search < 100ms. Real-time location updates every 3-5 seconds.</p></div>
+        <div class="info-card"><h4>📊 Scalability</h4><p>Handle millions of users, thousands of orders per minute.</p></div>
+        <div class="info-card"><h4>🔒 Consistency</h4><p>Order and payment data must be strongly consistent.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="architecture" class="content">
+    <h2 class="section-title">🏗️ High-Level Architecture</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📊 System Flow</div>
+      <div class="flow-visual">
+        <div class="node node-blue"><span class="node-icon">📱</span>User App</div>
+        <span class="arrow">→</span>
+        <div class="node node-purple"><span class="node-icon">🚪</span>API Gateway</div>
+        <span class="arrow">→</span>
+        <div class="node node-orange"><span class="node-icon">⚙️</span>Services</div>
+        <span class="arrow">→</span>
+        <div class="node node-green"><span class="node-icon">💾</span>Databases</div>
+      </div>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">🔄 Order Flow</div>
+      <div class="flow-visual">
+        <div class="node node-blue"><span class="node-icon">👤</span>Customer</div>
+        <span class="arrow">→</span>
+        <div class="node node-orange"><span class="node-icon">🛒</span>Order</div>
+        <span class="arrow">→</span>
+        <div class="node node-red"><span class="node-icon">🍽️</span>Restaurant</div>
+        <span class="arrow">→</span>
+        <div class="node node-green"><span class="node-icon">🚴</span>Delivery</div>
+        <span class="arrow">→</span>
+        <div class="node node-yellow"><span class="node-icon">✅</span>Delivered</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="services" class="content">
+    <h2 class="section-title">⚙️ Microservices</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🔧 Core Services</div>
+      <div class="services-grid">
+        <div class="service-card"><h4>👤 User Service</h4><p>Auth, profiles, addresses</p></div>
+        <div class="service-card"><h4>🍽️ Restaurant Service</h4><p>Menus, availability, ratings</p></div>
+        <div class="service-card"><h4>🛒 Order Service</h4><p>Cart, checkout, order state</p></div>
+        <div class="service-card"><h4>💳 Payment Service</h4><p>Transactions, refunds, wallets</p></div>
+        <div class="service-card"><h4>🚴 Delivery Service</h4><p>Driver matching, routing</p></div>
+        <div class="service-card"><h4>📍 Location Service</h4><p>Real-time tracking, geofencing</p></div>
+        <div class="service-card"><h4>🔍 Search Service</h4><p>Elasticsearch, filters, ranking</p></div>
+        <div class="service-card"><h4>📢 Notification Service</h4><p>Push, SMS, email updates</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="challenges" class="content">
+    <h2 class="section-title">🚧 Technical Challenges</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">⚡ Key Problems</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>📍 Real-Time Tracking</h4><p>WebSocket connections for live updates. Millions of concurrent connections.</p></div>
+        <div class="info-card"><h4>🚴 Driver Assignment</h4><p>Optimal matching considering distance, load, ratings. ML-based allocation.</p></div>
+        <div class="info-card"><h4>📈 Peak Load</h4><p>10x traffic during lunch/dinner. Auto-scaling, circuit breakers.</p></div>
+        <div class="info-card"><h4>🗺️ ETA Prediction</h4><p>Traffic, weather, restaurant prep time. ML models for accurate ETAs.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="scale" class="content">
+    <h2 class="section-title">📈 Scaling Strategies</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🚀 How to Scale</div>
+      <ul class="feature-list">
+        <li>💾 <strong>Database Sharding:</strong> Shard by city/region for geo-distributed data</li>
+        <li>📦 <strong>Caching:</strong> Redis for menus, restaurant data, user sessions</li>
+        <li>📨 <strong>Message Queues:</strong> Kafka for async processing (notifications, analytics)</li>
+        <li>🌐 <strong>CDN:</strong> Static assets, images served from edge locations</li>
+        <li>🔄 <strong>Load Balancing:</strong> Distribute traffic across service instances</li>
+        <li>📊 <strong>Read Replicas:</strong> Scale reads with database replicas</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

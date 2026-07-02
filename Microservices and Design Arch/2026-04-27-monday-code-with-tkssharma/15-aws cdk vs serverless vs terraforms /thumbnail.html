@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Thumbnail - CDK vs Serverless vs Terraform</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 1280px;
+        height: 720px;
+        font-family: 'Inter', sans-serif;
+        overflow: hidden;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+        position: relative;
+      }
+
+      .bg-grid {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+          linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        opacity: 0.5;
+      }
+
+      .glow-orange {
+        position: absolute;
+        top: 20%;
+        left: 10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(249, 115, 22, 0.4) 0%, transparent 70%);
+        filter: blur(60px);
+      }
+
+      .glow-red {
+        position: absolute;
+        top: 30%;
+        left: 40%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%);
+        filter: blur(60px);
+      }
+
+      .glow-purple {
+        position: absolute;
+        top: 20%;
+        right: 10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, transparent 70%);
+        filter: blur(60px);
+      }
+
+      .container {
+        position: relative;
+        z-index: 10;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+      }
+
+      .top-badge {
+        position: absolute;
+        top: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        color: #000;
+        padding: 8px 30px;
+        border-radius: 30px;
+        font-weight: 800;
+        font-size: 22px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        box-shadow: 0 4px 20px rgba(251, 191, 36, 0.5);
+      }
+
+      .year-badge {
+        position: absolute;
+        top: 30px;
+        right: 40px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: #fff;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 24px;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+      }
+
+      .vs-section {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 25px;
+        margin-top: 30px;
+      }
+
+      .tool-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .tool-icon {
+        width: 150px;
+        height: 150px;
+        border-radius: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        border: 3px solid rgba(255, 255, 255, 0.15);
+        padding: 25px;
+      }
+
+      .tool-icon svg {
+        width: 100%;
+        height: 100%;
+      }
+
+      .tool-icon.cdk {
+        background: linear-gradient(135deg, #232f3e, #131920);
+      }
+      .tool-icon.serverless {
+        background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+      }
+      .tool-icon.terraform {
+        background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
+      }
+
+      .tool-name {
+        font-size: 28px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .tool-name.cdk {
+        color: #ff9900;
+      }
+      .tool-name.serverless {
+        color: #fd5750;
+      }
+      .tool-name.terraform {
+        color: #7b42bc;
+      }
+
+      .vs-badge {
+        font-size: 52px;
+        font-weight: 900;
+        color: #fbbf24;
+        text-shadow: 0 0 40px rgba(251, 191, 36, 0.9);
+      }
+
+      .main-title {
+        margin-top: 40px;
+        text-align: center;
+      }
+
+      .title-text {
+        font-size: 78px;
+        font-weight: 900;
+        color: #fff;
+        text-transform: uppercase;
+        line-height: 1.1;
+        text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+      }
+
+      .title-highlight {
+        background: linear-gradient(90deg, #fbbf24, #f59e0b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .bottom-section {
+        position: absolute;
+        bottom: 30px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+      }
+
+      .feature-tag {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 10px 25px;
+        border-radius: 30px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 18px;
+        backdrop-filter: blur(10px);
+      }
+
+      .feature-tag span {
+        margin-right: 8px;
+      }
+
+      .corner-decoration {
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        border: 3px solid rgba(139, 92, 246, 0.3);
+      }
+      .corner-decoration.top-left {
+        top: 20px;
+        left: 20px;
+        border-right: none;
+        border-bottom: none;
+      }
+      .corner-decoration.top-right {
+        top: 20px;
+        right: 20px;
+        border-left: none;
+        border-bottom: none;
+      }
+      .corner-decoration.bottom-left {
+        bottom: 20px;
+        left: 20px;
+        border-right: none;
+        border-top: none;
+      }
+      .corner-decoration.bottom-right {
+        bottom: 20px;
+        right: 20px;
+        border-left: none;
+        border-top: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-grid"></div>
+    <div class="glow-orange"></div>
+    <div class="glow-red"></div>
+    <div class="glow-purple"></div>
+
+    <div class="corner-decoration top-left"></div>
+    <div class="corner-decoration top-right"></div>
+    <div class="corner-decoration bottom-left"></div>
+    <div class="corner-decoration bottom-right"></div>
+
+    <div class="container">
+      <div class="top-badge">⚡ Infrastructure as Code</div>
+      <div class="year-badge">2026</div>
+
+      <div class="vs-section">
+        <!-- AWS CDK -->
+        <div class="tool-card">
+          <div class="tool-icon cdk">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="32,2 62,17 62,47 32,62 2,47 2,17" fill="#FF9900" />
+              <polygon points="32,17 47,9 47,25 32,33 17,25 17,9" fill="#232F3E" />
+              <polygon points="32,33 47,25 47,41 32,49 17,41 17,25" fill="#232F3E" opacity="0.7" />
+            </svg>
+          </div>
+          <div class="tool-name cdk">AWS CDK</div>
+        </div>
+
+        <div class="vs-badge">VS</div>
+
+        <!-- Serverless -->
+        <div class="tool-card">
+          <div class="tool-icon serverless">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="32,4 60,18 32,32 4,18" fill="#FD5750" />
+              <polygon points="4,18 4,46 32,60 32,32" fill="#FD5750" opacity="0.85" />
+              <polygon points="60,18 60,46 32,60 32,32" fill="#FD5750" opacity="0.7" />
+              <line x1="16" y1="28" x2="32" y2="36" stroke="#fff" stroke-width="2" />
+              <line x1="48" y1="28" x2="32" y2="36" stroke="#fff" stroke-width="2" />
+              <line x1="16" y1="38" x2="32" y2="46" stroke="#fff" stroke-width="2" />
+              <line x1="48" y1="38" x2="32" y2="46" stroke="#fff" stroke-width="2" />
+            </svg>
+          </div>
+          <div class="tool-name serverless">Serverless</div>
+        </div>
+
+        <div class="vs-badge">VS</div>
+
+        <!-- Terraform -->
+        <div class="tool-card">
+          <div class="tool-icon terraform">
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="22,4 40,14 40,32 22,22" fill="#7B42BC" />
+              <polygon points="44,16 62,26 62,44 44,34" fill="#7B42BC" />
+              <polygon points="2,16 20,26 20,44 2,34" fill="#7B42BC" opacity="0.5" />
+              <polygon points="22,42 40,52 40,70 22,60" fill="#7B42BC" />
+            </svg>
+          </div>
+          <div class="tool-name terraform">Terraform</div>
+        </div>
+      </div>
+
+      <div class="main-title">
+        <div class="title-text"><span class="title-highlight">WHICH ONE</span> WINS?</div>
+      </div>
+
+      <div class="bottom-section">
+        <div class="feature-tag"><span>✅</span> Code Examples</div>
+        <div class="feature-tag"><span>✅</span> Real Comparison</div>
+        <div class="feature-tag"><span>✅</span> Decision Guide</div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Microservices Observability Stack</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0c0a1d 0%, #1a1433 50%, #0c0a1d 100%); min-height: 100vh; color: #fff; }
+    .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+    .bg-animation span { position: absolute; display: block; width: 20px; height: 20px; background: rgba(168,85,247,0.1); animation: move 25s linear infinite; bottom: -150px; border-radius: 50%; }
+    .bg-animation span:nth-child(1) { left: 25%; width: 80px; height: 80px; }
+    .bg-animation span:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; }
+    .bg-animation span:nth-child(3) { left: 70%; width: 30px; height: 30px; animation-delay: 4s; }
+    .bg-animation span:nth-child(4) { left: 40%; width: 60px; height: 60px; }
+    @keyframes move { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-1000px); opacity: 0; } }
+    header { text-align: center; padding: 3rem 2rem; }
+    h1 { font-size: 3rem; font-weight: 700; background: linear-gradient(90deg, #a855f7, #ec4899, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: #c4b5fd; font-size: 1.2rem; margin-top: 0.5rem; }
+    .tabs { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; padding: 0 2rem; margin-bottom: 2rem; }
+    .tab { padding: 1rem 1.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    .tab:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+    .tab.active { background: linear-gradient(135deg, #a855f7, #ec4899); border: none; }
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 2rem; color: #a855f7; }
+    .diagram-container { background: rgba(12,10,29,0.8); border-radius: 24px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(168,85,247,0.3); position: relative; }
+    .diagram-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #a855f7, #ec4899, #f97316); }
+    .diagram-title { font-size: 1.5rem; color: #fbbf24; margin-bottom: 1.5rem; }
+    .pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    @media (max-width: 768px) { .pillars { grid-template-columns: 1fr; } }
+    .pillar { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 1.5rem; text-align: center; border: 2px solid; transition: transform 0.3s ease; }
+    .pillar:hover { transform: translateY(-5px); }
+    .pillar.logs { border-color: rgba(16,185,129,0.5); }
+    .pillar.metrics { border-color: rgba(59,130,246,0.5); }
+    .pillar.traces { border-color: rgba(168,85,247,0.5); }
+    .pillar-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .pillar h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .logs h3 { color: #10b981; }
+    .metrics h3 { color: #3b82f6; }
+    .traces h3 { color: #a855f7; }
+    .pillar p { color: #d1d5db; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .info-card { background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(236,72,153,0.1)); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(168,85,247,0.3); transition: transform 0.3s ease; }
+    .info-card:hover { transform: translateY(-5px); }
+    .info-card h4 { color: #ec4899; font-size: 1.2rem; margin-bottom: 0.75rem; }
+    .info-card p { color: #d1d5db; line-height: 1.6; }
+    .feature-list { list-style: none; }
+    .feature-list li { padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 0.5rem; }
+    .feature-list li:last-child { border-bottom: none; }
+    .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+    .tool-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s ease; }
+    .tool-card:hover { transform: translateY(-5px); border-color: #a855f7; }
+    .tool-card h4 { color: #fff; margin-bottom: 0.5rem; font-size: 1rem; }
+    .tool-card p { color: #94a3b8; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+  <header>
+    <h1>📊 Observability Stack</h1>
+    <p class="subtitle">Logs, Metrics, Traces — The Three Pillars</p>
+  </header>
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="logs">Logs</button>
+    <button class="tab" data-tab="metrics">Metrics</button>
+    <button class="tab" data-tab="traces">Traces</button>
+    <button class="tab" data-tab="tools">Tools</button>
+  </div>
+
+  <div id="overview" class="content active">
+    <h2 class="section-title">🎯 The Three Pillars</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Observability Fundamentals</div>
+      <div class="pillars">
+        <div class="pillar logs">
+          <div class="pillar-icon">📝</div>
+          <h3>Logs</h3>
+          <p>Discrete events. What happened? Error messages, audit trails.</p>
+        </div>
+        <div class="pillar metrics">
+          <div class="pillar-icon">📈</div>
+          <h3>Metrics</h3>
+          <p>Numeric measurements. How is it performing? CPU, latency, throughput.</p>
+        </div>
+        <div class="pillar traces">
+          <div class="pillar-icon">🔗</div>
+          <h3>Traces</h3>
+          <p>Request journey. How did it flow? Distributed call chains.</p>
+        </div>
+      </div>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">❓ Why Observability?</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>🔍 Debug Faster</h4><p>Find root cause quickly in distributed systems.</p></div>
+        <div class="info-card"><h4>📊 Performance</h4><p>Identify bottlenecks and optimize response times.</p></div>
+        <div class="info-card"><h4>🚨 Alerting</h4><p>Detect issues before users report them.</p></div>
+        <div class="info-card"><h4>📈 Capacity</h4><p>Plan infrastructure based on real usage data.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="logs" class="content">
+    <h2 class="section-title">📝 Logging</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📋 Logging Best Practices</div>
+      <ul class="feature-list">
+        <li>📊 <strong>Structured Logs:</strong> JSON format with consistent fields</li>
+        <li>🔗 <strong>Correlation IDs:</strong> Link logs across services</li>
+        <li>📈 <strong>Log Levels:</strong> DEBUG, INFO, WARN, ERROR appropriately</li>
+        <li>💾 <strong>Centralized:</strong> Aggregate all logs in one place</li>
+        <li>🔍 <strong>Searchable:</strong> Full-text search, filtering, alerting</li>
+      </ul>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">🔧 Logging Stack</div>
+      <div class="tools-grid">
+        <div class="tool-card"><h4>ELK Stack</h4><p>Elasticsearch, Logstash, Kibana</p></div>
+        <div class="tool-card"><h4>Loki</h4><p>Grafana Loki, log aggregation</p></div>
+        <div class="tool-card"><h4>Fluentd</h4><p>Log collector & forwarder</p></div>
+        <div class="tool-card"><h4>CloudWatch</h4><p>AWS native logging</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="metrics" class="content">
+    <h2 class="section-title">📈 Metrics</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Metric Types</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>📈 Counter</h4><p>Cumulative values that only increase. Requests, errors, bytes sent.</p></div>
+        <div class="info-card"><h4>📊 Gauge</h4><p>Current value that can go up/down. CPU%, memory, connections.</p></div>
+        <div class="info-card"><h4>📉 Histogram</h4><p>Distribution of values. Latency percentiles (p50, p95, p99).</p></div>
+        <div class="info-card"><h4>📋 Summary</h4><p>Similar to histogram, calculated client-side.</p></div>
+      </div>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">🎯 Key Metrics (RED & USE)</div>
+      <ul class="feature-list">
+        <li>📨 <strong>Rate:</strong> Requests per second</li>
+        <li>❌ <strong>Errors:</strong> Failed requests rate</li>
+        <li>⏱️ <strong>Duration:</strong> Response time / latency</li>
+        <li>📊 <strong>Utilization:</strong> Resource usage %</li>
+        <li>⏳ <strong>Saturation:</strong> Queue depths, backlog</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="traces" class="content">
+    <h2 class="section-title">🔗 Distributed Tracing</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🔍 How Tracing Works</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>🎫 Trace ID</h4><p>Unique ID for entire request journey across all services.</p></div>
+        <div class="info-card"><h4>📦 Span</h4><p>Individual operation within a trace. Has start time, duration, metadata.</p></div>
+        <div class="info-card"><h4>🔗 Context Propagation</h4><p>Pass trace context through HTTP headers between services.</p></div>
+        <div class="info-card"><h4>📊 Visualization</h4><p>Waterfall view showing timing of each span.</p></div>
+      </div>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">🔧 Tracing Tools</div>
+      <div class="tools-grid">
+        <div class="tool-card"><h4>Jaeger</h4><p>Open source, CNCF</p></div>
+        <div class="tool-card"><h4>Zipkin</h4><p>Twitter's tracing system</p></div>
+        <div class="tool-card"><h4>OpenTelemetry</h4><p>Unified standard</p></div>
+        <div class="tool-card"><h4>AWS X-Ray</h4><p>AWS native tracing</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tools" class="content">
+    <h2 class="section-title">🔧 Observability Platforms</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🛠️ Popular Tools</div>
+      <div class="tools-grid">
+        <div class="tool-card"><h4>Grafana</h4><p>Dashboards</p></div>
+        <div class="tool-card"><h4>Prometheus</h4><p>Metrics</p></div>
+        <div class="tool-card"><h4>Datadog</h4><p>Full platform</p></div>
+        <div class="tool-card"><h4>New Relic</h4><p>APM</p></div>
+        <div class="tool-card"><h4>Splunk</h4><p>Logs & SIEM</p></div>
+        <div class="tool-card"><h4>Honeycomb</h4><p>Observability</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

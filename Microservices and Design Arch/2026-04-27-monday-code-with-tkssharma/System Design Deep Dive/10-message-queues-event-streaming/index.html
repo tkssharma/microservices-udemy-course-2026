@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Message Queues & Event Streaming - System Design Deep Dive</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0d0d0d;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: #64748b;
+      text-decoration: none;
+      font-size: 16px;
+      margin-bottom: 30px;
+      transition: color 0.3s;
+    }
+
+    .back-link:hover {
+      color: #22d3ee;
+    }
+
+    h1 {
+      font-size: 48px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 20px;
+      margin-bottom: 40px;
+    }
+
+    .cyan-underline {
+      width: 150px;
+      height: 4px;
+      background: linear-gradient(90deg, #06b6d4, #22d3ee);
+      margin-bottom: 50px;
+      border-radius: 2px;
+    }
+
+    .topics-section {
+      background: #12121a;
+      border: 1px solid #1e293b;
+      border-radius: 20px;
+      padding: 40px;
+      margin-bottom: 50px;
+    }
+
+    .topics-section h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 30px;
+    }
+
+    .topic-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .topic-item {
+      background: #1a1a2e;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 25px;
+    }
+
+    .topic-item h4 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .topic-item p {
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .status-badge {
+      display: inline-block;
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid #f59e0b;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: #fbbf24;
+      font-weight: 600;
+      margin-top: 15px;
+    }
+
+    .coming-soon {
+      background: rgba(100, 116, 139, 0.2);
+      border: 1px solid #64748b;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="../" class="back-link">← Back to Topics</a>
+    
+    <h1>Message Queues & Event Streaming</h1>
+    <div class="cyan-underline"></div>
+    <p class="subtitle">Build asynchronous and event-driven systems</p>
+
+    <div class="topics-section">
+      <h2>📋 Topics Covered</h2>
+      <div class="topic-list">
+        <div class="topic-item">
+          <h4>Message Queues</h4>
+          <p>RabbitMQ, AWS SQS, Pub/Sub, point-to-point patterns</p>
+          <span class="status-badge coming-soon">Coming Soon</span>
+        </div>
+        <div class="topic-item">
+          <h4>Event Streaming</h4>
+          <p>Apache Kafka, topics, partitions, consumer groups, exactly-once semantics</p>
+          <span class="status-badge coming-soon">Coming Soon</span>
+        </div>
+        <div class="topic-item">
+          <h4>Dead Letter Queues</h4>
+          <p>Handling failed messages and error processing</p>
+          <span class="status-badge coming-soon">Coming Soon</span>
+        </div>
+        <div class="topic-item">
+          <h4>Kafka vs RabbitMQ</h4>
+          <p>When to use message queues vs event streaming</p>
+          <span class="status-badge coming-soon">Coming Soon</span>
+        </div>
+      </div>
+    </div>
+
+    <a href="README.md" style="color: #22d3ee; text-decoration: none; font-size: 16px;">📚 View Topic Guide →</a>
+  </div>
+</body>
+</html>

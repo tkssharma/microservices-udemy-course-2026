@@ -1,0 +1,29 @@
+{
+  "name": "api-performance-demo",
+  "version": "1.0.0",
+  "description": "Demo: Handle millions of requests in Node.js/Express",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "start:cluster": "node src/server-cluster.js",
+    "start:optimized": "node src/server-optimized.js",
+    "start:pm2": "pm2 start ecosystem.config.js",
+    "stop:pm2": "pm2 delete all",
+    "benchmark": "node benchmark/load-test.js",
+    "benchmark:basic": "autocannon -c 100 -d 10 http://localhost:3000/api/users",
+    "benchmark:cached": "autocannon -c 100 -d 10 http://localhost:3001/api/users"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "compression": "^1.7.4",
+    "helmet": "^7.1.0",
+    "cors": "^2.8.5",
+    "ioredis": "^5.3.2",
+    "pg": "^8.11.3",
+    "lru-cache": "^10.2.0"
+  },
+  "devDependencies": {
+    "autocannon": "^7.15.0",
+    "pm2": "^5.3.1"
+  }
+}

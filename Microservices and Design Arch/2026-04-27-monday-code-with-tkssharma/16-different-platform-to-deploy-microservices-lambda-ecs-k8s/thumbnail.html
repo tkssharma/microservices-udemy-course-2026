@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1280, height=720">
+  <title>Thumbnail - Microservices Deployment Platforms</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      width: 1280px;
+      height: 720px;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      position: relative;
+    }
+
+    .bg-grid {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-image: 
+        linear-gradient(rgba(59, 130, 246, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59, 130, 246, 0.08) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.6;
+    }
+
+    .glow-lambda {
+      position: absolute; top: 15%; left: 5%;
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(255, 153, 0, 0.35) 0%, transparent 70%);
+      filter: blur(80px);
+    }
+
+    .glow-ecs {
+      position: absolute; top: 25%; left: 35%;
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(255, 69, 58, 0.3) 0%, transparent 70%);
+      filter: blur(80px);
+    }
+
+    .glow-k8s {
+      position: absolute; top: 15%; right: 5%;
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(50, 108, 229, 0.4) 0%, transparent 70%);
+      filter: blur(80px);
+    }
+
+    .container {
+      position: relative; z-index: 10;
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px;
+    }
+
+    .top-badge {
+      position: absolute; top: 25px; left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: #fff;
+      padding: 10px 35px;
+      border-radius: 30px;
+      font-weight: 800; font-size: 20px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      box-shadow: 0 4px 25px rgba(59, 130, 246, 0.5);
+    }
+
+    .year-badge {
+      position: absolute; top: 25px; right: 35px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-weight: 800; font-size: 22px;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .platforms-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 20px;
+    }
+
+    .platform-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .platform-icon {
+      width: 160px; height: 160px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      padding: 28px;
+      transition: transform 0.3s;
+    }
+
+    .platform-icon svg { width: 100%; height: 100%; }
+
+    .platform-icon.lambda { background: linear-gradient(135deg, #232f3e, #131920); }
+    .platform-icon.ecs { background: linear-gradient(135deg, #232f3e, #131920); }
+    .platform-icon.k8s { background: linear-gradient(135deg, #1a1f35, #0d1117); }
+
+    .platform-name {
+      font-size: 26px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .platform-name.lambda { color: #FF9900; }
+    .platform-name.ecs { color: #FF4F3E; }
+    .platform-name.k8s { color: #326CE5; }
+
+    .divider {
+      font-size: 36px;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .main-title {
+      margin-top: 35px;
+      text-align: center;
+    }
+
+    .title-line1 {
+      font-size: 52px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+    }
+
+    .title-line2 {
+      font-size: 82px;
+      font-weight: 900;
+      color: #fff;
+      text-transform: uppercase;
+      line-height: 1;
+      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .title-highlight {
+      background: linear-gradient(90deg, #f59e0b, #ef4444, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .bottom-section {
+      position: absolute;
+      bottom: 25px;
+      left: 0; right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+    }
+
+    .feature-tag {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 12px 28px;
+      border-radius: 30px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 17px;
+      backdrop-filter: blur(10px);
+    }
+
+    .feature-tag span { margin-right: 10px; }
+
+    .corner-decoration {
+      position: absolute;
+      width: 100px; height: 100px;
+      border: 3px solid rgba(59, 130, 246, 0.25);
+    }
+    .corner-decoration.top-left { top: 15px; left: 15px; border-right: none; border-bottom: none; }
+    .corner-decoration.top-right { top: 15px; right: 15px; border-left: none; border-bottom: none; }
+    .corner-decoration.bottom-left { bottom: 15px; left: 15px; border-right: none; border-top: none; }
+    .corner-decoration.bottom-right { bottom: 15px; right: 15px; border-left: none; border-top: none; }
+
+    .microservices-badge {
+      position: absolute;
+      top: 25px; left: 35px;
+      background: rgba(139, 92, 246, 0.2);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      color: #a78bfa;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="glow-lambda"></div>
+  <div class="glow-ecs"></div>
+  <div class="glow-k8s"></div>
+
+  <div class="corner-decoration top-left"></div>
+  <div class="corner-decoration top-right"></div>
+  <div class="corner-decoration bottom-left"></div>
+  <div class="corner-decoration bottom-right"></div>
+
+  <div class="container">
+    <div class="microservices-badge">🔷 Microservices</div>
+    <div class="top-badge">☁️ AWS Deployment</div>
+    <div class="year-badge">2026</div>
+
+    <div class="platforms-section">
+      <!-- AWS Lambda -->
+      <div class="platform-card">
+        <div class="platform-icon lambda">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 8L12 56h8l3-12h14l3 12h8L36 8H24z" fill="#FF9900"/>
+            <path d="M26 36l6-20 6 20H26z" fill="#232F3E"/>
+            <text x="32" y="62" text-anchor="middle" fill="#FF9900" font-size="8" font-weight="bold">λ</text>
+          </svg>
+        </div>
+        <div class="platform-name lambda">Lambda</div>
+      </div>
+      
+      <div class="divider">|</div>
+      
+      <!-- AWS ECS -->
+      <div class="platform-card">
+        <div class="platform-icon ecs">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="8" width="48" height="48" rx="8" fill="#FF4F3E" opacity="0.2"/>
+            <rect x="14" y="14" width="16" height="16" rx="3" fill="#FF4F3E"/>
+            <rect x="34" y="14" width="16" height="16" rx="3" fill="#FF4F3E" opacity="0.8"/>
+            <rect x="14" y="34" width="16" height="16" rx="3" fill="#FF4F3E" opacity="0.8"/>
+            <rect x="34" y="34" width="16" height="16" rx="3" fill="#FF4F3E" opacity="0.6"/>
+            <circle cx="22" cy="22" r="4" fill="#fff"/>
+            <circle cx="42" cy="22" r="4" fill="#fff" opacity="0.8"/>
+            <circle cx="22" cy="42" r="4" fill="#fff" opacity="0.8"/>
+            <circle cx="42" cy="42" r="4" fill="#fff" opacity="0.6"/>
+          </svg>
+        </div>
+        <div class="platform-name ecs">ECS</div>
+      </div>
+      
+      <div class="divider">|</div>
+      
+      <!-- Kubernetes -->
+      <div class="platform-card">
+        <div class="platform-icon k8s">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="32,4 58,18 58,46 32,60 6,46 6,18" fill="#326CE5" stroke="#326CE5" stroke-width="2"/>
+            <polygon points="32,12 50,22 50,42 32,52 14,42 14,22" fill="#fff" opacity="0.15"/>
+            <circle cx="32" cy="32" r="8" fill="#fff"/>
+            <circle cx="32" cy="14" r="4" fill="#fff"/>
+            <circle cx="48" cy="23" r="4" fill="#fff"/>
+            <circle cx="48" cy="41" r="4" fill="#fff"/>
+            <circle cx="32" cy="50" r="4" fill="#fff"/>
+            <circle cx="16" cy="41" r="4" fill="#fff"/>
+            <circle cx="16" cy="23" r="4" fill="#fff"/>
+            <line x1="32" y1="24" x2="32" y2="18" stroke="#326CE5" stroke-width="2"/>
+            <line x1="39" y1="28" x2="44" y2="25" stroke="#326CE5" stroke-width="2"/>
+            <line x1="39" y1="36" x2="44" y2="39" stroke="#326CE5" stroke-width="2"/>
+            <line x1="32" y1="40" x2="32" y2="46" stroke="#326CE5" stroke-width="2"/>
+            <line x1="25" y1="36" x2="20" y2="39" stroke="#326CE5" stroke-width="2"/>
+            <line x1="25" y1="28" x2="20" y2="25" stroke="#326CE5" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="platform-name k8s">Kubernetes</div>
+      </div>
+    </div>
+
+    <div class="main-title">
+      <div class="title-line1">Where to Deploy</div>
+      <div class="title-line2">
+        <span class="title-highlight">MICROSERVICES?</span>
+      </div>
+    </div>
+
+    <div class="bottom-section">
+      <div class="feature-tag"><span>⚡</span> Serverless</div>
+      <div class="feature-tag"><span>🐳</span> Containers</div>
+      <div class="feature-tag"><span>☸️</span> Orchestration</div>
+      <div class="feature-tag"><span>📊</span> Comparison</div>
+    </div>
+  </div>
+</body>
+</html>

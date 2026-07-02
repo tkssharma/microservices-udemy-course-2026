@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Microservices Authentication</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%); min-height: 100vh; color: #fff; }
+    .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+    .bg-animation span { position: absolute; display: block; width: 20px; height: 20px; background: rgba(139,92,246,0.1); animation: move 25s linear infinite; bottom: -150px; border-radius: 50%; }
+    .bg-animation span:nth-child(1) { left: 25%; width: 80px; height: 80px; }
+    .bg-animation span:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; }
+    .bg-animation span:nth-child(3) { left: 70%; width: 30px; height: 30px; animation-delay: 4s; }
+    .bg-animation span:nth-child(4) { left: 40%; width: 60px; height: 60px; }
+    .bg-animation span:nth-child(5) { left: 65%; width: 20px; height: 20px; }
+    @keyframes move { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-1000px); opacity: 0; } }
+    header { text-align: center; padding: 3rem 2rem; }
+    h1 { font-size: 3rem; font-weight: 700; background: linear-gradient(90deg, #8b5cf6, #06b6d4, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: #a78bfa; font-size: 1.2rem; margin-top: 0.5rem; }
+    .tabs { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; padding: 0 2rem; margin-bottom: 2rem; }
+    .tab { padding: 1rem 1.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    .tab:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+    .tab.active { background: linear-gradient(135deg, #8b5cf6, #06b6d4); border: none; }
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 2rem; color: #8b5cf6; }
+    .diagram-container { background: rgba(15,15,35,0.8); border-radius: 24px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(139,92,246,0.3); position: relative; }
+    .diagram-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #8b5cf6, #06b6d4, #10b981); }
+    .diagram-title { font-size: 1.5rem; color: #f59e0b; margin-bottom: 1.5rem; }
+    .flow-visual { display: flex; justify-content: center; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 2rem; }
+    .node { padding: 1rem 1.5rem; border-radius: 12px; font-weight: 600; text-align: center; transition: transform 0.3s ease; min-width: 120px; }
+    .node:hover { transform: scale(1.05); }
+    .node-icon { font-size: 2rem; margin-bottom: 0.5rem; display: block; }
+    .node-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 30px rgba(139,92,246,0.4); }
+    .node-green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 30px rgba(16,185,129,0.4); }
+    .node-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 30px rgba(59,130,246,0.4); }
+    .node-orange { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 30px rgba(245,158,11,0.4); }
+    .node-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 10px 30px rgba(6,182,212,0.4); }
+    .arrow { font-size: 1.5rem; color: #8b5cf6; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .info-card { background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(6,182,212,0.1)); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(139,92,246,0.3); transition: transform 0.3s ease; }
+    .info-card:hover { transform: translateY(-5px); }
+    .info-card h4 { color: #06b6d4; font-size: 1.2rem; margin-bottom: 0.75rem; }
+    .info-card p { color: #d1d5db; line-height: 1.6; }
+    .feature-list { list-style: none; }
+    .feature-list li { padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 0.5rem; }
+    .feature-list li:last-child { border-bottom: none; }
+    .comparison-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .comparison-box { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 1.5rem; border-left: 4px solid; }
+    .comparison-box.jwt { border-color: #10b981; }
+    .comparison-box.session { border-color: #3b82f6; }
+    .comparison-box.oauth { border-color: #f59e0b; }
+    .comparison-box h4 { margin-bottom: 0.75rem; font-size: 1.2rem; }
+    .jwt h4 { color: #10b981; }
+    .session h4 { color: #3b82f6; }
+    .oauth h4 { color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <div class="bg-animation"><span></span><span></span><span></span><span></span><span></span></div>
+  <header>
+    <h1>🔐 Microservices Authentication</h1>
+    <p class="subtitle">Securing Distributed Systems - JWT, OAuth, SSO</p>
+  </header>
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="strategies">Strategies</button>
+    <button class="tab" data-tab="jwt">JWT Auth</button>
+    <button class="tab" data-tab="oauth">OAuth 2.0</button>
+    <button class="tab" data-tab="patterns">Patterns</button>
+  </div>
+
+  <div id="overview" class="content active">
+    <h2 class="section-title">🎯 Authentication Challenges</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🔓 The Problem</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>🌐 Distributed Services</h4><p>Multiple services need to verify user identity. Can't share session state easily.</p></div>
+        <div class="info-card"><h4>🔄 Service-to-Service</h4><p>Internal services also need authentication. How do they trust each other?</p></div>
+        <div class="info-card"><h4>📈 Scalability</h4><p>Stateful sessions don't scale. Need stateless authentication mechanism.</p></div>
+        <div class="info-card"><h4>🔐 Single Sign-On</h4><p>Users expect to login once and access all services seamlessly.</p></div>
+      </div>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Auth Flow Overview</div>
+      <div class="flow-visual">
+        <div class="node node-blue"><span class="node-icon">👤</span>User</div>
+        <span class="arrow">→</span>
+        <div class="node node-purple"><span class="node-icon">🚪</span>API Gateway</div>
+        <span class="arrow">→</span>
+        <div class="node node-orange"><span class="node-icon">🔑</span>Auth Service</div>
+        <span class="arrow">→</span>
+        <div class="node node-green"><span class="node-icon">🎫</span>Token</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="strategies" class="content">
+    <h2 class="section-title">🎯 Authentication Strategies</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📋 Common Approaches</div>
+      <div class="comparison-grid">
+        <div class="comparison-box jwt"><h4>🎫 JWT (JSON Web Token)</h4><p>• Stateless, self-contained<br>• Contains user claims<br>• Signed & optionally encrypted<br>• No server-side session storage</p></div>
+        <div class="comparison-box session"><h4>🍪 Session-Based</h4><p>• Session stored server-side<br>• Cookie contains session ID<br>• Requires session store (Redis)<br>• Better for monoliths</p></div>
+        <div class="comparison-box oauth"><h4>🔐 OAuth 2.0 / OIDC</h4><p>• Delegated authorization<br>• Works with identity providers<br>• Access + Refresh tokens<br>• Industry standard</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="jwt" class="content">
+    <h2 class="section-title">🎫 JWT Authentication</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📦 JWT Structure</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>📋 Header</h4><p>Algorithm (HS256, RS256) and token type. Base64 encoded.</p></div>
+        <div class="info-card"><h4>📝 Payload</h4><p>Claims: sub, iat, exp, custom data. Contains user info.</p></div>
+        <div class="info-card"><h4>🔏 Signature</h4><p>HMAC or RSA signature. Ensures token integrity.</p></div>
+      </div>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">✅ JWT Best Practices</div>
+      <ul class="feature-list">
+        <li>⏱️ <strong>Short Expiry:</strong> Access tokens should expire in 15-60 minutes</li>
+        <li>🔄 <strong>Refresh Tokens:</strong> Use refresh tokens to get new access tokens</li>
+        <li>🔐 <strong>Use RS256:</strong> Asymmetric signing for microservices (public key verification)</li>
+        <li>📦 <strong>Minimal Claims:</strong> Don't store sensitive data in JWT payload</li>
+        <li>🚫 <strong>Blacklisting:</strong> Implement token revocation for logout/security</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="oauth" class="content">
+    <h2 class="section-title">🔐 OAuth 2.0 & OIDC</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🔄 OAuth Flow</div>
+      <div class="flow-visual">
+        <div class="node node-blue"><span class="node-icon">👤</span>User</div>
+        <span class="arrow">→</span>
+        <div class="node node-purple"><span class="node-icon">📱</span>Client App</div>
+        <span class="arrow">→</span>
+        <div class="node node-orange"><span class="node-icon">🏛️</span>Auth Server</div>
+        <span class="arrow">→</span>
+        <div class="node node-green"><span class="node-icon">🎫</span>Tokens</div>
+      </div>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">🎯 Grant Types</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>🔐 Authorization Code</h4><p>Best for web apps. Secure server-side exchange.</p></div>
+        <div class="info-card"><h4>🔑 Client Credentials</h4><p>Machine-to-machine. Service-to-service auth.</p></div>
+        <div class="info-card"><h4>🔄 Refresh Token</h4><p>Get new access token without re-login.</p></div>
+        <div class="info-card"><h4>📱 PKCE</h4><p>For mobile/SPA apps. Prevents code interception.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="patterns" class="content">
+    <h2 class="section-title">🏗️ Auth Patterns</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📐 Common Patterns</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>🚪 Gateway Authentication</h4><p>API Gateway validates tokens. Services receive verified claims.</p></div>
+        <div class="info-card"><h4>🔗 Token Propagation</h4><p>Pass user token between services. Each service validates.</p></div>
+        <div class="info-card"><h4>🤝 Mutual TLS</h4><p>Service-to-service auth using certificates.</p></div>
+        <div class="info-card"><h4>🎭 Service Mesh</h4><p>Istio/Linkerd handles auth at infrastructure level.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

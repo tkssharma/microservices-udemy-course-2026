@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Microservices Monitoring Platforms</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0c0a1d 0%, #1a1433 50%, #0c0a1d 100%); min-height: 100vh; color: #fff; }
+    .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+    .bg-animation span { position: absolute; display: block; width: 20px; height: 20px; background: rgba(99,102,241,0.1); animation: move 25s linear infinite; bottom: -150px; border-radius: 50%; }
+    .bg-animation span:nth-child(1) { left: 25%; width: 80px; height: 80px; }
+    .bg-animation span:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; }
+    .bg-animation span:nth-child(3) { left: 70%; width: 30px; height: 30px; animation-delay: 4s; }
+    .bg-animation span:nth-child(4) { left: 40%; width: 60px; height: 60px; }
+    @keyframes move { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-1000px); opacity: 0; } }
+    header { text-align: center; padding: 3rem 2rem; }
+    h1 { font-size: 2.5rem; font-weight: 700; background: linear-gradient(90deg, #6366f1, #ec4899, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: #a5b4fc; font-size: 1.2rem; margin-top: 0.5rem; }
+    .tabs { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; padding: 0 2rem; margin-bottom: 2rem; }
+    .tab { padding: 1rem 1.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    .tab:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+    .tab.active { background: linear-gradient(135deg, #6366f1, #ec4899); border: none; }
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 2rem; color: #6366f1; }
+    .diagram-container { background: rgba(12,10,29,0.8); border-radius: 24px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(99,102,241,0.3); position: relative; }
+    .diagram-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #6366f1, #ec4899, #f97316); }
+    .diagram-title { font-size: 1.5rem; color: #fbbf24; margin-bottom: 1.5rem; }
+    .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+    .tool-card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 1.5rem; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s ease; }
+    .tool-card:hover { transform: translateY(-5px); border-color: #6366f1; box-shadow: 0 20px 40px rgba(99,102,241,0.3); }
+    .tool-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .tool-card h4 { color: #fff; margin-bottom: 0.5rem; font-size: 1.1rem; }
+    .tool-card p { color: #94a3b8; font-size: 0.85rem; }
+    .tool-card .type { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; margin-top: 0.5rem; }
+    .type.metrics { background: rgba(59,130,246,0.2); color: #60a5fa; }
+    .type.logs { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+    .type.traces { background: rgba(168,85,247,0.2); color: #c4b5fd; }
+    .type.apm { background: rgba(236,72,153,0.2); color: #f9a8d4; }
+    .type.full { background: rgba(249,115,22,0.2); color: #fdba74; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .info-card { background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(236,72,153,0.1)); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(99,102,241,0.3); transition: transform 0.3s ease; }
+    .info-card:hover { transform: translateY(-5px); }
+    .info-card h4 { color: #a5b4fc; font-size: 1.2rem; margin-bottom: 0.75rem; }
+    .info-card p { color: #d1d5db; line-height: 1.6; }
+    .feature-list { list-style: none; }
+    .feature-list li { padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 0.5rem; }
+    .feature-list li:last-child { border-bottom: none; }
+    .category-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .category-box { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 1.5rem; border-left: 4px solid; }
+    .category-box.opensource { border-color: #10b981; }
+    .category-box.saas { border-color: #3b82f6; }
+    .category-box.cloud { border-color: #f97316; }
+    .category-box h4 { margin-bottom: 0.75rem; font-size: 1.2rem; }
+    .opensource h4 { color: #10b981; }
+    .saas h4 { color: #3b82f6; }
+    .cloud h4 { color: #f97316; }
+  </style>
+</head>
+<body>
+  <div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+  <header>
+    <h1>📊 Monitoring Platforms</h1>
+    <p class="subtitle">Tools to Monitor Microservices at Scale</p>
+  </header>
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="opensource">Open Source</button>
+    <button class="tab" data-tab="saas">SaaS Platforms</button>
+    <button class="tab" data-tab="cloud">Cloud Native</button>
+    <button class="tab" data-tab="choose">How to Choose</button>
+  </div>
+
+  <div id="overview" class="content active">
+    <h2 class="section-title">🎯 Monitoring Landscape</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🛠️ Popular Tools</div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="tool-icon">📈</div><h4>Prometheus</h4><p>Metrics collection & alerting</p><span class="type metrics">Metrics</span></div>
+        <div class="tool-card"><div class="tool-icon">📊</div><h4>Grafana</h4><p>Visualization & dashboards</p><span class="type full">Dashboards</span></div>
+        <div class="tool-card"><div class="tool-icon">🔗</div><h4>Jaeger</h4><p>Distributed tracing</p><span class="type traces">Traces</span></div>
+        <div class="tool-card"><div class="tool-icon">📝</div><h4>ELK Stack</h4><p>Log aggregation & search</p><span class="type logs">Logs</span></div>
+        <div class="tool-card"><div class="tool-icon">🐕</div><h4>Datadog</h4><p>Full observability platform</p><span class="type apm">APM</span></div>
+        <div class="tool-card"><div class="tool-icon">🆕</div><h4>New Relic</h4><p>Application performance</p><span class="type apm">APM</span></div>
+      </div>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">📋 What to Monitor</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>📈 Metrics</h4><p>CPU, memory, latency, throughput, error rates. Numeric time-series data.</p></div>
+        <div class="info-card"><h4>📝 Logs</h4><p>Application events, errors, audit trails. Structured JSON preferred.</p></div>
+        <div class="info-card"><h4>🔗 Traces</h4><p>Request flow across services. Identify bottlenecks and failures.</p></div>
+        <div class="info-card"><h4>🚨 Alerts</h4><p>Notify on anomalies. PagerDuty, Slack, email integrations.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="opensource" class="content">
+    <h2 class="section-title">🔓 Open Source Stack</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🛠️ Popular Open Source Tools</div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="tool-icon">📈</div><h4>Prometheus</h4><p>Pull-based metrics. PromQL queries. CNCF graduated.</p></div>
+        <div class="tool-card"><div class="tool-icon">📊</div><h4>Grafana</h4><p>Beautiful dashboards. Multiple data sources.</p></div>
+        <div class="tool-card"><div class="tool-icon">📝</div><h4>Loki</h4><p>Log aggregation. Like Prometheus but for logs.</p></div>
+        <div class="tool-card"><div class="tool-icon">🔗</div><h4>Jaeger</h4><p>Distributed tracing. Uber open-sourced.</p></div>
+        <div class="tool-card"><div class="tool-icon">📦</div><h4>OpenTelemetry</h4><p>Unified telemetry standard. Vendor neutral.</p></div>
+        <div class="tool-card"><div class="tool-icon">🔍</div><h4>Elasticsearch</h4><p>Search & analytics. Part of ELK stack.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="saas" class="content">
+    <h2 class="section-title">☁️ SaaS Platforms</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">💳 Commercial Platforms</div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="tool-icon">🐕</div><h4>Datadog</h4><p>Full platform. Metrics, logs, traces, APM.</p></div>
+        <div class="tool-card"><div class="tool-icon">🆕</div><h4>New Relic</h4><p>APM leader. Full-stack observability.</p></div>
+        <div class="tool-card"><div class="tool-icon">📊</div><h4>Splunk</h4><p>Enterprise logs. Security & SIEM.</p></div>
+        <div class="tool-card"><div class="tool-icon">🍯</div><h4>Honeycomb</h4><p>High-cardinality observability. Debug complex systems.</p></div>
+        <div class="tool-card"><div class="tool-icon">📈</div><h4>Dynatrace</h4><p>AI-powered. Auto-discovery.</p></div>
+        <div class="tool-card"><div class="tool-icon">🔔</div><h4>PagerDuty</h4><p>Incident management & alerting.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="cloud" class="content">
+    <h2 class="section-title">🌐 Cloud Native</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">☁️ Cloud Provider Tools</div>
+      <div class="category-grid">
+        <div class="category-box cloud"><h4>🟠 AWS</h4><p>• CloudWatch (metrics, logs)<br>• X-Ray (tracing)<br>• CloudTrail (audit)</p></div>
+        <div class="category-box cloud"><h4>🔵 Azure</h4><p>• Azure Monitor<br>• Application Insights<br>• Log Analytics</p></div>
+        <div class="category-box cloud"><h4>🟢 GCP</h4><p>• Cloud Monitoring<br>• Cloud Logging<br>• Cloud Trace</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="choose" class="content">
+    <h2 class="section-title">🤔 How to Choose</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📋 Decision Factors</div>
+      <div class="category-grid">
+        <div class="category-box opensource"><h4>Choose Open Source</h4><p>• Budget constraints<br>• Full control needed<br>• Customization required<br>• Team has expertise</p></div>
+        <div class="category-box saas"><h4>Choose SaaS</h4><p>• Quick setup needed<br>• Less ops overhead<br>• Enterprise support<br>• Advanced features</p></div>
+        <div class="category-box cloud"><h4>Choose Cloud Native</h4><p>• Single cloud strategy<br>• Deep integration needed<br>• Already paying for cloud<br>• Simple requirements</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

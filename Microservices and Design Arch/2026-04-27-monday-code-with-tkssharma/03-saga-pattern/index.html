@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saga Pattern - Distributed Transactions</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .bg-animation {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .bg-animation span {
+      position: absolute;
+      display: block;
+      width: 20px; height: 20px;
+      background: rgba(139,92,246,0.1);
+      animation: move 25s linear infinite;
+      bottom: -150px;
+      border-radius: 50%;
+    }
+
+    .bg-animation span:nth-child(1) { left: 25%; width: 80px; height: 80px; animation-delay: 0s; }
+    .bg-animation span:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; }
+    .bg-animation span:nth-child(3) { left: 70%; width: 20px; height: 20px; animation-delay: 4s; }
+    .bg-animation span:nth-child(4) { left: 40%; width: 60px; height: 60px; animation-delay: 0s; }
+    .bg-animation span:nth-child(5) { left: 65%; width: 20px; height: 20px; animation-delay: 0s; }
+
+    @keyframes move {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; }
+    }
+
+    header { text-align: center; padding: 3rem 2rem; }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #8b5cf6, #06b6d4, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle { color: #a78bfa; font-size: 1.2rem; margin-top: 0.5rem; }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 0 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .tab {
+      padding: 1rem 1.5rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .tab:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+    .tab.active { background: linear-gradient(135deg, #8b5cf6, #06b6d4); border: none; }
+
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 2rem; color: #8b5cf6; }
+
+    .diagram-container {
+      background: rgba(15,15,35,0.8);
+      border-radius: 24px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(139,92,246,0.3);
+      position: relative;
+    }
+
+    .diagram-container::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #8b5cf6, #06b6d4, #10b981);
+    }
+
+    .diagram-title { font-size: 1.5rem; color: #f59e0b; margin-bottom: 1.5rem; }
+
+    .saga-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .saga-step {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .step-node {
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      min-width: 150px;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .step-node:hover { transform: scale(1.05); }
+
+    .step-action { background: linear-gradient(135deg, #10b981, #059669); }
+    .step-compensate { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+    .step-arrow {
+      flex: 1;
+      height: 3px;
+      background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+      position: relative;
+    }
+
+    .step-arrow::after {
+      content: '→';
+      position: absolute;
+      right: -10px;
+      top: -12px;
+      font-size: 1.5rem;
+      color: #06b6d4;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .comparison-grid { grid-template-columns: 1fr; }
+    }
+
+    .comparison-box {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 2px solid;
+    }
+
+    .comparison-box.choreography { border-color: rgba(16,185,129,0.5); }
+    .comparison-box.orchestration { border-color: rgba(59,130,246,0.5); }
+
+    .comparison-header { font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; }
+    .choreography .comparison-header { color: #10b981; }
+    .orchestration .comparison-header { color: #3b82f6; }
+
+    .feature-list { list-style: none; }
+    .feature-list li {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .feature-list li:last-child { border-bottom: none; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .info-card {
+      background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(6,182,212,0.1));
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid rgba(139,92,246,0.3);
+      transition: transform 0.3s ease;
+    }
+
+    .info-card:hover { transform: translateY(-5px); }
+    .info-card h4 { color: #06b6d4; font-size: 1.2rem; margin-bottom: 0.75rem; }
+    .info-card p { color: #d1d5db; line-height: 1.6; }
+
+    .flow-visual {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 2rem;
+    }
+
+    .node {
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .node-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 30px rgba(139,92,246,0.4); }
+    .node-green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 30px rgba(16,185,129,0.4); }
+    .node-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 30px rgba(59,130,246,0.4); }
+    .node-orange { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 30px rgba(245,158,11,0.4); }
+    .node-red { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 10px 30px rgba(239,68,68,0.4); }
+
+    .arrow { font-size: 1.5rem; color: #8b5cf6; }
+  </style>
+</head>
+<body>
+  <div class="bg-animation">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+
+  <header>
+    <h1>🔄 Saga Pattern</h1>
+    <p class="subtitle">Managing Distributed Transactions in Microservices</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="problem">The Problem</button>
+    <button class="tab" data-tab="choreography">Choreography</button>
+    <button class="tab" data-tab="orchestration">Orchestration</button>
+    <button class="tab" data-tab="compensation">Compensation</button>
+    <button class="tab" data-tab="example">Real Example</button>
+  </div>
+
+  <!-- Overview -->
+  <div id="overview" class="content active">
+    <h2 class="section-title">📚 What is the Saga Pattern?</h2>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🎯 Definition</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>📖 Saga Pattern</h4>
+          <p>A sequence of local transactions where each transaction updates data within a single service. If one step fails, compensating transactions are executed to undo previous changes.</p>
+        </div>
+        <div class="info-card">
+          <h4>🎯 Purpose</h4>
+          <p>Maintain data consistency across multiple microservices without using distributed ACID transactions (2PC).</p>
+        </div>
+        <div class="info-card">
+          <h4>⚡ Key Concept</h4>
+          <p>Instead of one big transaction, break it into smaller local transactions with compensating actions for rollback.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🔄 Saga Flow</div>
+      <div class="flow-visual">
+        <div class="node node-green">T1: Create Order</div>
+        <span class="arrow">→</span>
+        <div class="node node-blue">T2: Reserve Stock</div>
+        <span class="arrow">→</span>
+        <div class="node node-purple">T3: Process Payment</div>
+        <span class="arrow">→</span>
+        <div class="node node-orange">T4: Ship Order</div>
+      </div>
+      <p style="text-align: center; color: #a78bfa; margin-top: 1rem;">Each step is a local transaction. If T3 fails, compensating transactions C2, C1 are executed.</p>
+    </div>
+  </div>
+
+  <!-- Problem -->
+  <div id="problem" class="content">
+    <h2 class="section-title">❌ The Problem with Distributed Transactions</h2>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🏛️ Traditional ACID Transactions</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>✅ Works in Monolith</h4>
+          <p>Single database, single transaction. BEGIN → operations → COMMIT/ROLLBACK. Simple and reliable.</p>
+        </div>
+        <div class="info-card">
+          <h4>❌ Fails in Microservices</h4>
+          <p>Multiple databases, multiple services. Can't lock resources across service boundaries.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🚫 Why 2PC (Two-Phase Commit) Doesn't Work</div>
+      <ul class="feature-list">
+        <li>🔒 <strong>Blocking:</strong> All participants locked until coordinator decides</li>
+        <li>⏱️ <strong>Latency:</strong> Multiple network round-trips add significant delay</li>
+        <li>💥 <strong>Single Point of Failure:</strong> If coordinator crashes, all participants stuck</li>
+        <li>📈 <strong>Scalability:</strong> Doesn't scale well with many services</li>
+        <li>🔗 <strong>Coupling:</strong> Services tightly coupled to transaction coordinator</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Choreography -->
+  <div id="choreography" class="content">
+    <h2 class="section-title">💃 Choreography-Based Saga</h2>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🎭 How It Works</div>
+      <div class="info-card" style="margin-bottom: 1.5rem;">
+        <h4>📢 Event-Driven</h4>
+        <p>Each service publishes events after completing its local transaction. Other services listen and react to these events. No central coordinator.</p>
+      </div>
+
+      <div class="flow-visual">
+        <div class="node node-green">Order Service<br><small>OrderCreated →</small></div>
+        <span class="arrow">📢</span>
+        <div class="node node-blue">Inventory<br><small>StockReserved →</small></div>
+        <span class="arrow">📢</span>
+        <div class="node node-purple">Payment<br><small>PaymentProcessed →</small></div>
+        <span class="arrow">📢</span>
+        <div class="node node-orange">Shipping<br><small>OrderShipped</small></div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">✅ Pros & ❌ Cons</div>
+      <div class="comparison-grid">
+        <div class="comparison-box choreography">
+          <div class="comparison-header">✅ Advantages</div>
+          <ul class="feature-list">
+            <li>🔓 Loose coupling between services</li>
+            <li>📈 Simple for small number of steps</li>
+            <li>🚀 No single point of failure</li>
+            <li>⚡ Low latency</li>
+          </ul>
+        </div>
+        <div class="comparison-box" style="border-color: rgba(239,68,68,0.5);">
+          <div class="comparison-header" style="color: #ef4444;">❌ Disadvantages</div>
+          <ul class="feature-list">
+            <li>🔍 Hard to track overall flow</li>
+            <li>🌀 Risk of cyclic dependencies</li>
+            <li>🧪 Complex testing</li>
+            <li>📊 Difficult to add new steps</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orchestration -->
+  <div id="orchestration" class="content">
+    <h2 class="section-title">🎼 Orchestration-Based Saga</h2>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🎯 How It Works</div>
+      <div class="info-card" style="margin-bottom: 1.5rem;">
+        <h4>🎭 Central Orchestrator</h4>
+        <p>A dedicated orchestrator service coordinates the saga. It tells each participant what to do and handles the overall flow and compensations.</p>
+      </div>
+
+      <div class="flow-visual">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+          <div class="node node-purple" style="font-size: 1.2rem;">🎼 Saga Orchestrator</div>
+          <div style="display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center;">
+            <div class="node node-green">Order</div>
+            <div class="node node-blue">Inventory</div>
+            <div class="node node-orange">Payment</div>
+            <div class="node node-red">Shipping</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">✅ Pros & ❌ Cons</div>
+      <div class="comparison-grid">
+        <div class="comparison-box orchestration">
+          <div class="comparison-header">✅ Advantages</div>
+          <ul class="feature-list">
+            <li>🔍 Easy to understand flow</li>
+            <li>📊 Centralized monitoring</li>
+            <li>🧪 Easier testing</li>
+            <li>➕ Easy to add/modify steps</li>
+          </ul>
+        </div>
+        <div class="comparison-box" style="border-color: rgba(239,68,68,0.5);">
+          <div class="comparison-header" style="color: #ef4444;">❌ Disadvantages</div>
+          <ul class="feature-list">
+            <li>💥 Single point of failure risk</li>
+            <li>🔗 More coupling to orchestrator</li>
+            <li>🏗️ Additional infrastructure</li>
+            <li>📦 Orchestrator can become complex</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compensation -->
+  <div id="compensation" class="content">
+    <h2 class="section-title">⏪ Compensating Transactions</h2>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🔄 What is Compensation?</div>
+      <div class="info-card">
+        <h4>↩️ Undo Actions</h4>
+        <p>A compensating transaction undoes the effect of a previous transaction. It's not a rollback — it's a new transaction that semantically reverses the previous one.</p>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">📋 Example Compensations</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>✅ Action: Create Order</h4>
+          <p>↩️ Compensation: Cancel Order</p>
+        </div>
+        <div class="info-card">
+          <h4>✅ Action: Reserve Stock</h4>
+          <p>↩️ Compensation: Release Stock</p>
+        </div>
+        <div class="info-card">
+          <h4>✅ Action: Charge Payment</h4>
+          <p>↩️ Compensation: Refund Payment</p>
+        </div>
+        <div class="info-card">
+          <h4>✅ Action: Ship Order</h4>
+          <p>↩️ Compensation: Recall Shipment / Process Return</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Example -->
+  <div id="example" class="content">
+    <h2 class="section-title">🛒 Real-World Example: E-Commerce Order</h2>
+
+    <div class="diagram-container">
+      <div class="diagram-title">✅ Happy Path</div>
+      <div class="saga-flow">
+        <div class="saga-step">
+          <div class="step-node step-action">1. Create Order</div>
+          <div class="step-arrow"></div>
+          <div class="step-node step-action">2. Reserve Stock</div>
+          <div class="step-arrow"></div>
+          <div class="step-node step-action">3. Process Payment</div>
+          <div class="step-arrow"></div>
+          <div class="step-node step-action">4. Ship Order ✅</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">❌ Failure at Payment → Compensation</div>
+      <div class="saga-flow">
+        <div class="saga-step">
+          <div class="step-node step-action">1. Create Order ✅</div>
+          <div class="step-arrow"></div>
+          <div class="step-node step-action">2. Reserve Stock ✅</div>
+          <div class="step-arrow"></div>
+          <div class="step-node step-compensate">3. Payment Failed ❌</div>
+        </div>
+        <p style="color: #f59e0b; margin: 1rem 0;">⬇️ Trigger Compensating Transactions</p>
+        <div class="saga-step">
+          <div class="step-node step-compensate">C2. Release Stock</div>
+          <div class="step-arrow"></div>
+          <div class="step-node step-compensate">C1. Cancel Order</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

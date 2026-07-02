@@ -1,0 +1,1478 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lambda vs ECS vs Kubernetes - Where to Deploy Microservices?</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap');
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        min-height: 100vh;
+        color: #fff;
+      }
+      .bg-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+      }
+      .bg-animation span {
+        position: absolute;
+        display: block;
+        width: 20px;
+        height: 20px;
+        background: rgba(34, 197, 94, 0.1);
+        animation: move 25s linear infinite;
+        bottom: -150px;
+        border-radius: 50%;
+      }
+      .bg-animation span:nth-child(1) {
+        left: 25%;
+        width: 80px;
+        height: 80px;
+      }
+      .bg-animation span:nth-child(2) {
+        left: 10%;
+        width: 20px;
+        height: 20px;
+        animation-delay: 2s;
+      }
+      .bg-animation span:nth-child(3) {
+        left: 70%;
+        width: 30px;
+        height: 30px;
+        animation-delay: 4s;
+      }
+      .bg-animation span:nth-child(4) {
+        left: 40%;
+        width: 60px;
+        height: 60px;
+      }
+      @keyframes move {
+        0% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-1000px);
+          opacity: 0;
+        }
+      }
+      header {
+        text-align: center;
+        padding: 2rem 2rem 1rem;
+      }
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #f97316, #3b82f6, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .subtitle {
+        color: #86efac;
+        font-size: 1.2rem;
+        margin-top: 0.5rem;
+      }
+      .hook-banner {
+        background: linear-gradient(135deg, #f97316, #ef4444);
+        padding: 1rem 2rem;
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0 2rem 1.5rem;
+        border-radius: 16px;
+      }
+      .tabs {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        padding: 0 2rem;
+        margin-bottom: 2rem;
+      }
+      .tab {
+        padding: 0.75rem 1.25rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+      }
+      .tab:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+      }
+      .tab.active {
+        background: linear-gradient(135deg, #22c55e, #3b82f6);
+        border: none;
+      }
+      .content {
+        display: none;
+        padding: 0 2rem 3rem;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      .content.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .section-title {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 2rem;
+        color: #22c55e;
+      }
+      .diagram-container {
+        background: rgba(15, 23, 42, 0.8);
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        position: relative;
+      }
+      .diagram-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #22c55e, #3b82f6, #f97316);
+        border-radius: 24px 24px 0 0;
+      }
+      .diagram-title {
+        font-size: 1.3rem;
+        color: #fbbf24;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-weight: 700;
+      }
+      .platform-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+      }
+      @media (max-width: 900px) {
+        .platform-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .platform-box {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 2px solid;
+        text-align: center;
+        transition: transform 0.3s ease;
+      }
+      .platform-box:hover {
+        transform: translateY(-5px);
+      }
+      .platform-box.lambda {
+        border-color: rgba(249, 115, 22, 0.5);
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.05));
+      }
+      .platform-box.ecs {
+        border-color: rgba(59, 130, 246, 0.5);
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+      }
+      .platform-box.k8s {
+        border-color: rgba(139, 92, 246, 0.5);
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+      }
+      .platform-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+      .platform-box h3 {
+        font-size: 1.4rem;
+        margin-bottom: 0.5rem;
+      }
+      .lambda h3 {
+        color: #f97316;
+      }
+      .ecs h3 {
+        color: #3b82f6;
+      }
+      .k8s h3 {
+        color: #8b5cf6;
+      }
+      .platform-box p {
+        color: #d1d5db;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+      }
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+      .info-card {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.1));
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        transition: transform 0.3s ease;
+      }
+      .info-card:hover {
+        transform: translateY(-5px);
+      }
+      .info-card h4 {
+        color: #86efac;
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+      }
+      .info-card p {
+        color: #d1d5db;
+        line-height: 1.6;
+        font-size: 0.9rem;
+      }
+      .feature-list {
+        list-style: none;
+        text-align: left;
+      }
+      .feature-list li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.9rem;
+      }
+      .feature-list li:last-child {
+        border-bottom: none;
+      }
+      .vs-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        font-size: 0.85rem;
+      }
+      .vs-table th,
+      .vs-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .vs-table th {
+        color: #fbbf24;
+        background: rgba(0, 0, 0, 0.2);
+      }
+      .vs-table td:nth-child(2) {
+        color: #f97316;
+      }
+      .vs-table td:nth-child(3) {
+        color: #3b82f6;
+      }
+      .vs-table td:nth-child(4) {
+        color: #8b5cf6;
+      }
+      .arch-diagram {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+      }
+      .arch-layer {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .arch-node {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        text-align: center;
+        min-width: 120px;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .arch-arrow {
+        font-size: 1.5rem;
+        color: #a78bfa;
+      }
+      .code-block {
+        background: #1e1e2e;
+        border-radius: 12px;
+        padding: 1.5rem;
+        overflow-x: auto;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.8rem;
+        line-height: 1.6;
+        margin-top: 1rem;
+      }
+      .usecase-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+      .usecase-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border-left: 4px solid;
+      }
+      .usecase-card.lambda-case {
+        border-color: #f97316;
+      }
+      .usecase-card.ecs-case {
+        border-color: #3b82f6;
+      }
+      .usecase-card.k8s-case {
+        border-color: #8b5cf6;
+      }
+      .usecase-card h4 {
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+      }
+      .usecase-card p {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+      .company-tag {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        margin-top: 0.75rem;
+      }
+      .flow-decision {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+      .decision-box {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        color: #000;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 700;
+        text-align: center;
+      }
+      .decision-options {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .decision-path {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .decision-answer {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+      .yes {
+        background: #10b981;
+      }
+      .no {
+        background: #ef4444;
+      }
+      .result-box {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 700;
+      }
+      .cost-bar {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .cost-label {
+        width: 120px;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .cost-track {
+        flex: 1;
+        height: 35px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .cost-fill {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 1rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        border-radius: 8px;
+      }
+      .thumb-preview {
+        width: 100%;
+        max-width: 640px;
+        aspect-ratio: 16/9;
+        margin: 0 auto;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+      }
+      .metric-card {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(109, 40, 217, 0.1));
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+      }
+      .metric-value {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #10b981, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .metric-label {
+        color: #a78bfa;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+    <header>
+      <h1>⚡ Lambda vs ECS vs Kubernetes</h1>
+      <p class="subtitle">Where Should You Deploy Your Microservices?</p>
+    </header>
+    <div class="hook-banner">
+      🤔 Choosing WRONG platform = 10x higher costs & sleepless nights! Here's how the BIG companies decide →
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="overview">📊 Overview</button>
+      <button class="tab" data-tab="lambda">⚡ Lambda</button>
+      <button class="tab" data-tab="ecs">🐳 ECS/Fargate</button>
+      <button class="tab" data-tab="k8s">☸️ Kubernetes</button>
+      <button class="tab" data-tab="architecture">🏗️ Architecture</button>
+      <button class="tab" data-tab="usecases">💼 Use Cases</button>
+      <button class="tab" data-tab="decision">🎯 Decision Flow</button>
+      <button class="tab" data-tab="comparison">⚔️ Comparison</button>
+      <button class="tab" data-tab="costs">💰 Costs</button>
+      <button class="tab" data-tab="thumbnail">🎨 Thumbnail</button>
+    </div>
+
+    <div id="overview" class="content active">
+      <h2 class="section-title">🎯 Platform Overview</h2>
+      <div class="diagram-container">
+        <div class="diagram-title">☁️ Deployment Options</div>
+        <div class="platform-grid">
+          <div class="platform-box lambda">
+            <div class="platform-icon">⚡</div>
+            <h3>AWS Lambda</h3>
+            <p>Serverless functions. Pay per invocation.</p>
+            <ul class="feature-list">
+              <li>✅ Zero server management</li>
+              <li>✅ Auto-scaling to zero</li>
+              <li>✅ Pay only when running</li>
+              <li>❌ 15 min timeout</li>
+            </ul>
+          </div>
+          <div class="platform-box ecs">
+            <div class="platform-icon">🐳</div>
+            <h3>ECS/Fargate</h3>
+            <p>Managed containers. AWS native.</p>
+            <ul class="feature-list">
+              <li>✅ Docker containers</li>
+              <li>✅ AWS integrated</li>
+              <li>✅ Simpler than K8s</li>
+              <li>❌ AWS lock-in</li>
+            </ul>
+          </div>
+          <div class="platform-box k8s">
+            <div class="platform-icon">☸️</div>
+            <h3>Kubernetes</h3>
+            <p>Container orchestration. Full control.</p>
+            <ul class="feature-list">
+              <li>✅ Multi-cloud portable</li>
+              <li>✅ Rich ecosystem</li>
+              <li>✅ Full flexibility</li>
+              <li>❌ Complex operations</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="lambda" class="content">
+      <h2 class="section-title">⚡ AWS Lambda</h2>
+      <div class="diagram-container">
+        <div class="diagram-title">📦 Key Features</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>🚀 Serverless</h4>
+            <p>No servers to manage. AWS handles scaling, patching, availability.</p>
+          </div>
+          <div class="info-card">
+            <h4>💰 Pay Per Use</h4>
+            <p>Charged per request and compute time. Scale to zero = zero cost.</p>
+          </div>
+          <div class="info-card">
+            <h4>🔗 Event-Driven</h4>
+            <p>Triggered by API Gateway, S3, SQS, DynamoDB, CloudWatch.</p>
+          </div>
+          <div class="info-card">
+            <h4>⚡ Fast Deploy</h4>
+            <p>Deploy in seconds. No container builds needed.</p>
+          </div>
+        </div>
+      </div>
+      <div class="diagram-container">
+        <div class="diagram-title">🎯 Best For</div>
+        <ul class="feature-list">
+          <li>📨 API endpoints with variable traffic</li>
+          <li>🔄 Event processing (S3, SQS, Kinesis)</li>
+          <li>⏰ Scheduled tasks and cron jobs</li>
+          <li>🔌 Backend for mobile/web apps</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="ecs" class="content">
+      <h2 class="section-title">🐳 ECS/Fargate</h2>
+      <div class="diagram-container">
+        <div class="diagram-title">📦 Key Features</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>🐳 Docker Native</h4>
+            <p>Run any Docker container. Standard tooling and images.</p>
+          </div>
+          <div class="info-card">
+            <h4>☁️ Fargate</h4>
+            <p>Serverless containers. No EC2 instances to manage.</p>
+          </div>
+          <div class="info-card">
+            <h4>🔗 AWS Integration</h4>
+            <p>Deep integration with ALB, CloudWatch, IAM, VPC.</p>
+          </div>
+          <div class="info-card">
+            <h4>📈 Auto Scaling</h4>
+            <p>Scale based on CPU, memory, custom metrics.</p>
+          </div>
+        </div>
+      </div>
+      <div class="diagram-container">
+        <div class="diagram-title">🎯 Best For</div>
+        <ul class="feature-list">
+          <li>🏃 Long-running services and APIs</li>
+          <li>🐳 Existing Docker workloads</li>
+          <li>☁️ AWS-centric organizations</li>
+          <li>📊 Predictable workloads</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="k8s" class="content">
+      <h2 class="section-title">☸️ Kubernetes</h2>
+      <div class="diagram-container">
+        <div class="diagram-title">📦 Key Features</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>🌐 Multi-Cloud</h4>
+            <p>Run on AWS (EKS), GCP (GKE), Azure (AKS), on-prem.</p>
+          </div>
+          <div class="info-card">
+            <h4>🔧 Rich Ecosystem</h4>
+            <p>Helm, Istio, ArgoCD, Prometheus. Huge community.</p>
+          </div>
+          <div class="info-card">
+            <h4>📊 Full Control</h4>
+            <p>Custom networking, storage, scheduling policies.</p>
+          </div>
+          <div class="info-card">
+            <h4>🔄 Self-Healing</h4>
+            <p>Auto-restart, auto-scaling, rolling deployments.</p>
+          </div>
+        </div>
+      </div>
+      <div class="diagram-container">
+        <div class="diagram-title">🎯 Best For</div>
+        <ul class="feature-list">
+          <li>🏢 Large-scale microservices</li>
+          <li>🌐 Multi-cloud or hybrid deployments</li>
+          <li>🔧 Teams with K8s expertise</li>
+          <li>📊 Complex orchestration needs</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Architecture Diagrams -->
+    <div id="architecture" class="content">
+      <h2 class="section-title">🏗️ Architecture Diagrams</h2>
+
+      <!-- Lambda Architecture -->
+      <div class="diagram-container">
+        <div class="diagram-title">⚡ Lambda Serverless Architecture</div>
+        <div class="arch-diagram">
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #ec4899, #db2777)">Users/Clients 👥</div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #06b6d4, #0891b2)">CloudFront CDN 🌍</div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #f97316, #ea580c)">API Gateway 🚪</div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #f97316, #c2410c)">
+              Lambda ⚡<br />User Service
+            </div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #f97316, #c2410c)">
+              Lambda ⚡<br />Order Service
+            </div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #f97316, #c2410c)">
+              Lambda ⚡<br />Payment Service
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">DynamoDB 🗄️</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #ef4444, #dc2626)">SQS 📨</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #10b981, #059669)">S3 📦</div>
+          </div>
+        </div>
+        <div class="info-grid" style="margin-top: 1.5rem">
+          <div class="info-card">
+            <h4>✅ Pros</h4>
+            <p>Zero servers, auto-scale, pay-per-use, fast deployment</p>
+          </div>
+          <div class="info-card">
+            <h4>❌ Cons</h4>
+            <p>Cold starts, 15min timeout, vendor lock-in, debugging harder</p>
+          </div>
+          <div class="info-card">
+            <h4>💰 Cost</h4>
+            <p>$0.20/1M requests + $0.0000166/GB-sec</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ECS Architecture -->
+      <div class="diagram-container">
+        <div class="diagram-title">🐳 ECS/Fargate Architecture</div>
+        <div class="arch-diagram">
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #ec4899, #db2777)">Users/Clients 👥</div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #f59e0b, #d97706)">
+              Application Load Balancer ⚖️
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #3b82f6, #2563eb)">ECS Cluster 🐳</div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8)">
+              Fargate Task<br />User API
+            </div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8)">
+              Fargate Task<br />Order API
+            </div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8)">
+              Fargate Task<br />Payment API
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">RDS PostgreSQL 🗄️</div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #ef4444, #dc2626)">
+              ElastiCache Redis 💾
+            </div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #10b981, #059669)">ECR Registry 📦</div>
+          </div>
+        </div>
+        <div class="info-grid" style="margin-top: 1.5rem">
+          <div class="info-card">
+            <h4>✅ Pros</h4>
+            <p>Docker native, AWS integrated, simpler than K8s, Fargate serverless</p>
+          </div>
+          <div class="info-card">
+            <h4>❌ Cons</h4>
+            <p>AWS lock-in, less portable, limited ecosystem vs K8s</p>
+          </div>
+          <div class="info-card">
+            <h4>💰 Cost</h4>
+            <p>Fargate: ~$0.04/vCPU/hr + $0.004/GB/hr</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kubernetes Architecture -->
+      <div class="diagram-container">
+        <div class="diagram-title">☸️ Kubernetes (EKS) Architecture</div>
+        <div class="arch-diagram">
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #ec4899, #db2777)">Users/Clients 👥</div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #06b6d4, #0891b2)">
+              Ingress Controller (NGINX/ALB) 🚪
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9)">
+              Service Mesh (Istio) 🕸️
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #8b5cf6, #5b21b6)">
+              Pod 🎯<br />User (3 replicas)
+            </div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #8b5cf6, #5b21b6)">
+              Pod 🎯<br />Order (3 replicas)
+            </div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #8b5cf6, #5b21b6)">
+              Pod 🎯<br />Payment (3 replicas)
+            </div>
+          </div>
+          <div class="arch-arrow">⬇️</div>
+          <div class="arch-layer">
+            <div class="arch-node" style="background: linear-gradient(135deg, #10b981, #059669)">
+              PostgreSQL 🗄️<br />(StatefulSet)
+            </div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #ef4444, #dc2626)">
+              Redis 💾<br />(Cluster)
+            </div>
+            <div class="arch-node" style="background: linear-gradient(135deg, #f59e0b, #d97706)">
+              Kafka 📨<br />(Strimzi)
+            </div>
+          </div>
+        </div>
+        <div class="info-grid" style="margin-top: 1.5rem">
+          <div class="info-card">
+            <h4>✅ Pros</h4>
+            <p>Multi-cloud, rich ecosystem, full control, service mesh, GitOps</p>
+          </div>
+          <div class="info-card">
+            <h4>❌ Cons</h4>
+            <p>Complex ops, steep learning curve, more overhead</p>
+          </div>
+          <div class="info-card">
+            <h4>💰 Cost</h4>
+            <p>EKS: $0.10/hr + EC2/Fargate costs</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Use Cases -->
+    <div id="usecases" class="content">
+      <h2 class="section-title">💼 Real-World Use Cases</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">⚡ Lambda Use Cases</div>
+        <div class="usecase-grid">
+          <div class="usecase-card lambda-case">
+            <h4 style="color: #f97316">🖼️ Image Processing</h4>
+            <p>
+              Resize, compress, thumbnail generation triggered by S3 uploads. Scales automatically with upload volume.
+            </p>
+            <span class="company-tag">Used by: Netflix, Airbnb</span>
+          </div>
+          <div class="usecase-card lambda-case">
+            <h4 style="color: #f97316">📧 Email/SMS Notifications</h4>
+            <p>Event-driven notifications via SQS triggers. Pay only when sending notifications.</p>
+            <span class="company-tag">Used by: Slack, Twilio</span>
+          </div>
+          <div class="usecase-card lambda-case">
+            <h4 style="color: #f97316">🔐 Auth & Token Validation</h4>
+            <p>API Gateway authorizers. Validate JWT tokens, check permissions before routing.</p>
+            <span class="company-tag">Used by: Auth0, Okta</span>
+          </div>
+          <div class="usecase-card lambda-case">
+            <h4 style="color: #f97316">📊 Data ETL Pipelines</h4>
+            <p>Process Kinesis/Kafka streams, transform data, load into data warehouse.</p>
+            <span class="company-tag">Used by: Expedia, Capital One</span>
+          </div>
+          <div class="usecase-card lambda-case">
+            <h4 style="color: #f97316">⏰ Scheduled Jobs/Cron</h4>
+            <p>CloudWatch scheduled events. Daily reports, cleanup tasks, health checks.</p>
+            <span class="company-tag">Used by: Nordstrom, iRobot</span>
+          </div>
+          <div class="usecase-card lambda-case">
+            <h4 style="color: #f97316">🤖 Chatbots & Alexa Skills</h4>
+            <p>Serverless backend for conversational interfaces. Variable load, pay-per-use.</p>
+            <span class="company-tag">Used by: Amazon, Dominos</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🐳 ECS/Fargate Use Cases</div>
+        <div class="usecase-grid">
+          <div class="usecase-card ecs-case">
+            <h4 style="color: #3b82f6">🌐 Long-Running APIs</h4>
+            <p>REST/GraphQL APIs that need persistent connections, WebSockets, or >15min processing.</p>
+            <span class="company-tag">Used by: Duolingo, Coursera</span>
+          </div>
+          <div class="usecase-card ecs-case">
+            <h4 style="color: #3b82f6">🔄 Background Workers</h4>
+            <p>Queue processors, async job handlers, batch processing without time limits.</p>
+            <span class="company-tag">Used by: Samsung, Turner</span>
+          </div>
+          <div class="usecase-card ecs-case">
+            <h4 style="color: #3b82f6">🐳 Dockerized Legacy Apps</h4>
+            <p>Lift-and-shift existing Docker workloads. Minimal code changes required.</p>
+            <span class="company-tag">Used by: Capital One, Verizon</span>
+          </div>
+          <div class="usecase-card ecs-case">
+            <h4 style="color: #3b82f6">🎮 Gaming Backends</h4>
+            <p>Real-time game servers, matchmaking, leaderboards with persistent connections.</p>
+            <span class="company-tag">Used by: Riot Games, EA</span>
+          </div>
+          <div class="usecase-card ecs-case">
+            <h4 style="color: #3b82f6">📹 Media Streaming</h4>
+            <p>Video transcoding, live streaming backends, content delivery services.</p>
+            <span class="company-tag">Used by: Hulu, Discovery</span>
+          </div>
+          <div class="usecase-card ecs-case">
+            <h4 style="color: #3b82f6">🏢 Monolith Migration</h4>
+            <p>First step from monolith to microservices. Container-ready, AWS integrated.</p>
+            <span class="company-tag">Used by: Expedia, Hotels.com</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">☸️ Kubernetes Use Cases</div>
+        <div class="usecase-grid">
+          <div class="usecase-card k8s-case">
+            <h4 style="color: #8b5cf6">🌐 Multi-Cloud Strategy</h4>
+            <p>Same workloads on AWS, GCP, Azure. Avoid vendor lock-in, disaster recovery.</p>
+            <span class="company-tag">Used by: Spotify, Pinterest</span>
+          </div>
+          <div class="usecase-card k8s-case">
+            <h4 style="color: #8b5cf6">🏢 Enterprise Scale (100+ Services)</h4>
+            <p>Large microservices architectures needing service mesh, advanced networking.</p>
+            <span class="company-tag">Used by: Uber, Airbnb, Netflix</span>
+          </div>
+          <div class="usecase-card k8s-case">
+            <h4 style="color: #8b5cf6">🤖 ML/AI Platforms</h4>
+            <p>Kubeflow, MLflow, model training, GPU workloads, experiment tracking.</p>
+            <span class="company-tag">Used by: OpenAI, Google, Meta</span>
+          </div>
+          <div class="usecase-card k8s-case">
+            <h4 style="color: #8b5cf6">🏠 Hybrid Cloud</h4>
+            <p>On-prem + cloud workloads. Consistent deployment across environments.</p>
+            <span class="company-tag">Used by: Banks, Healthcare</span>
+          </div>
+          <div class="usecase-card k8s-case">
+            <h4 style="color: #8b5cf6">📊 Data Platforms</h4>
+            <p>Kafka, Spark, Flink on K8s. Stateful workloads with persistent volumes.</p>
+            <span class="company-tag">Used by: LinkedIn, Twitter</span>
+          </div>
+          <div class="usecase-card k8s-case">
+            <h4 style="color: #8b5cf6">🔄 GitOps & Advanced CI/CD</h4>
+            <p>ArgoCD, Flux, progressive delivery, canary deployments, A/B testing.</p>
+            <span class="company-tag">Used by: Intuit, Adobe</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision Flow -->
+    <div id="decision" class="content">
+      <h2 class="section-title">🎯 Decision Flowchart</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🤔 Which Platform Should You Choose?</div>
+        <div class="flow-decision">
+          <div class="decision-box">Do you need >15 min execution time?</div>
+          <div class="decision-options">
+            <div class="decision-path">
+              <div class="decision-answer no">NO</div>
+              <div class="arch-arrow">⬇️</div>
+              <div class="decision-box" style="font-size: 0.9rem">Is traffic unpredictable/spiky?</div>
+              <div class="decision-options" style="margin-top: 0.5rem">
+                <div class="decision-path">
+                  <div class="decision-answer yes">YES</div>
+                  <div class="arch-arrow">⬇️</div>
+                  <div class="result-box" style="background: linear-gradient(135deg, #f97316, #ea580c)">
+                    ⚡ Use LAMBDA
+                  </div>
+                </div>
+                <div class="decision-path">
+                  <div class="decision-answer no">NO</div>
+                  <div class="arch-arrow">⬇️</div>
+                  <div class="decision-box" style="font-size: 0.85rem">AWS only?</div>
+                </div>
+              </div>
+            </div>
+            <div class="decision-path">
+              <div class="decision-answer yes">YES</div>
+              <div class="arch-arrow">⬇️</div>
+              <div class="decision-box" style="font-size: 0.9rem">Multi-cloud needed?</div>
+              <div class="decision-options" style="margin-top: 0.5rem">
+                <div class="decision-path">
+                  <div class="decision-answer yes">YES</div>
+                  <div class="arch-arrow">⬇️</div>
+                  <div class="result-box" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)">
+                    ☸️ Use KUBERNETES
+                  </div>
+                </div>
+                <div class="decision-path">
+                  <div class="decision-answer no">NO</div>
+                  <div class="arch-arrow">⬇️</div>
+                  <div class="result-box" style="background: linear-gradient(135deg, #3b82f6, #2563eb)">
+                    🐳 Use ECS/FARGATE
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📋 Quick Decision Matrix</div>
+        <table class="vs-table">
+          <tr>
+            <th>Scenario</th>
+            <th>Best Choice</th>
+            <th>Why?</th>
+          </tr>
+          <tr>
+            <td>Startup MVP, low budget</td>
+            <td style="color: #f97316">⚡ Lambda</td>
+            <td>Pay only for usage, fast deployment</td>
+          </tr>
+          <tr>
+            <td>Existing Docker apps</td>
+            <td style="color: #3b82f6">🐳 ECS</td>
+            <td>Easy migration, AWS integrated</td>
+          </tr>
+          <tr>
+            <td>Enterprise, multi-cloud</td>
+            <td style="color: #8b5cf6">☸️ K8s</td>
+            <td>Portable, full control</td>
+          </tr>
+          <tr>
+            <td>Webhooks, APIs</td>
+            <td style="color: #f97316">⚡ Lambda</td>
+            <td>Event-driven, auto-scale to 0</td>
+          </tr>
+          <tr>
+            <td>Real-time/WebSockets</td>
+            <td style="color: #3b82f6">🐳 ECS</td>
+            <td>Persistent connections</td>
+          </tr>
+          <tr>
+            <td>ML/AI workloads</td>
+            <td style="color: #8b5cf6">☸️ K8s</td>
+            <td>GPU support, Kubeflow</td>
+          </tr>
+          <tr>
+            <td>Batch processing</td>
+            <td style="color: #f97316">⚡ Lambda + Step Functions</td>
+            <td>Orchestration built-in</td>
+          </tr>
+          <tr>
+            <td>100+ microservices</td>
+            <td style="color: #8b5cf6">☸️ K8s</td>
+            <td>Service mesh, advanced networking</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🎯 Team Size Recommendations</div>
+        <div class="info-grid">
+          <div class="info-card" style="border-color: #f97316">
+            <h4 style="color: #f97316">1-5 Developers</h4>
+            <p><strong>Lambda + Serverless Framework</strong><br />Zero ops overhead, focus on code, fast iteration.</p>
+          </div>
+          <div class="info-card" style="border-color: #3b82f6">
+            <h4 style="color: #3b82f6">5-20 Developers</h4>
+            <p><strong>ECS/Fargate + CDK</strong><br />Balanced complexity, familiar Docker, AWS native.</p>
+          </div>
+          <div class="info-card" style="border-color: #8b5cf6">
+            <h4 style="color: #8b5cf6">20+ Developers</h4>
+            <p><strong>Kubernetes (EKS/GKE)</strong><br />Platform team, self-service, multi-team scalability.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison -->
+    <div id="comparison" class="content">
+      <h2 class="section-title">⚔️ Detailed Comparison</h2>
+      <div class="diagram-container">
+        <div class="diagram-title">📊 Feature Comparison Table</div>
+        <table class="vs-table">
+          <tr>
+            <th>Feature</th>
+            <th>⚡ Lambda</th>
+            <th>🐳 ECS/Fargate</th>
+            <th>☸️ Kubernetes</th>
+          </tr>
+          <tr>
+            <td>Server Management</td>
+            <td>None ✅</td>
+            <td>Fargate: None ✅</td>
+            <td>EKS: Minimal</td>
+          </tr>
+          <tr>
+            <td>Scaling</td>
+            <td>Auto to 0 ✅</td>
+            <td>Auto (min 0 with scale-in)</td>
+            <td>HPA/VPA/KEDA</td>
+          </tr>
+          <tr>
+            <td>Cost Model</td>
+            <td>Per request 💰</td>
+            <td>Per hour</td>
+            <td>Per hour</td>
+          </tr>
+          <tr>
+            <td>Cold Start</td>
+            <td>Yes ❄️</td>
+            <td>No</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Max Runtime</td>
+            <td>15 min ⏰</td>
+            <td>Unlimited ✅</td>
+            <td>Unlimited ✅</td>
+          </tr>
+          <tr>
+            <td>Portability</td>
+            <td>Low (AWS only)</td>
+            <td>Low (AWS only)</td>
+            <td>High ✅ Multi-cloud</td>
+          </tr>
+          <tr>
+            <td>Complexity</td>
+            <td>Low ✅</td>
+            <td>Medium</td>
+            <td>High</td>
+          </tr>
+          <tr>
+            <td>Learning Curve</td>
+            <td>Easy ✅</td>
+            <td>Moderate</td>
+            <td>Steep 📚</td>
+          </tr>
+          <tr>
+            <td>Service Mesh</td>
+            <td>N/A</td>
+            <td>App Mesh</td>
+            <td>Istio/Linkerd ✅</td>
+          </tr>
+          <tr>
+            <td>GitOps</td>
+            <td>SAM/CDK</td>
+            <td>CDK/Copilot</td>
+            <td>ArgoCD/Flux ✅</td>
+          </tr>
+          <tr>
+            <td>Debugging</td>
+            <td>Harder 🔍</td>
+            <td>Container logs</td>
+            <td>kubectl, dashboards ✅</td>
+          </tr>
+          <tr>
+            <td>State Management</td>
+            <td>External only</td>
+            <td>EBS/EFS</td>
+            <td>PV/PVC ✅</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">⏱️ Startup Time Comparison</div>
+        <div class="cost-bar">
+          <div class="cost-label">Lambda (Cold)</div>
+          <div class="cost-track">
+            <div class="cost-fill" style="width: 80%; background: linear-gradient(90deg, #ef4444, #f97316)">
+              100-500ms
+            </div>
+          </div>
+        </div>
+        <div class="cost-bar">
+          <div class="cost-label">Lambda (Warm)</div>
+          <div class="cost-track">
+            <div class="cost-fill" style="width: 10%; background: linear-gradient(90deg, #10b981, #22c55e)">
+              &lt;10ms
+            </div>
+          </div>
+        </div>
+        <div class="cost-bar">
+          <div class="cost-label">ECS Fargate</div>
+          <div class="cost-track">
+            <div class="cost-fill" style="width: 60%; background: linear-gradient(90deg, #3b82f6, #60a5fa)">
+              30-60s (task start)
+            </div>
+          </div>
+        </div>
+        <div class="cost-bar">
+          <div class="cost-label">Kubernetes Pod</div>
+          <div class="cost-track">
+            <div class="cost-fill" style="width: 50%; background: linear-gradient(90deg, #8b5cf6, #a78bfa)">
+              10-30s (pod start)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Costs -->
+    <div id="costs" class="content">
+      <h2 class="section-title">💰 Cost Analysis</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📊 Cost Comparison (1M requests/month)</div>
+        <div class="cost-bar">
+          <div class="cost-label">⚡ Lambda</div>
+          <div class="cost-track">
+            <div class="cost-fill" style="width: 15%; background: linear-gradient(90deg, #10b981, #22c55e)">
+              ~$20/mo
+            </div>
+          </div>
+        </div>
+        <div class="cost-bar">
+          <div class="cost-label">🐳 Fargate</div>
+          <div class="cost-track">
+            <div class="cost-fill" style="width: 40%; background: linear-gradient(90deg, #3b82f6, #60a5fa)">
+              ~$70/mo
+            </div>
+          </div>
+        </div>
+        <div class="cost-bar">
+          <div class="cost-label">☸️ EKS</div>
+          <div class="cost-track">
+            <div class="cost-fill" style="width: 55%; background: linear-gradient(90deg, #8b5cf6, #a78bfa)">
+              ~$100/mo
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📈 Cost at Scale (100M requests/month)</div>
+        <div class="cost-bar">
+          <div class="cost-label">⚡ Lambda</div>
+          <div class="cost-track">
+            <div class="cost-fill" style="width: 90%; background: linear-gradient(90deg, #ef4444, #f97316)">
+              ~$2,000/mo 📈
+            </div>
+          </div>
+        </div>
+        <div class="cost-bar">
+          <div class="cost-label">🐳 Fargate</div>
+          <div class="cost-track">
+            <div class="cost-fill" style="width: 40%; background: linear-gradient(90deg, #3b82f6, #60a5fa)">
+              ~$500/mo
+            </div>
+          </div>
+        </div>
+        <div class="cost-bar">
+          <div class="cost-label">☸️ EKS</div>
+          <div class="cost-track">
+            <div class="cost-fill" style="width: 35%; background: linear-gradient(90deg, #8b5cf6, #a78bfa)">
+              ~$400/mo
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">💡 Cost Optimization Tips</div>
+        <div class="info-grid">
+          <div class="info-card" style="border-color: #f97316">
+            <h4 style="color: #f97316">⚡ Lambda Tips</h4>
+            <p>
+              • Provisioned Concurrency for predictable traffic<br />• Arm64 = 20% cheaper<br />• Optimize
+              memory/timeout<br />• Avoid Cold Starts
+            </p>
+          </div>
+          <div class="info-card" style="border-color: #3b82f6">
+            <h4 style="color: #3b82f6">🐳 Fargate Tips</h4>
+            <p>
+              • Spot instances (70% savings)<br />• Right-size CPU/memory<br />• Use Fargate Spot<br />• Scale in during
+              off-hours
+            </p>
+          </div>
+          <div class="info-card" style="border-color: #8b5cf6">
+            <h4 style="color: #8b5cf6">☸️ Kubernetes Tips</h4>
+            <p>• Spot/Preemptible nodes<br />• Cluster Autoscaler<br />• Karpenter for AWS<br />• Resource quotas</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🎯 Cost Sweet Spots</div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-value">&lt;1M</div>
+            <div class="metric-label">Lambda wins</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">1-50M</div>
+            <div class="metric-label">ECS/Fargate balanced</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">&gt;50M</div>
+            <div class="metric-label">K8s most economical</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value">Variable</div>
+            <div class="metric-label">Lambda scale-to-0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thumbnail -->
+    <div id="thumbnail" class="content">
+      <h2 class="section-title">🎨 Video Thumbnails</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">Option 1: Platform Battle (High CTR)</div>
+        <div
+          class="thumb-preview"
+          style="background: linear-gradient(135deg, #0a0a0a, #1a1a2e); display: flex; position: relative"
+        >
+          <div
+            style="
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              border-right: 2px solid #f97316;
+            "
+          >
+            <div style="font-size: 3.5rem">⚡</div>
+            <div style="font-size: 1.8rem; font-weight: 900; color: #f97316">Lambda</div>
+          </div>
+          <div
+            style="
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              border-right: 2px solid #3b82f6;
+            "
+          >
+            <div style="font-size: 3.5rem">🐳</div>
+            <div style="font-size: 1.8rem; font-weight: 900; color: #3b82f6">ECS</div>
+          </div>
+          <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center">
+            <div style="font-size: 3.5rem">☸️</div>
+            <div style="font-size: 1.8rem; font-weight: 900; color: #8b5cf6">K8s</div>
+          </div>
+          <div
+            style="
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              background: #fbbf24;
+              color: #000;
+              padding: 10px 25px;
+              border-radius: 30px;
+              font-weight: 900;
+              font-size: 1.5rem;
+            "
+          >
+            VS
+          </div>
+          <div
+            style="
+              position: absolute;
+              bottom: 15px;
+              left: 50%;
+              transform: translateX(-50%);
+              font-size: 1.3rem;
+              font-weight: 800;
+            "
+          >
+            Which One Wins? 🏆
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">Option 2: Decision Tree (Helpful)</div>
+        <div
+          class="thumb-preview"
+          style="
+            background: linear-gradient(180deg, #1e1b4b, #312e81);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+          "
+        >
+          <div style="font-size: 1.3rem; color: #fbbf24; margin-bottom: 15px">🤔 WHERE TO DEPLOY?</div>
+          <div style="display: flex; gap: 30px; align-items: flex-end">
+            <div style="text-align: center">
+              <div style="font-size: 3rem">⚡</div>
+              <div style="font-weight: 800; color: #f97316">Lambda</div>
+              <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px">Events</div>
+            </div>
+            <div style="text-align: center">
+              <div style="font-size: 3rem">🐳</div>
+              <div style="font-weight: 800; color: #3b82f6">ECS</div>
+              <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px">AWS Only</div>
+            </div>
+            <div style="text-align: center">
+              <div style="font-size: 3rem">☸️</div>
+              <div style="font-weight: 800; color: #8b5cf6">K8s</div>
+              <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px">Multi-Cloud</div>
+            </div>
+          </div>
+          <div
+            style="
+              margin-top: 20px;
+              background: linear-gradient(90deg, #10b981, #3b82f6);
+              padding: 10px 30px;
+              border-radius: 30px;
+              font-weight: 900;
+              font-size: 1.2rem;
+            "
+          >
+            Complete Guide 2024
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">Option 3: Cost Focus (Practical)</div>
+        <div
+          class="thumb-preview"
+          style="
+            background: linear-gradient(135deg, #064e3b, #065f46);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 30px;
+            position: relative;
+          "
+        >
+          <div
+            style="
+              position: absolute;
+              top: 15px;
+              right: 15px;
+              background: #ef4444;
+              padding: 8px 15px;
+              border-radius: 20px;
+              font-weight: 900;
+              font-size: 0.9rem;
+            "
+          >
+            💰 SAVE 80%
+          </div>
+          <div style="font-size: 2rem; font-weight: 900; margin-bottom: 20px; text-align: center">
+            Wrong Platform =<br /><span style="color: #ef4444">10x Higher Costs!</span>
+          </div>
+          <div style="display: flex; justify-content: center; gap: 20px">
+            <div
+              style="background: rgba(255, 255, 255, 0.1); padding: 15px 25px; border-radius: 12px; text-align: center"
+            >
+              <div style="font-size: 2rem">⚡</div>
+              <div style="font-weight: 700">$20</div>
+            </div>
+            <div
+              style="background: rgba(255, 255, 255, 0.1); padding: 15px 25px; border-radius: 12px; text-align: center"
+            >
+              <div style="font-size: 2rem">🐳</div>
+              <div style="font-weight: 700">$70</div>
+            </div>
+            <div
+              style="background: rgba(255, 255, 255, 0.1); padding: 15px 25px; border-radius: 12px; text-align: center"
+            >
+              <div style="font-size: 2rem">☸️</div>
+              <div style="font-weight: 700">$100</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">💡 Thumbnail Best Practices</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>🎨 Platform Colors</h4>
+            <p>Lambda: Orange #f97316<br />ECS: Blue #3b82f6<br />K8s: Purple #8b5cf6</p>
+          </div>
+          <div class="info-card">
+            <h4>📝 Big Text</h4>
+            <p>Max 5 words visible. Make it readable on mobile thumbnails.</p>
+          </div>
+          <div class="info-card">
+            <h4>⚔️ Comparison Style</h4>
+            <p>VS badges, split screens work great for comparison videos.</p>
+          </div>
+          <div class="info-card">
+            <h4>💰 Numbers</h4>
+            <p>Cost savings, percentages, and specific numbers drive clicks.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.querySelectorAll('.tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+          document.querySelectorAll('.content').forEach((c) => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+      });
+    </script>
+  </body>
+</html>

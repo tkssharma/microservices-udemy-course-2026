@@ -1,0 +1,1775 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Design Airbnb at Scale: Microservices, Search & High-Performance APIs</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+        min-height: 100vh;
+        color: #e0e0e0;
+        padding: 2rem;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 0.5rem;
+        color: #fff;
+        font-size: 1.8rem;
+      }
+      .subtitle {
+        text-align: center;
+        color: #a78bfa;
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+      }
+      h2 {
+        margin: 2rem 0 1rem;
+        color: #a78bfa;
+        border-bottom: 1px solid #333;
+        padding-bottom: 0.5rem;
+      }
+      h3 {
+        color: #10b981;
+        margin: 1.5rem 0 1rem;
+      }
+      .diagram-container {
+        background: #1e1e2e;
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      .mermaid {
+        display: flex;
+        justify-content: center;
+      }
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      .tab {
+        padding: 0.5rem 1rem;
+        background: #2d2d44;
+        border: none;
+        border-radius: 8px;
+        color: #e0e0e0;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+      }
+      .tab:hover,
+      .tab.active {
+        background: #ff5a5f;
+        color: #fff;
+      }
+      .diagram-section {
+        display: none;
+      }
+      .diagram-section.active {
+        display: block;
+      }
+      .flow-dot {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, #fff 0%, #ff5a5f 40%, #ff385c 70%, transparent 100%);
+        border-radius: 50%;
+        box-shadow:
+          0 0 20px #ff5a5f,
+          0 0 40px #ff385c,
+          0 0 60px #ff5a5f;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0;
+      }
+      .flow-dot.active {
+        animation: pulse 0.5s ease-in-out infinite alternate;
+      }
+      @keyframes pulse {
+        from {
+          transform: scale(1);
+          box-shadow:
+            0 0 20px #ff5a5f,
+            0 0 40px #ff385c;
+        }
+        to {
+          transform: scale(1.5);
+          box-shadow:
+            0 0 35px #ff5a5f,
+            0 0 60px #ff385c,
+            0 0 80px #ff5a5f;
+        }
+      }
+      .info-box {
+        background: linear-gradient(135deg, #2d2d44 0%, #1e1e2e 100%);
+        border-left: 4px solid #ff5a5f;
+        padding: 1rem 1.5rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .info-box h3 {
+        color: #ff5a5f;
+        margin-bottom: 0.5rem;
+        margin-top: 0;
+      }
+      .info-box ul {
+        margin-left: 1.5rem;
+      }
+      .info-box li {
+        margin: 0.5rem 0;
+        line-height: 1.5;
+      }
+      .callout {
+        background: linear-gradient(135deg, #ff5a5f20 0%, #ff385c10 100%);
+        border: 1px solid #ff5a5f;
+        padding: 1rem 1.5rem;
+        margin: 1rem 0;
+        border-radius: 8px;
+        font-style: italic;
+        color: #fff;
+      }
+      .callout::before {
+        content: '💡 ';
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        background: #1e1e2e;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      th,
+      td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #333;
+      }
+      th {
+        background: #ff5a5f;
+        color: #fff;
+      }
+      tr:hover {
+        background: #2d2d44;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🏠 Design Airbnb at Scale</h1>
+    <p class="subtitle">Microservices, Search & High-Performance APIs | System Design Deep Dive</p>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('architecture', event)">1. High-Level Architecture</button>
+      <button class="tab" onclick="showTab('microservices', event)">2. Microservices (DDD)</button>
+      <button class="tab" onclick="showTab('auth', event)">3. Auth & AuthZ</button>
+      <button class="tab" onclick="showTab('database', event)">4. Database Strategy</button>
+      <button class="tab" onclick="showTab('search', event)">5. Search at Scale</button>
+      <button class="tab" onclick="showTab('communication', event)">6. Service Communication</button>
+      <button class="tab" onclick="showTab('performance', event)">7. API Performance</button>
+      <button class="tab" onclick="showTab('flows', event)">8. End-to-End Flows</button>
+      <button class="tab" onclick="showTab('advanced', event)">9. Advanced Patterns</button>
+    </div>
+
+    <!-- 1. High-Level Architecture -->
+    <div id="architecture" class="diagram-section active">
+      <h2>1. High-Level Architecture (Production-Grade)</h2>
+
+      <div class="callout">At scale, most performance wins come BEFORE your service is even hit.</div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Clients["Client Layer"]
+        WEB[Web App<br/>React/Next.js]
+        MOB[Mobile Apps<br/>iOS/Android]
+        PWA[PWA]
+    end
+    
+    subgraph Edge["Edge Layer"]
+        CDN[CDN<br/>CloudFront/Akamai]
+        WAF[WAF<br/>Web Application Firewall]
+    end
+    
+    subgraph Gateway["API Gateway Layer"]
+        APIG[API Gateway<br/>Kong/AWS API GW]
+        AUTH[Auth Service]
+        RATE[Rate Limiter]
+    end
+    
+    subgraph LB["Load Balancing"]
+        ALB[Application Load Balancer]
+        NLB[Network Load Balancer]
+    end
+    
+    subgraph Services["Microservices Layer"]
+        US[User Service]
+        LS[Listing Service]
+        SS[Search Service]
+        BS[Booking Service]
+        PS[Payment Service]
+        NS[Notification Service]
+    end
+    
+    subgraph Data["Data Layer"]
+        CACHE[(Redis Cache)]
+        DB[(Databases)]
+        ES[(Elasticsearch)]
+        S3[(S3 Storage)]
+    end
+    
+    subgraph Messaging["Message Broker"]
+        KAFKA[Apache Kafka]
+    end
+    
+    Clients --> CDN
+    CDN --> WAF
+    WAF --> APIG
+    APIG --> AUTH
+    APIG --> RATE
+    APIG --> ALB
+    ALB --> Services
+    Services --> CACHE
+    Services --> DB
+    Services --> ES
+    Services --> S3
+    Services --> KAFKA
+    
+    style Edge fill:#ff5a5f
+    style Gateway fill:#00a699
+    style Services fill:#484848
+    style Data fill:#767676
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Request["Request Flow"]
+        C[Client] --> CDN1[CDN]
+        CDN1 --> GW[API Gateway]
+        GW --> LB1[Load Balancer]
+        LB1 --> SVC[Service]
+        SVC --> CACHE1[Cache]
+        CACHE1 -->|Miss| DB1[Database]
+    end
+    
+    subgraph Caching["Cache Hit Flow"]
+        C2[Client] --> CDN2[CDN Cache Hit]
+        CDN2 -->|Static Assets| C2
+    end
+    
+    style Request fill:#1e1e2e
+    style Caching fill:#00a699
+        </pre>
+      </div>
+
+      <div class="info-box">
+        <h3>Edge Layer Responsibilities</h3>
+        <ul>
+          <li><strong>CDN</strong>: Cache static assets, images, listing thumbnails (80% of requests)</li>
+          <li><strong>WAF</strong>: Block malicious requests, SQL injection, XSS</li>
+          <li><strong>API Gateway</strong>: Authentication, rate limiting, request routing</li>
+          <li><strong>Load Balancer</strong>: Distribute traffic, health checks, SSL termination</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 2. Microservices -->
+    <div id="microservices" class="diagram-section">
+      <h2>2. Microservices (Domain-Driven Design)</h2>
+
+      <div class="callout">Search and Booking must NEVER share a database or logic—they scale differently.</div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Core["Core Domain Services"]
+        US[User Service<br/>Registration, Profile, Auth]
+        LS[Listing Service<br/>CRUD, Images, Amenities]
+        BS[Booking Service<br/>Reservations, Cancellations]
+        PS[Payment Service<br/>Transactions, Refunds]
+    end
+    
+    subgraph Supporting["Supporting Services"]
+        SS[Search Service<br/>Elasticsearch, Filters]
+        AS[Availability Service<br/>Calendar, Blocking]
+        PRS[Pricing Service<br/>Dynamic Pricing]
+        RS[Recommendation Service<br/>ML-based suggestions]
+    end
+    
+    subgraph Generic["Generic Services"]
+        NS[Notification Service<br/>Email, SMS, Push]
+        MS[Messaging Service<br/>Host-Guest Chat]
+        RVS[Review Service<br/>Ratings, Reviews]
+        ANS[Analytics Service<br/>Tracking, Metrics]
+    end
+    
+    US --> BS
+    LS --> SS
+    LS --> AS
+    BS --> PS
+    BS --> AS
+    BS --> NS
+    PRS --> LS
+    RS --> SS
+    
+    style Core fill:#ff5a5f
+    style Supporting fill:#00a699
+    style Generic fill:#484848
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Bounded["Bounded Contexts"]
+        direction TB
+        subgraph UserCtx["User Context"]
+            U1[User Aggregate]
+            U2[Profile]
+            U3[Authentication]
+        end
+        
+        subgraph ListingCtx["Listing Context"]
+            L1[Listing Aggregate]
+            L2[Amenities]
+            L3[Photos]
+            L4[Location]
+        end
+        
+        subgraph BookingCtx["Booking Context"]
+            B1[Reservation Aggregate]
+            B2[Guest Info]
+            B3[Payment Info]
+        end
+    end
+    
+    UserCtx -->|User ID| ListingCtx
+    UserCtx -->|User ID| BookingCtx
+    ListingCtx -->|Listing ID| BookingCtx
+    
+    style UserCtx fill:#ff5a5f
+    style ListingCtx fill:#00a699
+    style BookingCtx fill:#484848
+        </pre>
+      </div>
+
+      <div class="info-box">
+        <h3>DDD Principles Applied</h3>
+        <ul>
+          <li><strong>Single Responsibility</strong>: Each service owns one business domain</li>
+          <li><strong>Independent Scaling</strong>: Search scales 10x more than Booking</li>
+          <li><strong>Separate Deployments</strong>: Deploy without affecting other services</li>
+          <li><strong>Database per Service</strong>: No shared databases between services</li>
+          <li><strong>API Contracts</strong>: Services communicate via well-defined APIs</li>
+        </ul>
+      </div>
+
+      <table>
+        <tr>
+          <th>Service</th>
+          <th>Scale Factor</th>
+          <th>Criticality</th>
+          <th>Team Size</th>
+        </tr>
+        <tr>
+          <td>Search Service</td>
+          <td>10x (read-heavy)</td>
+          <td>High</td>
+          <td>5-8 engineers</td>
+        </tr>
+        <tr>
+          <td>Booking Service</td>
+          <td>1x (write-heavy)</td>
+          <td>Critical</td>
+          <td>4-6 engineers</td>
+        </tr>
+        <tr>
+          <td>Listing Service</td>
+          <td>3x</td>
+          <td>High</td>
+          <td>4-5 engineers</td>
+        </tr>
+        <tr>
+          <td>Payment Service</td>
+          <td>1x</td>
+          <td>Critical</td>
+          <td>3-4 engineers</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 3. Auth & AuthZ -->
+    <div id="auth" class="diagram-section">
+      <h2>3. Authentication & Authorization Architecture</h2>
+
+      <div class="callout">Auth happens at the edge, AuthZ happens at the service. Never trust, always verify.</div>
+
+      <h3 style="color: #ff5a5f">🔐 Authentication Flow (Who are you?)</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Clients["Client Layer"]
+        WEB[Web App]
+        MOB[Mobile App]
+        API[Third-Party API]
+    end
+    
+    subgraph Auth["Authentication Layer"]
+        GW[API Gateway]
+        AUTH[Auth Service]
+        IDP[Identity Provider<br/>Auth0/Cognito]
+    end
+    
+    subgraph Tokens["Token Types"]
+        JWT[JWT Access Token<br/>15 min expiry]
+        REF[Refresh Token<br/>7 day expiry]
+        API_KEY[API Key<br/>For partners]
+    end
+    
+    subgraph Storage["Token Storage"]
+        REDIS[(Redis<br/>Session Store)]
+        DB[(PostgreSQL<br/>Refresh Tokens)]
+    end
+    
+    Clients --> GW
+    GW --> AUTH
+    AUTH --> IDP
+    AUTH --> Tokens
+    JWT --> REDIS
+    REF --> DB
+    
+    style Auth fill:#ff5a5f
+    style Tokens fill:#00a699
+    style Storage fill:#484848
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant C as Client App
+    participant GW as API Gateway
+    participant AS as Auth Service
+    participant IDP as Identity Provider
+    participant R as Redis
+    
+    Note over U,R: Login Flow
+    U->>C: Enter email/password
+    C->>GW: POST /auth/login
+    GW->>AS: Forward credentials
+    AS->>IDP: Validate credentials
+    IDP-->>AS: User verified
+    AS->>AS: Generate JWT + Refresh Token
+    AS->>R: Store session metadata
+    AS-->>GW: Return tokens
+    GW-->>C: Set cookies + return JWT
+    C-->>U: Login successful
+    
+    Note over U,R: Authenticated Request
+    U->>C: Access dashboard
+    C->>GW: GET /api/bookings + Bearer JWT
+    GW->>GW: Validate JWT signature
+    GW->>GW: Check expiry
+    GW->>GW: Extract user claims
+    GW-->>C: Forward to service with user context
+        </pre>
+      </div>
+
+      <h3 style="color: #00a699">🛡️ Authorization Flow (What can you do?)</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Request["Incoming Request"]
+        REQ[API Request]
+        JWT1[JWT with Claims]
+    end
+    
+    subgraph Gateway["API Gateway"]
+        VAL[Validate Token]
+        EXT[Extract Claims]
+    end
+    
+    subgraph Service["Booking Service"]
+        CTRL[Controller]
+        GUARD[Auth Guard]
+        POLICY[Policy Engine]
+    end
+    
+    subgraph Policies["Authorization Policies"]
+        P1[Role-Based: GUEST, HOST, ADMIN]
+        P2[Resource-Based: Own bookings only]
+        P3[Attribute-Based: Verified hosts]
+        P4[Contextual: Time-based access]
+    end
+    
+    REQ --> VAL
+    JWT1 --> EXT
+    VAL --> CTRL
+    EXT --> GUARD
+    GUARD --> POLICY
+    POLICY --> Policies
+    
+    style Gateway fill:#ff5a5f
+    style Service fill:#00a699
+    style Policies fill:#f59e0b
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant GW as API Gateway
+    participant BS as Booking Service
+    participant PS as Policy Service
+    participant DB as Database
+    
+    Note over C,DB: Authorization Check Flow
+    C->>GW: DELETE /bookings/123 + JWT
+    GW->>GW: Validate JWT
+    GW->>BS: Forward with user context
+    
+    BS->>PS: Can user:456 delete booking:123?
+    PS->>DB: Get booking owner
+    DB-->>PS: Owner is user:456
+    PS->>PS: Check policy: users can delete own bookings
+    PS-->>BS: ALLOWED
+    
+    BS->>DB: Delete booking
+    DB-->>BS: Deleted
+    BS-->>GW: 200 OK
+    GW-->>C: Booking cancelled
+    
+    Note over C,DB: Unauthorized Attempt
+    C->>GW: DELETE /bookings/789 + JWT
+    GW->>BS: Forward with user context
+    BS->>PS: Can user:456 delete booking:789?
+    PS->>DB: Get booking owner
+    DB-->>PS: Owner is user:999
+    PS-->>BS: DENIED
+    BS-->>GW: 403 Forbidden
+    GW-->>C: Not authorized
+        </pre>
+      </div>
+
+      <h3 style="color: #f59e0b">🔄 Inter-Service Authentication</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph External["External Requests"]
+        USER[User JWT]
+    end
+    
+    subgraph Internal["Internal Service-to-Service"]
+        MTLS[mTLS Certificates]
+        SVC_TOKEN[Service Account Token]
+        API_KEY[Internal API Keys]
+    end
+    
+    subgraph ServiceMesh["Service Mesh (Istio)"]
+        SIDE1[Sidecar Proxy]
+        SIDE2[Sidecar Proxy]
+        CA[Certificate Authority]
+    end
+    
+    USER --> SIDE1
+    SIDE1 -->|mTLS| SIDE2
+    CA --> SIDE1
+    CA --> SIDE2
+    
+    style External fill:#ff5a5f
+    style Internal fill:#00a699
+    style ServiceMesh fill:#484848
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant BS as Booking Service
+    participant IS as Istio Sidecar
+    participant IS2 as Istio Sidecar
+    participant PS as Payment Service
+    
+    Note over BS,PS: Service-to-Service with mTLS
+    BS->>IS: Call Payment Service
+    IS->>IS: Attach service identity
+    IS->>IS2: mTLS encrypted request
+    IS2->>IS2: Verify caller identity
+    IS2->>PS: Forward request
+    PS->>PS: Check service authorization
+    PS-->>IS2: Response
+    IS2-->>IS: Encrypted response
+    IS-->>BS: Payment result
+    
+    Note over BS,PS: User Context Propagation
+    BS->>IS: Call with X-User-Context header
+    IS->>IS2: Forward user context
+    IS2->>PS: Request + user context
+    PS->>PS: Apply user-level policies
+    PS-->>BS: Authorized response
+        </pre>
+      </div>
+
+      <h3 style="color: #8b5cf6">🏢 Role-Based Access Control (RBAC)</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Roles["User Roles"]
+        GUEST[Guest<br/>Book, Review, Message]
+        HOST[Host<br/>List, Manage, Earnings]
+        SUPERHOST[Superhost<br/>Priority Support, Badge]
+        ADMIN[Admin<br/>Full Access]
+    end
+    
+    subgraph Permissions["Permissions Matrix"]
+        direction TB
+        P_BOOK[booking:create]
+        P_LIST[listing:create]
+        P_MANAGE[listing:manage]
+        P_ADMIN[admin:access]
+    end
+    
+    subgraph Resources["Protected Resources"]
+        R_BOOKING[Bookings]
+        R_LISTING[Listings]
+        R_PAYMENT[Payments]
+        R_ANALYTICS[Analytics]
+    end
+    
+    GUEST --> P_BOOK
+    HOST --> P_LIST
+    HOST --> P_MANAGE
+    ADMIN --> P_ADMIN
+    
+    P_BOOK --> R_BOOKING
+    P_LIST --> R_LISTING
+    P_MANAGE --> R_LISTING
+    P_ADMIN --> R_ANALYTICS
+    
+    style Roles fill:#ff5a5f
+    style Permissions fill:#00a699
+    style Resources fill:#f59e0b
+        </pre>
+      </div>
+
+      <table>
+        <tr>
+          <th>Role</th>
+          <th>Permissions</th>
+          <th>Resources</th>
+        </tr>
+        <tr>
+          <td>Guest</td>
+          <td>booking:create, review:create, message:send</td>
+          <td>Own bookings, Own reviews</td>
+        </tr>
+        <tr>
+          <td>Host</td>
+          <td>listing:create, listing:manage, calendar:edit</td>
+          <td>Own listings, Listing bookings</td>
+        </tr>
+        <tr>
+          <td>Superhost</td>
+          <td>All Host + priority:support</td>
+          <td>Same as Host + Badge</td>
+        </tr>
+        <tr>
+          <td>Admin</td>
+          <td>*:* (all permissions)</td>
+          <td>All resources</td>
+        </tr>
+      </table>
+
+      <div class="info-box">
+        <h3>Auth Architecture Best Practices</h3>
+        <ul>
+          <li><strong>JWT at Gateway</strong>: Validate tokens at edge, not in every service</li>
+          <li><strong>Short-lived Access Tokens</strong>: 15 minutes max, use refresh tokens</li>
+          <li><strong>mTLS for Internal</strong>: Service mesh handles inter-service auth</li>
+          <li><strong>User Context Propagation</strong>: Pass user claims via headers internally</li>
+          <li><strong>Policy Engine</strong>: Centralize authorization logic (OPA/Casbin)</li>
+          <li><strong>Audit Logging</strong>: Log all auth decisions for compliance</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 4. Database Strategy -->
+    <div id="database" class="diagram-section">
+      <h2>4. Database & Data Strategy</h2>
+
+      <div class="callout">Choose databases based on ACCESS PATTERNS, not just data type.</div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Services["Microservices"]
+        US[User Service]
+        LS[Listing Service]
+        BS[Booking Service]
+        SS[Search Service]
+        PS[Payment Service]
+    end
+    
+    subgraph Databases["Database per Service"]
+        USDB[(PostgreSQL<br/>Users)]
+        LSDB[(MongoDB<br/>Listings)]
+        BSDB[(PostgreSQL<br/>Bookings)]
+        ESDB[(Elasticsearch<br/>Search Index)]
+        PSDB[(PostgreSQL<br/>Payments)]
+    end
+    
+    subgraph Cache["Cache Layer"]
+        RC[(Redis Cluster)]
+    end
+    
+    subgraph Storage["Object Storage"]
+        S3[(S3<br/>Images, Files)]
+    end
+    
+    US --> USDB
+    LS --> LSDB
+    BS --> BSDB
+    SS --> ESDB
+    PS --> PSDB
+    
+    US --> RC
+    LS --> RC
+    BS --> RC
+    SS --> RC
+    
+    LS --> S3
+    
+    style Services fill:#ff5a5f
+    style Databases fill:#00a699
+    style Cache fill:#f59e0b
+    style Storage fill:#484848
+        </pre>
+      </div>
+
+      <table>
+        <tr>
+          <th>Service</th>
+          <th>Database</th>
+          <th>Why This Choice</th>
+        </tr>
+        <tr>
+          <td>User Service</td>
+          <td>PostgreSQL</td>
+          <td>ACID compliance, strong consistency for auth</td>
+        </tr>
+        <tr>
+          <td>Listing Service</td>
+          <td>MongoDB</td>
+          <td>Flexible schema for amenities, nested objects</td>
+        </tr>
+        <tr>
+          <td>Booking Service</td>
+          <td>PostgreSQL</td>
+          <td>Transactions, referential integrity, ACID</td>
+        </tr>
+        <tr>
+          <td>Search Service</td>
+          <td>Elasticsearch</td>
+          <td>Full-text search, geo queries, aggregations</td>
+        </tr>
+        <tr>
+          <td>Payment Service</td>
+          <td>PostgreSQL</td>
+          <td>Financial transactions require strong consistency</td>
+        </tr>
+      </table>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Write["Write Path"]
+        W1[Listing Service]
+        W2[MongoDB Primary]
+        W3[Change Stream]
+        W4[Sync Service]
+        W5[Elasticsearch]
+    end
+    
+    subgraph Read["Read Path"]
+        R1[Search Request]
+        R2[Elasticsearch]
+        R3[Return Results]
+    end
+    
+    W1 -->|Write| W2
+    W2 -->|CDC| W3
+    W3 --> W4
+    W4 -->|Index| W5
+    
+    R1 --> R2
+    R2 --> R3
+    
+    style Write fill:#ff5a5f
+    style Read fill:#00a699
+        </pre>
+      </div>
+
+      <div class="info-box">
+        <h3>Data Sync Strategy</h3>
+        <ul>
+          <li><strong>Change Data Capture (CDC)</strong>: MongoDB Change Streams to Elasticsearch</li>
+          <li><strong>Eventually Consistent</strong>: Search index may lag by seconds</li>
+          <li><strong>Denormalization</strong>: Search index contains flattened data for speed</li>
+          <li><strong>Read Replicas</strong>: Scale reads independently from writes</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 5. Search at Scale -->
+    <div id="search" class="diagram-section">
+      <h2>5. Search System Design (Core Differentiator)</h2>
+
+      <div class="callout">Search systems are read-heavy, so we optimize for READS, not writes.</div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Problem["The Challenge"]
+        P1[10M+ Listings]
+        P2[Complex Filters]
+        P3[Geo-location Search]
+        P4[Under 200ms Latency]
+    end
+    
+    subgraph Solution["Elasticsearch Solution"]
+        ES[Elasticsearch Cluster]
+        IDX[Search Index]
+        GEO[Geo-hash Index]
+        AGG[Aggregations]
+    end
+    
+    subgraph Optimizations["Optimizations"]
+        O1[Denormalized Data]
+        O2[Pre-computed Filters]
+        O3[Geo-hashing]
+        O4[Caching Hot Queries]
+    end
+    
+    Problem --> Solution
+    Solution --> Optimizations
+    
+    style Problem fill:#ff5a5f
+    style Solution fill:#00a699
+    style Optimizations fill:#f59e0b
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant GW as API Gateway
+    participant SS as Search Service
+    participant RC as Redis Cache
+    participant ES as Elasticsearch
+    
+    U->>GW: Search Paris, 2 guests, $100-200
+    GW->>SS: Forward search request
+    SS->>RC: Check cache for query hash
+    
+    alt Cache Hit
+        RC-->>SS: Return cached results
+        SS-->>GW: Search results
+        GW-->>U: 50 listings in 50ms
+    else Cache Miss
+        RC-->>SS: Cache miss
+        SS->>ES: Query with filters
+        ES-->>SS: Matching listings
+        SS->>RC: Cache results (TTL: 5min)
+        SS-->>GW: Search results
+        GW-->>U: 50 listings in 150ms
+    end
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Index["Elasticsearch Index Document"]
+        direction TB
+        D1[listing_id: uuid]
+        D2[title: Cozy Paris Apt]
+        D3[location: geo_point 48.8566, 2.3522]
+        D4[price: 150]
+        D5[rating: 4.8]
+        D6[amenities: wifi, kitchen, ac]
+        D7[availability_bitmap: 01110011...]
+        D8[host_response_rate: 98%]
+        D9[instant_book: true]
+    end
+    
+    subgraph Queries["Query Types"]
+        Q1[Geo Distance Query]
+        Q2[Range Query price]
+        Q3[Term Query amenities]
+        Q4[Bool Query combined]
+    end
+    
+    Index --> Queries
+    
+    style Index fill:#00a699
+    style Queries fill:#ff5a5f
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph GeoSearch["Geo-hashing for Location Search"]
+        WORLD[World Map]
+        REGION[Region: Europe]
+        COUNTRY[Country: France]
+        CITY[City: Paris]
+        AREA[Area: Marais]
+        BLOCK[Block: Specific Grid]
+    end
+    
+    subgraph Hash["Geohash Examples"]
+        H1[u09 - Europe]
+        H2[u09t - Paris Area]
+        H3[u09tv - Marais District]
+        H4[u09tvg - Specific Block]
+    end
+    
+    WORLD --> REGION --> COUNTRY --> CITY --> AREA --> BLOCK
+    CITY --> H2
+    AREA --> H3
+    BLOCK --> H4
+    
+    style GeoSearch fill:#ff5a5f
+    style Hash fill:#00a699
+        </pre>
+      </div>
+
+      <div class="info-box">
+        <h3>Search Optimization Techniques</h3>
+        <ul>
+          <li><strong>Geo-hashing</strong>: Convert lat/lng to prefix-searchable strings</li>
+          <li><strong>Denormalization</strong>: Store all needed data in one document</li>
+          <li><strong>Availability Bitmap</strong>: Pre-compute 365-day availability</li>
+          <li><strong>Ranking & Scoring</strong>: Quality score, response rate, booking rate</li>
+          <li><strong>Faceted Search</strong>: Pre-aggregated filter counts</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 6. Communication Patterns -->
+    <div id="communication" class="diagram-section">
+      <h2>6. Inter-Service Communication</h2>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Sync["Synchronous (REST/gRPC)"]
+        direction LR
+        S1[User Validation]
+        S2[Listing Details]
+        S3[Availability Check]
+        S4[Payment Processing]
+    end
+    
+    subgraph Async["Asynchronous (Event-Driven)"]
+        direction LR
+        A1[Booking Created Event]
+        A2[Payment Completed Event]
+        A3[Review Submitted Event]
+        A4[Listing Updated Event]
+    end
+    
+    subgraph When["When to Use"]
+        W1[Sync: Need immediate response]
+        W2[Async: Fire and forget]
+        W3[Sync: User-facing APIs]
+        W4[Async: Background processing]
+    end
+    
+    style Sync fill:#ff5a5f
+    style Async fill:#00a699
+    style When fill:#484848
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant BS as Booking Service
+    participant K as Kafka
+    participant PS as Payment Service
+    participant NS as Notification Service
+    participant AS as Availability Service
+    participant ANS as Analytics Service
+    
+    Note over BS,ANS: Event-Driven Booking Flow
+    
+    BS->>K: Publish BookingCreated Event
+    
+    par Payment Processing
+        K->>PS: Consume event
+        PS->>PS: Process payment
+        PS->>K: Publish PaymentCompleted
+    and Notification
+        K->>NS: Consume event
+        NS->>NS: Send confirmation email
+    and Availability Update
+        K->>AS: Consume event
+        AS->>AS: Block calendar dates
+    and Analytics
+        K->>ANS: Consume event
+        ANS->>ANS: Track booking metrics
+    end
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Kafka["Kafka Topics"]
+        T1[booking.created]
+        T2[booking.confirmed]
+        T3[payment.completed]
+        T4[listing.updated]
+        T5[review.submitted]
+    end
+    
+    subgraph Consumers["Consumer Groups"]
+        C1[Payment Consumer]
+        C2[Notification Consumer]
+        C3[Search Indexer]
+        C4[Analytics Consumer]
+    end
+    
+    T1 --> C1
+    T1 --> C2
+    T3 --> C2
+    T4 --> C3
+    T5 --> C3
+    T1 --> C4
+    T2 --> C4
+    
+    style Kafka fill:#ff5a5f
+    style Consumers fill:#00a699
+        </pre>
+      </div>
+
+      <div class="callout">
+        Sync for user-facing, Async for everything else. Decouple services to scale independently.
+      </div>
+
+      <h3 style="color: #ff5a5f">🔗 Service Mesh Architecture</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Mesh["Service Mesh (Istio)"]
+        subgraph Pod1["Booking Service Pod"]
+            BS[Booking Service]
+            E1[Envoy Sidecar]
+        end
+        
+        subgraph Pod2["Payment Service Pod"]
+            PS[Payment Service]
+            E2[Envoy Sidecar]
+        end
+        
+        subgraph Pod3["Notification Service Pod"]
+            NS[Notification Service]
+            E3[Envoy Sidecar]
+        end
+        
+        subgraph ControlPlane["Control Plane"]
+            ISTIOD[Istiod]
+            CA[Certificate Authority]
+            CONFIG[Config Store]
+        end
+    end
+    
+    BS --> E1
+    E1 -->|mTLS| E2
+    E1 -->|mTLS| E3
+    E2 --> PS
+    E3 --> NS
+    
+    ISTIOD --> E1
+    ISTIOD --> E2
+    ISTIOD --> E3
+    CA --> ISTIOD
+    
+    style ControlPlane fill:#ff5a5f
+    style Pod1 fill:#00a699
+    style Pod2 fill:#00a699
+    style Pod3 fill:#00a699
+        </pre>
+      </div>
+
+      <h3 style="color: #00a699">📡 gRPC vs REST Decision</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph External["External Communication"]
+        CLIENT[Client Apps]
+        REST1[REST API<br/>JSON over HTTP/1.1]
+        GW[API Gateway]
+    end
+    
+    subgraph Internal["Internal Communication"]
+        GRPC[gRPC<br/>Protobuf over HTTP/2]
+        SVC1[Service A]
+        SVC2[Service B]
+        SVC3[Service C]
+    end
+    
+    CLIENT --> REST1
+    REST1 --> GW
+    GW --> GRPC
+    GRPC --> SVC1
+    GRPC --> SVC2
+    GRPC --> SVC3
+    
+    style External fill:#ff5a5f
+    style Internal fill:#00a699
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant GW as API Gateway
+    participant BS as Booking Service
+    participant LS as Listing Service
+    participant PS as Payment Service
+    
+    Note over C,PS: Synchronous Chain (Anti-pattern to avoid)
+    C->>GW: POST /book
+    GW->>BS: gRPC CreateBooking
+    BS->>LS: gRPC GetListing
+    LS-->>BS: Listing details
+    BS->>PS: gRPC CreatePayment
+    PS-->>BS: Payment created
+    BS-->>GW: Booking response
+    GW-->>C: 201 Created
+    Note over C,PS: Total latency = sum of all calls
+    
+    Note over C,PS: Better: Async with Orchestration
+    C->>GW: POST /book
+    GW->>BS: gRPC CreateBooking
+    BS->>BS: Validate locally
+    BS-->>GW: 202 Accepted
+    GW-->>C: Booking in progress
+    Note over BS,PS: Background saga handles rest
+        </pre>
+      </div>
+
+      <h3 style="color: #f59e0b">📬 Event Schema & Contracts</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Schema["Event Schema Registry"]
+        SR[Schema Registry<br/>Confluent/AWS Glue]
+        V1[booking.created.v1]
+        V2[booking.created.v2]
+        V3[payment.completed.v1]
+    end
+    
+    subgraph Producer["Event Producers"]
+        P1[Booking Service]
+        P2[Payment Service]
+    end
+    
+    subgraph Consumer["Event Consumers"]
+        C1[Notification Service]
+        C2[Analytics Service]
+        C3[Search Indexer]
+    end
+    
+    P1 -->|Register schema| SR
+    P2 -->|Register schema| SR
+    SR -->|Validate| C1
+    SR -->|Validate| C2
+    SR -->|Validate| C3
+    
+    style Schema fill:#f59e0b
+    style Producer fill:#ff5a5f
+    style Consumer fill:#00a699
+        </pre>
+      </div>
+
+      <table>
+        <tr>
+          <th>Pattern</th>
+          <th>Use Case</th>
+          <th>Latency</th>
+          <th>Coupling</th>
+        </tr>
+        <tr>
+          <td>REST</td>
+          <td>External APIs, simple CRUD</td>
+          <td>Medium</td>
+          <td>High</td>
+        </tr>
+        <tr>
+          <td>gRPC</td>
+          <td>Internal service calls, streaming</td>
+          <td>Low</td>
+          <td>Medium</td>
+        </tr>
+        <tr>
+          <td>Kafka Events</td>
+          <td>Async workflows, event sourcing</td>
+          <td>Variable</td>
+          <td>Low</td>
+        </tr>
+        <tr>
+          <td>GraphQL</td>
+          <td>Frontend aggregation, flexible queries</td>
+          <td>Medium</td>
+          <td>Low</td>
+        </tr>
+      </table>
+
+      <div class="info-box">
+        <h3>Communication Best Practices</h3>
+        <ul>
+          <li><strong>Service Mesh</strong>: Use Istio/Linkerd for mTLS, observability, retries</li>
+          <li><strong>gRPC Internal</strong>: 10x faster than REST for service-to-service</li>
+          <li><strong>Schema Registry</strong>: Version your events, ensure backward compatibility</li>
+          <li><strong>Circuit Breaker</strong>: Fail fast when downstream is unhealthy</li>
+          <li><strong>Retry with Backoff</strong>: Exponential backoff for transient failures</li>
+          <li><strong>Dead Letter Queue</strong>: Capture failed messages for debugging</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 7. API Performance -->
+    <div id="performance" class="diagram-section">
+      <h2>7. API Performance Optimization</h2>
+
+      <div class="callout">Every 100ms of latency costs 1% conversion. Performance IS a feature.</div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Caching["Multi-Layer Caching"]
+        L1[CDN Cache<br/>Static assets, images]
+        L2[API Gateway Cache<br/>Response caching]
+        L3[Application Cache<br/>Redis]
+        L4[Database Cache<br/>Query cache]
+    end
+    
+    L1 --> L2 --> L3 --> L4
+    
+    subgraph CacheStrategy["Cache Strategies"]
+        CS1[Cache-Aside]
+        CS2[Write-Through]
+        CS3[Write-Behind]
+        CS4[Read-Through]
+    end
+    
+    style Caching fill:#ff5a5f
+    style CacheStrategy fill:#00a699
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant CDN as CDN
+    participant GW as API Gateway
+    participant AGG as Aggregator
+    participant S1 as Listing Service
+    participant S2 as Pricing Service
+    participant S3 as Review Service
+    
+    Note over C,S3: Without Aggregator (Bad)
+    C->>S1: Get listing
+    S1-->>C: Listing data
+    C->>S2: Get price
+    S2-->>C: Price data
+    C->>S3: Get reviews
+    S3-->>C: Reviews
+    Note over C: 3 round trips = slow
+    
+    Note over C,S3: With Aggregator (Good)
+    C->>AGG: Get listing details
+    par Parallel calls
+        AGG->>S1: Get listing
+        AGG->>S2: Get price
+        AGG->>S3: Get reviews
+    end
+    S1-->>AGG: Listing
+    S2-->>AGG: Price
+    S3-->>AGG: Reviews
+    AGG-->>C: Combined response
+    Note over C: 1 round trip = fast
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph ReadOpt["Read Optimizations"]
+        R1[Read Replicas]
+        R2[Query Optimization]
+        R3[Denormalization]
+        R4[Materialized Views]
+    end
+    
+    subgraph WriteOpt["Write Optimizations"]
+        W1[Write-Behind Cache]
+        W2[Batch Processing]
+        W3[Async Writes]
+        W4[Event Sourcing]
+    end
+    
+    subgraph Network["Network Optimizations"]
+        N1[Connection Pooling]
+        N2[HTTP/2]
+        N3[gRPC]
+        N4[Compression]
+    end
+    
+    style ReadOpt fill:#ff5a5f
+    style WriteOpt fill:#00a699
+    style Network fill:#f59e0b
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph RateLimit["Rate Limiting Strategy"]
+        RL1[Per User: 100 req/min]
+        RL2[Per IP: 1000 req/min]
+        RL3[Per API Key: 10000 req/min]
+        RL4[Sliding Window Algorithm]
+    end
+    
+    subgraph Pagination["Pagination Strategy"]
+        P1[Cursor-based]
+        P2[NOT Offset-based]
+        P3[Limit: max 50 items]
+        P4[Next cursor in response]
+    end
+    
+    subgraph Response["Response Optimization"]
+        RS1[Field Selection]
+        RS2[Sparse Fieldsets]
+        RS3[Compression gzip]
+        RS4[Conditional Requests ETag]
+    end
+    
+    style RateLimit fill:#ff5a5f
+    style Pagination fill:#00a699
+    style Response fill:#f59e0b
+        </pre>
+      </div>
+
+      <div class="info-box">
+        <h3>Performance Checklist</h3>
+        <ul>
+          <li><strong>Caching</strong>: Cache popular listings, search results for top cities</li>
+          <li><strong>Pagination</strong>: Always use cursor-based, never return full dataset</li>
+          <li><strong>Aggregation</strong>: BFF (Backend-for-Frontend) reduces round trips</li>
+          <li><strong>Read Replicas</strong>: Scale reads independently</li>
+          <li><strong>Connection Pooling</strong>: Reuse database connections</li>
+          <li><strong>Compression</strong>: gzip responses, especially JSON</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 8. End-to-End Flows -->
+    <div id="flows" class="diagram-section">
+      <h2>8. End-to-End Flows</h2>
+
+      <h3 style="color: #00a699">🔍 Search Flow (Target: &lt;200ms)</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant CDN as CDN
+    participant GW as API Gateway
+    participant SS as Search Service
+    participant RC as Redis Cache
+    participant ES as Elasticsearch
+    
+    Note over U,ES: Search Flow - Paris, 2 guests, $100-200/night
+    
+    U->>CDN: GET /search?city=Paris&guests=2&price=100-200
+    CDN->>CDN: Check edge cache
+    CDN->>GW: Cache miss, forward
+    GW->>GW: Validate, rate limit
+    GW->>SS: Route to Search Service
+    
+    SS->>SS: Build query hash
+    SS->>RC: GET cache:search:hash123
+    
+    alt Cache Hit (50ms)
+        RC-->>SS: Cached results
+        SS-->>GW: Return 50 listings
+        GW-->>CDN: Response + cache headers
+        CDN-->>U: Results in 50ms
+    else Cache Miss (150ms)
+        RC-->>SS: null
+        SS->>ES: Bool query with geo, price, guests
+        ES->>ES: Execute query, rank results
+        ES-->>SS: Top 50 listings + facets
+        SS->>RC: SET cache:search:hash123 TTL=300
+        SS-->>GW: Return 50 listings
+        GW-->>CDN: Response
+        CDN-->>U: Results in 150ms
+    end
+        </pre>
+      </div>
+
+      <h3 style="color: #ff5a5f">🧾 Booking Flow (Critical Path)</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant GW as API Gateway
+    participant BS as Booking Service
+    participant AS as Availability Service
+    participant PS as Payment Service
+    participant K as Kafka
+    participant NS as Notification Service
+    
+    Note over U,NS: Booking Flow - Reserve listing for 3 nights
+    
+    U->>GW: POST /bookings {listingId, dates, guests}
+    GW->>BS: Create booking request
+    
+    BS->>AS: Check availability (dates)
+    AS->>AS: Acquire distributed lock
+    AS-->>BS: Available, hold for 10 min
+    
+    BS->>BS: Calculate total price
+    BS->>PS: Create payment intent
+    PS->>PS: Stripe/PayPal integration
+    PS-->>BS: Payment intent created
+    
+    BS-->>U: Redirect to payment page
+    U->>PS: Complete payment
+    PS-->>BS: Payment webhook - success
+    
+    BS->>BS: Confirm booking
+    BS->>AS: Block dates permanently
+    BS->>K: Publish BookingConfirmed event
+    
+    par Async Processing
+        K->>NS: Send confirmation email
+        K->>NS: Send SMS notification
+        K->>NS: Push notification to host
+    end
+    
+    BS-->>U: Booking confirmed!
+        </pre>
+      </div>
+
+      <h3 style="color: #f59e0b">🏠 Listing Creation Flow</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant H as Host
+    participant GW as API Gateway
+    participant LS as Listing Service
+    participant S3 as S3 Storage
+    participant IMG as Image Service
+    participant K as Kafka
+    participant SS as Search Indexer
+    
+    Note over H,SS: Host creates new listing
+    
+    H->>GW: POST /listings {title, description, amenities}
+    GW->>LS: Create listing
+    LS->>LS: Validate listing data
+    LS->>LS: Save to MongoDB
+    LS-->>H: Listing created (draft)
+    
+    H->>GW: POST /listings/:id/photos
+    GW->>IMG: Upload photos
+    IMG->>S3: Store original images
+    IMG->>IMG: Generate thumbnails (multiple sizes)
+    IMG->>S3: Store thumbnails
+    IMG-->>H: Photos uploaded
+    
+    H->>GW: POST /listings/:id/publish
+    GW->>LS: Publish listing
+    LS->>LS: Validate completeness
+    LS->>K: Publish ListingPublished event
+    
+    K->>SS: Consume event
+    SS->>SS: Index in Elasticsearch
+    SS-->>K: Indexed successfully
+    
+    LS-->>H: Listing is now live!
+        </pre>
+      </div>
+
+      <div class="info-box">
+        <h3>Bottlenecks & Solutions</h3>
+        <ul>
+          <li><strong>Search Latency</strong>: Solved with Elasticsearch + Redis caching</li>
+          <li><strong>Double Booking</strong>: Solved with distributed locks on availability</li>
+          <li><strong>Payment Failures</strong>: Solved with idempotency keys</li>
+          <li><strong>Image Upload</strong>: Solved with async processing + CDN</li>
+          <li><strong>Notification Delays</strong>: Solved with async event processing</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 9. Advanced Patterns -->
+    <div id="advanced" class="diagram-section">
+      <h2>9. Advanced Architecture Patterns</h2>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph CQRS["CQRS Pattern"]
+        direction LR
+        W[Write Model<br/>Booking Service]
+        R[Read Model<br/>Search Service]
+        ES1[Event Store]
+    end
+    
+    W -->|Commands| ES1
+    ES1 -->|Events| R
+    
+    subgraph EventSourcing["Event Sourcing"]
+        E1[BookingCreated]
+        E2[PaymentReceived]
+        E3[BookingConfirmed]
+        E4[CheckInCompleted]
+    end
+    
+    ES1 --> EventSourcing
+    
+    style CQRS fill:#ff5a5f
+    style EventSourcing fill:#00a699
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Consistency["Consistency Models"]
+        SC[Strong Consistency<br/>Payments, Bookings]
+        EC[Eventual Consistency<br/>Search Index, Analytics]
+    end
+    
+    subgraph Idempotency["Idempotency in Booking"]
+        I1[Idempotency Key in Header]
+        I2[Store in Redis with TTL]
+        I3[Return cached response if exists]
+    end
+    
+    subgraph CircuitBreaker["Circuit Breaker Pattern"]
+        CB1[Closed: Normal operation]
+        CB2[Open: Fail fast]
+        CB3[Half-Open: Test recovery]
+    end
+    
+    style Consistency fill:#ff5a5f
+    style Idempotency fill:#00a699
+    style CircuitBreaker fill:#f59e0b
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Saga["Booking Saga (Choreography)"]
+        S1[Booking Created]
+        S2[Availability Held]
+        S3[Payment Processed]
+        S4[Booking Confirmed]
+        S5[Notifications Sent]
+    end
+    
+    subgraph Compensating["Compensating Transactions"]
+        C1[Release Availability]
+        C2[Refund Payment]
+        C3[Cancel Booking]
+    end
+    
+    S1 --> S2 --> S3 --> S4 --> S5
+    S3 -->|Failure| C2
+    S2 -->|Failure| C1
+    S4 -->|Failure| C3
+    
+    style Saga fill:#00a699
+    style Compensating fill:#ff5a5f
+        </pre>
+      </div>
+
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph HotPartition["Avoiding Hot Partitions"]
+        HP1[Problem: Paris listings hit same partition]
+        HP2[Solution: Add random suffix to partition key]
+        HP3[listing_id + random(0-9)]
+    end
+    
+    subgraph CacheInvalidation["Cache Invalidation"]
+        CI1[TTL-based: Simple, eventual]
+        CI2[Event-based: Publish on change]
+        CI3[Versioning: Cache with version]
+    end
+    
+    subgraph Sharding["Database Sharding"]
+        SH1[Shard by region]
+        SH2[Shard by listing_id hash]
+        SH3[Cross-shard queries are expensive]
+    end
+    
+    style HotPartition fill:#ff5a5f
+    style CacheInvalidation fill:#00a699
+    style Sharding fill:#f59e0b
+        </pre>
+      </div>
+
+      <div class="info-box">
+        <h3>Senior-Level Talking Points</h3>
+        <ul>
+          <li><strong>Eventual Consistency vs Strong Consistency</strong>: Search can be stale, bookings cannot</li>
+          <li><strong>CQRS Pattern</strong>: Separate read and write models for different scale requirements</li>
+          <li><strong>Hot Partitions</strong>: Popular cities cause uneven load distribution</li>
+          <li><strong>Cache Invalidation</strong>: One of the hardest problems - use TTL + events</li>
+          <li><strong>Idempotency</strong>: Critical for payment APIs - same request = same result</li>
+          <li><strong>Saga Pattern</strong>: Manage distributed transactions with compensating actions</li>
+          <li><strong>Circuit Breaker</strong>: Fail fast when downstream service is unhealthy</li>
+        </ul>
+      </div>
+
+      <div class="callout">
+        Designing systems isn't about drawing boxes—it's about understanding scale, trade-offs, and bottlenecks.
+      </div>
+    </div>
+
+    <script>
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'dark',
+        themeVariables: {
+          primaryColor: '#ff5a5f',
+          primaryTextColor: '#fff',
+          primaryBorderColor: '#ff385c',
+          lineColor: '#00a699',
+          secondaryColor: '#1e1e2e',
+          tertiaryColor: '#2d2d44',
+        },
+      });
+
+      const renderedTabs = new Set();
+      let activeAnimations = [];
+
+      async function showTab(tabId, evt) {
+        activeAnimations.forEach((id) => cancelAnimationFrame(id));
+        activeAnimations = [];
+        document.querySelectorAll('.flow-dot').forEach((d) => d.remove());
+        document.querySelectorAll('.diagram-section').forEach((s) => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        if (evt && evt.target) {
+          evt.target.classList.add('active');
+        } else {
+          document.querySelector(`.tab[onclick*="${tabId}"]`).classList.add('active');
+        }
+        if (!renderedTabs.has(tabId)) {
+          const section = document.getElementById(tabId);
+          const pres = section.querySelectorAll('pre.mermaid');
+          for (const pre of pres) {
+            if (!pre.dataset.processed) {
+              const id = 'mermaid-' + Math.random().toString(36).substr(2, 9);
+              try {
+                const { svg } = await mermaid.render(id, pre.textContent);
+                const div = document.createElement('div');
+                div.innerHTML = svg;
+                div.className = 'mermaid';
+                pre.replaceWith(div);
+              } catch (e) {
+                console.error('Mermaid error:', e);
+              }
+            }
+          }
+          renderedTabs.add(tabId);
+        }
+        setTimeout(() => startFlowAnimation(tabId), 500);
+      }
+
+      function startFlowAnimation(tabId) {
+        const section = document.getElementById(tabId);
+        const svgs = section.querySelectorAll('.mermaid svg');
+        svgs.forEach((svg) => {
+          const paths = svg.querySelectorAll('path.flowchart-link, path[class*="messageLine"], line');
+          paths.forEach((path) => {
+            animateDotAlongPath(path, svg);
+          });
+        });
+      }
+
+      function animateDotAlongPath(path, svg) {
+        const dot = document.createElement('div');
+        dot.className = 'flow-dot';
+        document.body.appendChild(dot);
+        let progress = 0;
+        const speed = 0.003 + Math.random() * 0.002;
+        const delay = Math.random() * 2000;
+        setTimeout(() => {
+          dot.classList.add('active');
+          function animate() {
+            progress += speed;
+            if (progress > 1) progress = 0;
+            let point;
+            try {
+              if (path.getTotalLength) {
+                const length = path.getTotalLength();
+                point = path.getPointAtLength(progress * length);
+              } else if (path.tagName === 'line') {
+                const x1 = parseFloat(path.getAttribute('x1'));
+                const y1 = parseFloat(path.getAttribute('y1'));
+                const x2 = parseFloat(path.getAttribute('x2'));
+                const y2 = parseFloat(path.getAttribute('y2'));
+                point = { x: x1 + (x2 - x1) * progress, y: y1 + (y2 - y1) * progress };
+              }
+              if (point) {
+                const svgRect = svg.getBoundingClientRect();
+                const ctm = svg.getScreenCTM();
+                if (ctm) {
+                  dot.style.left = svgRect.left + point.x * ctm.a + ctm.e - svgRect.left - 10 + 'px';
+                  dot.style.top = svgRect.top + point.y * ctm.d + ctm.f - svgRect.top - 10 + 'px';
+                  dot.style.opacity = '1';
+                }
+              }
+            } catch (e) {}
+            const animId = requestAnimationFrame(animate);
+            activeAnimations.push(animId);
+          }
+          animate();
+        }, delay);
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        showTab('architecture');
+      });
+    </script>
+  </body>
+</html>

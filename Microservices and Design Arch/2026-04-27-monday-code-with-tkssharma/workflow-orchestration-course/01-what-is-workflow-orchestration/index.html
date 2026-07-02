@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 1: What is Workflow Orchestration?</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+        .card-hover { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <header class="gradient-bg text-white py-12">
+        <div class="container mx-auto px-6">
+            <p class="text-indigo-200 mb-2">Module 1</p>
+            <h1 class="text-4xl font-bold">What is Workflow Orchestration?</h1>
+            <p class="mt-4 text-xl opacity-90">Understanding core concepts, terminology, and how workflow engines work</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <!-- What is Workflow -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">📋 What is a Workflow?</h2>
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 mb-6">
+                    <p class="text-lg"><strong>Definition:</strong> A workflow is a sequence of tasks or steps that need to be executed to complete a business process.</p>
+                </div>
+                <h3 class="font-bold text-gray-700 mb-4">E-commerce Order Workflow Example</h3>
+                <svg viewBox="0 0 800 100" class="w-full">
+                    <circle cx="30" cy="50" r="12" fill="#22c55e"/>
+                    <rect x="60" y="30" width="120" height="40" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="120" y="55" text-anchor="middle" font-size="12" fill="#1d4ed8">Place Order</text>
+                    <path d="M180,50 L210,50" stroke="#666" stroke-width="2" marker-end="url(#arr)"/>
+                    <rect x="220" y="30" width="120" height="40" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="280" y="55" text-anchor="middle" font-size="12" fill="#1d4ed8">Reserve Inventory</text>
+                    <path d="M340,50 L370,50" stroke="#666" stroke-width="2" marker-end="url(#arr)"/>
+                    <rect x="380" y="30" width="120" height="40" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="440" y="55" text-anchor="middle" font-size="12" fill="#1d4ed8">Process Payment</text>
+                    <path d="M500,50 L530,50" stroke="#666" stroke-width="2" marker-end="url(#arr)"/>
+                    <rect x="540" y="30" width="120" height="40" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="600" y="55" text-anchor="middle" font-size="12" fill="#1d4ed8">Ship Order</text>
+                    <path d="M660,50 L690,50" stroke="#666" stroke-width="2" marker-end="url(#arr)"/>
+                    <circle cx="720" cy="50" r="10" fill="none" stroke="#ef4444" stroke-width="3"/>
+                    <circle cx="720" cy="50" r="6" fill="#ef4444"/>
+                    <defs><marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#666"/></marker></defs>
+                </svg>
+            </div>
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-white rounded-lg shadow p-4 card-hover">
+                    <span class="text-2xl">📍</span>
+                    <h4 class="font-bold mt-2">Sequential</h4>
+                    <p class="text-sm text-gray-600">Steps execute in defined order</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 card-hover">
+                    <span class="text-2xl">🔀</span>
+                    <h4 class="font-bold mt-2">Conditional</h4>
+                    <p class="text-sm text-gray-600">Different paths based on decisions</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 card-hover">
+                    <span class="text-2xl">⏱️</span>
+                    <h4 class="font-bold mt-2">Long-running</h4>
+                    <p class="text-sm text-gray-600">Can span minutes to months</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- What is Orchestration -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🎼 What is Orchestration?</h2>
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="bg-purple-50 border-l-4 border-purple-500 p-4 mb-6">
+                    <p class="text-lg"><strong>Definition:</strong> Workflow Orchestration is the automated coordination, management, and execution of workflows across multiple services, systems, or tasks.</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="font-bold text-gray-700 mb-4">🎻 The Orchestra Analogy</h3>
+                        <svg viewBox="0 0 300 200" class="w-full">
+                            <rect x="100" y="20" width="100" height="40" rx="5" fill="#8b5cf6" stroke="#7c3aed" stroke-width="2"/>
+                            <text x="150" y="45" text-anchor="middle" font-size="11" fill="white" font-weight="bold">CONDUCTOR</text>
+                            <path d="M120,60 L70,100" stroke="#8b5cf6" stroke-width="2"/>
+                            <path d="M150,60 L150,100" stroke="#8b5cf6" stroke-width="2"/>
+                            <path d="M180,60 L230,100" stroke="#8b5cf6" stroke-width="2"/>
+                            <rect x="30" y="110" width="80" height="35" rx="5" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                            <text x="70" y="132" text-anchor="middle" font-size="10" fill="#4338ca">🎻 Violin</text>
+                            <rect x="110" y="110" width="80" height="35" rx="5" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                            <text x="150" y="132" text-anchor="middle" font-size="10" fill="#4338ca">🎺 Trumpet</text>
+                            <rect x="190" y="110" width="80" height="35" rx="5" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                            <text x="230" y="132" text-anchor="middle" font-size="10" fill="#4338ca">🥁 Drums</text>
+                            <text x="150" y="170" text-anchor="middle" font-size="10" fill="#666">Conductor tells each instrument</text>
+                            <text x="150" y="185" text-anchor="middle" font-size="10" fill="#666">WHEN and WHAT to play</text>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-700 mb-4">Key Functions</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 p-2 bg-gray-50 rounded">
+                                <span class="text-xl">📍</span>
+                                <div><strong>State Tracking</strong> - Where is each workflow?</div>
+                            </div>
+                            <div class="flex items-center gap-3 p-2 bg-gray-50 rounded">
+                                <span class="text-xl">🔄</span>
+                                <div><strong>Transitions</strong> - Move between steps</div>
+                            </div>
+                            <div class="flex items-center gap-3 p-2 bg-gray-50 rounded">
+                                <span class="text-xl">⏰</span>
+                                <div><strong>Timers</strong> - Scheduling & timeouts</div>
+                            </div>
+                            <div class="flex items-center gap-3 p-2 bg-gray-50 rounded">
+                                <span class="text-xl">⚠️</span>
+                                <div><strong>Error Handling</strong> - Retries & compensation</div>
+                            </div>
+                            <div class="flex items-center gap-3 p-2 bg-gray-50 rounded">
+                                <span class="text-xl">📊</span>
+                                <div><strong>Audit Trail</strong> - Complete history</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Workflow Engine Architecture -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">⚙️ How Workflow Engines Work</h2>
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <svg viewBox="0 0 600 350" class="w-full">
+                    <rect x="200" y="10" width="200" height="50" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                    <text x="300" y="40" text-anchor="middle" font-size="12" fill="#b45309" font-weight="bold">WORKFLOW DEFINITION</text>
+                    <text x="300" y="55" text-anchor="middle" font-size="9" fill="#d97706">(BPMN / Code / JSON)</text>
+                    <path d="M300,60 L300,90" stroke="#666" stroke-width="2" marker-end="url(#arr2)"/>
+                    <rect x="200" y="95" width="200" height="50" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="300" y="125" text-anchor="middle" font-size="12" fill="#1d4ed8" font-weight="bold">WORKFLOW ENGINE</text>
+                    <text x="300" y="140" text-anchor="middle" font-size="9" fill="#3b82f6">(State Machine)</text>
+                    <path d="M300,145 L300,175" stroke="#666" stroke-width="2" marker-end="url(#arr2)"/>
+                    <rect x="200" y="180" width="200" height="50" rx="8" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+                    <text x="300" y="210" text-anchor="middle" font-size="12" fill="#047857" font-weight="bold">WORKFLOW INSTANCE</text>
+                    <text x="300" y="225" text-anchor="middle" font-size="9" fill="#059669">(Running + Unique ID)</text>
+                    <path d="M300,230 L300,260" stroke="#666" stroke-width="2" marker-end="url(#arr2)"/>
+                    <rect x="200" y="265" width="200" height="40" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                    <text x="300" y="290" text-anchor="middle" font-size="12" fill="#4338ca" font-weight="bold">TASK QUEUE</text>
+                    <path d="M200,285 L120,285" stroke="#666" stroke-width="2"/>
+                    <path d="M120,285 L120,320" stroke="#666" stroke-width="2" marker-end="url(#arr2)"/>
+                    <path d="M400,285 L480,285" stroke="#666" stroke-width="2"/>
+                    <path d="M480,285 L480,320" stroke="#666" stroke-width="2" marker-end="url(#arr2)"/>
+                    <rect x="50" y="325" width="140" height="35" rx="5" fill="#fce7f3" stroke="#ec4899" stroke-width="2"/>
+                    <text x="120" y="347" text-anchor="middle" font-size="11" fill="#be185d">Worker A (Your Code)</text>
+                    <rect x="410" y="325" width="140" height="35" rx="5" fill="#fce7f3" stroke="#ec4899" stroke-width="2"/>
+                    <text x="480" y="347" text-anchor="middle" font-size="11" fill="#be185d">Worker B (Your Code)</text>
+                    <defs><marker id="arr2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#666"/></marker></defs>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Orchestration vs Choreography -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">⚖️ Orchestration vs Choreography</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-indigo-500">
+                    <h3 class="text-xl font-bold text-indigo-600 mb-4">🎼 Orchestration</h3>
+                    <svg viewBox="0 0 250 150" class="w-full mb-4">
+                        <rect x="75" y="10" width="100" height="35" rx="5" fill="#6366f1"/>
+                        <text x="125" y="32" text-anchor="middle" font-size="10" fill="white" font-weight="bold">ORCHESTRATOR</text>
+                        <path d="M95,45 L55,80" stroke="#6366f1" stroke-width="2"/>
+                        <path d="M125,45 L125,80" stroke="#6366f1" stroke-width="2"/>
+                        <path d="M155,45 L195,80" stroke="#6366f1" stroke-width="2"/>
+                        <rect x="20" y="85" width="70" height="30" rx="5" fill="#e0e7ff" stroke="#6366f1"/>
+                        <text x="55" y="105" text-anchor="middle" font-size="9" fill="#4338ca">Service A</text>
+                        <rect x="90" y="85" width="70" height="30" rx="5" fill="#e0e7ff" stroke="#6366f1"/>
+                        <text x="125" y="105" text-anchor="middle" font-size="9" fill="#4338ca">Service B</text>
+                        <rect x="160" y="85" width="70" height="30" rx="5" fill="#e0e7ff" stroke="#6366f1"/>
+                        <text x="195" y="105" text-anchor="middle" font-size="9" fill="#4338ca">Service C</text>
+                    </svg>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Central control</li>
+                        <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Easy to debug</li>
+                        <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Full visibility</li>
+                        <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Complex flows</li>
+                    </ul>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-orange-500">
+                    <h3 class="text-xl font-bold text-orange-600 mb-4">🎭 Choreography</h3>
+                    <svg viewBox="0 0 250 150" class="w-full mb-4">
+                        <rect x="20" y="50" width="70" height="30" rx="5" fill="#fed7aa" stroke="#f97316"/>
+                        <text x="55" y="70" text-anchor="middle" font-size="9" fill="#c2410c">Service A</text>
+                        <path d="M90,65 L120,65" stroke="#f97316" stroke-width="2" marker-end="url(#arr3)"/>
+                        <text x="105" y="58" text-anchor="middle" font-size="7" fill="#666">event</text>
+                        <rect x="125" y="50" width="70" height="30" rx="5" fill="#fed7aa" stroke="#f97316"/>
+                        <text x="160" y="70" text-anchor="middle" font-size="9" fill="#c2410c">Service B</text>
+                        <path d="M195,65 L225,65" stroke="#f97316" stroke-width="2" marker-end="url(#arr3)"/>
+                        <text x="210" y="58" text-anchor="middle" font-size="7" fill="#666">event</text>
+                        <rect x="160" y="90" width="70" height="30" rx="5" fill="#fed7aa" stroke="#f97316"/>
+                        <text x="195" y="110" text-anchor="middle" font-size="9" fill="#c2410c">Service C</text>
+                        <path d="M55,80 L55,105 L155,105" stroke="#f97316" stroke-width="1" stroke-dasharray="3"/>
+                        <defs><marker id="arr3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#f97316"/></marker></defs>
+                    </svg>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Loose coupling</li>
+                        <li class="flex items-center gap-2"><span class="text-green-500">✓</span> Independent services</li>
+                        <li class="flex items-center gap-2"><span class="text-yellow-500">⚠</span> Hard to debug</li>
+                        <li class="flex items-center gap-2"><span class="text-yellow-500">⚠</span> Scattered state</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Terminology -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">📖 Key Terminology</h2>
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-white rounded-lg shadow p-4"><strong>Workflow Definition</strong><p class="text-sm text-gray-600">Blueprint/template for a process</p></div>
+                <div class="bg-white rounded-lg shadow p-4"><strong>Workflow Instance</strong><p class="text-sm text-gray-600">Running execution of a definition</p></div>
+                <div class="bg-white rounded-lg shadow p-4"><strong>Task</strong><p class="text-sm text-gray-600">Single unit of work in workflow</p></div>
+                <div class="bg-white rounded-lg shadow p-4"><strong>Activity</strong><p class="text-sm text-gray-600">External work by workers</p></div>
+                <div class="bg-white rounded-lg shadow p-4"><strong>Signal</strong><p class="text-sm text-gray-600">External event affecting workflow</p></div>
+                <div class="bg-white rounded-lg shadow p-4"><strong>Gateway</strong><p class="text-sm text-gray-600">Decision point (XOR, AND, OR)</p></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto px-6 text-center">
+            <p>Module 1: What is Workflow Orchestration? | Code with TK Sharma</p>
+        </div>
+    </footer>
+</body>
+</html>

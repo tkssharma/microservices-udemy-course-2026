@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CQRS Pattern - Real Example</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%); min-height: 100vh; color: #fff; }
+    .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+    .bg-animation span { position: absolute; display: block; width: 20px; height: 20px; background: rgba(236,72,153,0.1); animation: move 25s linear infinite; bottom: -150px; border-radius: 50%; }
+    .bg-animation span:nth-child(1) { left: 25%; width: 80px; height: 80px; }
+    .bg-animation span:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; }
+    .bg-animation span:nth-child(3) { left: 70%; width: 30px; height: 30px; animation-delay: 4s; }
+    .bg-animation span:nth-child(4) { left: 40%; width: 60px; height: 60px; }
+    @keyframes move { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-1000px); opacity: 0; } }
+    header { text-align: center; padding: 3rem 2rem; }
+    h1 { font-size: 3rem; font-weight: 700; background: linear-gradient(90deg, #ec4899, #8b5cf6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: #f9a8d4; font-size: 1.2rem; margin-top: 0.5rem; }
+    .tabs { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; padding: 0 2rem; margin-bottom: 2rem; }
+    .tab { padding: 1rem 1.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    .tab:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+    .tab.active { background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; }
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 2rem; color: #ec4899; }
+    .diagram-container { background: rgba(15,23,42,0.8); border-radius: 24px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(236,72,153,0.3); position: relative; }
+    .diagram-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #ec4899, #8b5cf6, #06b6d4); }
+    .diagram-title { font-size: 1.5rem; color: #fbbf24; margin-bottom: 1.5rem; }
+    .cqrs-visual { display: flex; justify-content: center; align-items: stretch; gap: 2rem; flex-wrap: wrap; padding: 2rem; }
+    .cqrs-side { flex: 1; min-width: 280px; padding: 1.5rem; border-radius: 16px; background: rgba(255,255,255,0.05); }
+    .cqrs-side.write { border: 2px solid rgba(16,185,129,0.5); }
+    .cqrs-side.read { border: 2px solid rgba(59,130,246,0.5); }
+    .cqrs-side h3 { font-size: 1.5rem; margin-bottom: 1rem; text-align: center; }
+    .write h3 { color: #10b981; }
+    .read h3 { color: #3b82f6; }
+    .cqrs-side ul { list-style: none; }
+    .cqrs-side li { padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .cqrs-side li:last-child { border-bottom: none; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .info-card { background: linear-gradient(135deg, rgba(236,72,153,0.2), rgba(139,92,246,0.1)); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(236,72,153,0.3); transition: transform 0.3s ease; }
+    .info-card:hover { transform: translateY(-5px); }
+    .info-card h4 { color: #f9a8d4; font-size: 1.2rem; margin-bottom: 0.75rem; }
+    .info-card p { color: #d1d5db; line-height: 1.6; }
+    .feature-list { list-style: none; }
+    .feature-list li { padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 0.5rem; }
+    .feature-list li:last-child { border-bottom: none; }
+    .flow-visual { display: flex; justify-content: center; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding: 2rem; }
+    .node { padding: 1rem 1.5rem; border-radius: 12px; font-weight: 600; text-align: center; }
+    .node-green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 30px rgba(16,185,129,0.4); }
+    .node-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 30px rgba(59,130,246,0.4); }
+    .node-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 30px rgba(139,92,246,0.4); }
+    .node-orange { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 30px rgba(245,158,11,0.4); }
+    .arrow { font-size: 1.5rem; color: #ec4899; }
+  </style>
+</head>
+<body>
+  <div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+  <header>
+    <h1>📊 CQRS Pattern</h1>
+    <p class="subtitle">Command Query Responsibility Segregation</p>
+  </header>
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="pattern">The Pattern</button>
+    <button class="tab" data-tab="example">E-Commerce Example</button>
+    <button class="tab" data-tab="benefits">Benefits</button>
+    <button class="tab" data-tab="when">When to Use</button>
+  </div>
+
+  <div id="overview" class="content active">
+    <h2 class="section-title">🎯 What is CQRS?</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">💡 Core Concept</div>
+      <div class="info-card" style="margin-bottom: 1.5rem;">
+        <h4>📖 Definition</h4>
+        <p>CQRS separates read and write operations into different models. Commands (writes) modify state. Queries (reads) return data. Each can be optimized independently.</p>
+      </div>
+      <div class="cqrs-visual">
+        <div class="cqrs-side write">
+          <h3>✏️ Command (Write)</h3>
+          <ul>
+            <li>📝 CreateOrder</li>
+            <li>📝 UpdateProduct</li>
+            <li>📝 CancelOrder</li>
+            <li>💾 Write Database</li>
+          </ul>
+        </div>
+        <div class="cqrs-side read">
+          <h3>🔍 Query (Read)</h3>
+          <ul>
+            <li>📖 GetOrderDetails</li>
+            <li>📖 ListProducts</li>
+            <li>📖 GetUserOrders</li>
+            <li>💾 Read Database</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="pattern" class="content">
+    <h2 class="section-title">🏗️ The Pattern</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🔄 CQRS Flow</div>
+      <div class="flow-visual">
+        <div class="node node-green">Command</div>
+        <span class="arrow">→</span>
+        <div class="node node-purple">Write Model</div>
+        <span class="arrow">→</span>
+        <div class="node node-orange">Event</div>
+        <span class="arrow">→</span>
+        <div class="node node-blue">Read Model</div>
+      </div>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">📦 Components</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>📝 Commands</h4><p>Intent to change state. CreateOrder, UpdateInventory. Validated before processing.</p></div>
+        <div class="info-card"><h4>🔍 Queries</h4><p>Request for data. Read-only. No side effects. Optimized for specific views.</p></div>
+        <div class="info-card"><h4>💾 Write Store</h4><p>Normalized database. Optimized for writes. Source of truth.</p></div>
+        <div class="info-card"><h4>📊 Read Store</h4><p>Denormalized views. Optimized for queries. Can use different database.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="example" class="content">
+    <h2 class="section-title">🛒 E-Commerce Example</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📦 Order System with CQRS</div>
+      <div class="cqrs-visual">
+        <div class="cqrs-side write">
+          <h3>✏️ Write Side</h3>
+          <ul>
+            <li><strong>PlaceOrder</strong> → Validate stock, create order</li>
+            <li><strong>PayOrder</strong> → Process payment</li>
+            <li><strong>ShipOrder</strong> → Update shipping status</li>
+            <li>💾 <em>PostgreSQL (normalized)</em></li>
+          </ul>
+        </div>
+        <div class="cqrs-side read">
+          <h3>🔍 Read Side</h3>
+          <ul>
+            <li><strong>OrderDetails</strong> → Full order with items, shipping</li>
+            <li><strong>OrderHistory</strong> → User's past orders</li>
+            <li><strong>OrderDashboard</strong> → Analytics view</li>
+            <li>💾 <em>Elasticsearch (denormalized)</em></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="benefits" class="content">
+    <h2 class="section-title">✅ Benefits</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🎯 Why CQRS?</div>
+      <ul class="feature-list">
+        <li>📈 <strong>Independent Scaling:</strong> Scale reads and writes separately</li>
+        <li>⚡ <strong>Optimized Queries:</strong> Denormalized views for fast reads</li>
+        <li>🔧 <strong>Flexibility:</strong> Different databases for read/write</li>
+        <li>📊 <strong>Simpler Models:</strong> Focused, single-purpose models</li>
+        <li>🔄 <strong>Event Sourcing Friendly:</strong> Natural fit with event-driven systems</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="when" class="content">
+    <h2 class="section-title">🤔 When to Use?</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📋 Good Fit</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>✅ Use CQRS When</h4><p>• Read/write patterns differ significantly<br>• Complex queries needed<br>• High read/write ratio<br>• Scaling requirements differ</p></div>
+        <div class="info-card"><h4>❌ Avoid CQRS When</h4><p>• Simple CRUD operations<br>• Small applications<br>• Team unfamiliar with pattern<br>• Strong consistency required</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

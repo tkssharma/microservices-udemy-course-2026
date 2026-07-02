@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caching Strategies - Interactive Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0d0d0d;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 48px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 20px;
+      margin-bottom: 40px;
+    }
+
+    .cyan-underline {
+      width: 150px;
+      height: 4px;
+      background: linear-gradient(90deg, #06b6d4, #22d3ee);
+      margin-bottom: 40px;
+      border-radius: 2px;
+    }
+
+    .strategy-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 15px 30px;
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+
+    .tab:hover {
+      border-color: #06b6d4;
+      color: #22d3ee;
+    }
+
+    .tab.active {
+      background: rgba(6, 182, 212, 0.2);
+      border-color: #06b6d4;
+      color: #22d3ee;
+    }
+
+    .demo-container {
+      background: #12121a;
+      border: 1px solid #1e293b;
+      border-radius: 20px;
+      padding: 40px;
+      min-height: 500px;
+    }
+
+    .demo-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+
+    .demo-description {
+      color: #94a3b8;
+      font-size: 16px;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .architecture {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      margin: 40px 0;
+      flex-wrap: wrap;
+    }
+
+    .component {
+      background: #1a1a2e;
+      border: 2px solid #334155;
+      border-radius: 15px;
+      padding: 30px;
+      text-align: center;
+      min-width: 180px;
+      transition: all 0.3s;
+    }
+
+    .component:hover {
+      border-color: #06b6d4;
+      transform: translateY(-5px);
+    }
+
+    .component.active {
+      border-color: #06b6d4;
+      background: rgba(6, 182, 212, 0.1);
+      box-shadow: 0 0 30px rgba(6, 182, 212, 0.3);
+    }
+
+    .component .icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    .component .label {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .arrow {
+      font-size: 40px;
+      color: #06b6d4;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 15px 30px;
+      background: #06b6d4;
+      border: none;
+      border-radius: 10px;
+      color: #0d0d0d;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn:hover {
+      background: #22d3ee;
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      background: #334155;
+      color: #64748b;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .log-container {
+      background: #0d0d0d;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 30px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .log-title {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .log-entry {
+      color: #94a3b8;
+      font-size: 14px;
+      padding: 8px 0;
+      border-bottom: 1px solid #1e293b;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .log-entry.success { color: #10b981; }
+    .log-entry.miss { color: #f59e0b; }
+    .log-entry.info { color: #06b6d4; }
+
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 40px;
+    }
+
+    .pros-cons-box {
+      background: #12121a;
+      border: 1px solid #1e293b;
+      border-radius: 15px;
+      padding: 25px;
+    }
+
+    .pros-cons-box h3 {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .pros-cons-box.pros h3 { color: #10b981; }
+    .pros-cons-box.cons h3 { color: #ef4444; }
+
+    .pros-cons-box ul {
+      list-style: none;
+    }
+
+    .pros-cons-box li {
+      padding: 10px 0;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pros-cons-box.pros li::before {
+      content: "✓";
+      color: #10b981;
+      font-weight: bold;
+    }
+
+    .pros-cons-box.cons li::before {
+      content: "✗";
+      color: #ef4444;
+      font-weight: bold;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Caching Strategies</h1>
+    <div class="cyan-underline"></div>
+    <p class="subtitle">Interactive visualization of different caching patterns</p>
+
+    <div class="strategy-tabs">
+      <div class="tab active" onclick="showStrategy('cache-aside')">Cache-Aside</div>
+      <div class="tab" onclick="showStrategy('read-through')">Read-Through</div>
+      <div class="tab" onclick="showStrategy('write-through')">Write-Through</div>
+      <div class="tab" onclick="showStrategy('write-behind')">Write-Behind</div>
+    </div>
+
+    <!-- Cache-Aside -->
+    <div id="cache-aside" class="demo-container">
+      <h2 class="demo-title">Cache-Aside (Lazy Loading)</h2>
+      <p class="demo-description">Application checks cache first. If miss, queries database and populates cache.</p>
+      
+      <div class="architecture">
+        <div class="component" id="ca-client">
+          <div class="icon">👤</div>
+          <div class="label">Client</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="component" id="ca-cache">
+          <div class="icon">⚡</div>
+          <div class="label">Cache</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="component" id="ca-db">
+          <div class="icon">🗄️</div>
+          <div class="label">Database</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" onclick="simulateCacheAside('hit')">Simulate Cache Hit</button>
+        <button class="btn" onclick="simulateCacheAside('miss')">Simulate Cache Miss</button>
+      </div>
+
+      <div class="log-container">
+        <div class="log-title">Operation Log</div>
+        <div id="ca-log"></div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pros-cons-box pros">
+          <h3>Pros</h3>
+          <ul>
+            <li>Simple to implement</li>
+            <li>Only cache data that's actually used</li>
+            <li>Cache is always consistent with DB</li>
+          </ul>
+        </div>
+        <div class="pros-cons-box cons">
+          <h3>Cons</h3>
+          <ul>
+            <li>Three round trips on cache miss</li>
+            <li>Cache stampede on high load</li>
+            <li>Stale data until TTL expires</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Read-Through -->
+    <div id="read-through" class="demo-container hidden">
+      <h2 class="demo-title">Read-Through Cache</h2>
+      <p class="demo-description">Cache handles the database query. Application only talks to cache.</p>
+      
+      <div class="architecture">
+        <div class="component" id="rt-client">
+          <div class="icon">👤</div>
+          <div class="label">Client</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="component" id="rt-cache">
+          <div class="icon">⚡</div>
+          <div class="label">Cache</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="component" id="rt-db">
+          <div class="icon">🗄️</div>
+          <div class="label">Database</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" onclick="simulateReadThrough('hit')">Simulate Cache Hit</button>
+        <button class="btn" onclick="simulateReadThrough('miss')">Simulate Cache Miss</button>
+      </div>
+
+      <div class="log-container">
+        <div class="log-title">Operation Log</div>
+        <div id="rt-log"></div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pros-cons-box pros">
+          <h3>Pros</h3>
+          <ul>
+            <li>Application code is simpler</li>
+            <li>Cache handles all logic</li>
+            <li>Consistent caching behavior</li>
+          </ul>
+        </div>
+        <div class="pros-cons-box cons">
+          <h3>Cons</h3>
+          <ul>
+            <li>Requires cache library support</li>
+            <li>Cache becomes a dependency</li>
+            <li>Less flexibility in implementation</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Write-Through -->
+    <div id="write-through" class="demo-container hidden">
+      <h2 class="demo-title">Write-Through Cache</h2>
+      <p class="demo-description">Write to cache and database simultaneously. Cache always has latest data.</p>
+      
+      <div class="architecture">
+        <div class="component" id="wt-client">
+          <div class="icon">👤</div>
+          <div class="label">Client</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="component" id="wt-cache">
+          <div class="icon">⚡</div>
+          <div class="label">Cache</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="component" id="wt-db">
+          <div class="icon">🗄️</div>
+          <div class="label">Database</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" onclick="simulateWriteThrough()">Simulate Write Operation</button>
+      </div>
+
+      <div class="log-container">
+        <div class="log-title">Operation Log</div>
+        <div id="wt-log"></div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pros-cons-box pros">
+          <h3>Pros</h3>
+          <ul>
+            <li>Data is always consistent</li>
+            <li>Reads are always fast</li>
+            <li>No stale data</li>
+          </ul>
+        </div>
+        <div class="pros-cons-box cons">
+          <h3>Cons</h3>
+          <ul>
+            <li>Slower writes (two operations)</li>
+            <li>Higher write latency</li>
+            <li>Cache must be highly available</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Write-Behind -->
+    <div id="write-behind" class="demo-container hidden">
+      <h2 class="demo-title">Write-Behind (Write-Back)</h2>
+      <p class="demo-description">Write to cache immediately, sync to database asynchronously.</p>
+      
+      <div class="architecture">
+        <div class="component" id="wb-client">
+          <div class="icon">👤</div>
+          <div class="label">Client</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="component" id="wb-cache">
+          <div class="icon">⚡</div>
+          <div class="label">Cache</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="component" id="wb-db">
+          <div class="icon">🗄️</div>
+          <div class="label">Database</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" onclick="simulateWriteBehind()">Simulate Write Operation</button>
+      </div>
+
+      <div class="log-container">
+        <div class="log-title">Operation Log</div>
+        <div id="wb-log"></div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pros-cons-box pros">
+          <h3>Pros</h3>
+          <ul>
+            <li>Fastest write performance</li>
+            <li>Can batch writes to DB</li>
+            <li>Reduces DB load</li>
+          </ul>
+        </div>
+        <div class="pros-cons-box cons">
+          <h3>Cons</h3>
+          <ul>
+            <li>Data loss if cache fails</li>
+            <li>Complex to implement</li>
+            <li>Eventual consistency</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showStrategy(strategy) {
+      document.querySelectorAll('.demo-container').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(strategy).classList.remove('hidden');
+      event.target.classList.add('active');
+    }
+
+    function addLog(containerId, message, type = 'info') {
+      const container = document.getElementById(containerId);
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      container.insertBefore(entry, container.firstChild);
+    }
+
+    function resetComponents(prefix) {
+      document.getElementById(`${prefix}-client`).classList.remove('active');
+      document.getElementById(`${prefix}-cache`).classList.remove('active');
+      document.getElementById(`${prefix}-db`).classList.remove('active');
+    }
+
+    function activateComponent(id) {
+      document.getElementById(id).classList.add('active');
+      setTimeout(() => document.getElementById(id).classList.remove('active'), 1000);
+    }
+
+    // Cache-Aside
+    async function simulateCacheAside(type) {
+      const logId = 'ca-log';
+      resetComponents('ca');
+      
+      addLog(logId, 'Client requests data...', 'info');
+      activateComponent('ca-client');
+      
+      await sleep(500);
+      addLog(logId, 'Checking cache...', 'info');
+      activateComponent('ca-cache');
+      
+      await sleep(500);
+      
+      if (type === 'hit') {
+        addLog(logId, '✓ Cache HIT! Data returned from cache', 'success');
+      } else {
+        addLog(logId, '✗ Cache MISS! Querying database...', 'miss');
+        activateComponent('ca-db');
+        
+        await sleep(500);
+        addLog(logId, 'Data retrieved from database', 'info');
+        
+        await sleep(300);
+        addLog(logId, 'Populating cache with data', 'info');
+        activateComponent('ca-cache');
+        
+        await sleep(300);
+        addLog(logId, '✓ Data returned to client', 'success');
+      }
+    }
+
+    // Read-Through
+    async function simulateReadThrough(type) {
+      const logId = 'rt-log';
+      resetComponents('rt');
+      
+      addLog(logId, 'Client requests data from cache...', 'info');
+      activateComponent('rt-client');
+      
+      await sleep(500);
+      activateComponent('rt-cache');
+      
+      await sleep(500);
+      
+      if (type === 'hit') {
+        addLog(logId, '✓ Cache HIT! Data returned', 'success');
+      } else {
+        addLog(logId, '✗ Cache MISS! Cache queries database...', 'miss');
+        activateComponent('rt-db');
+        
+        await sleep(500);
+        addLog(logId, 'Cache retrieves data from database', 'info');
+        
+        await sleep(300);
+        addLog(logId, 'Cache populates itself', 'info');
+        
+        await sleep(300);
+        addLog(logId, '✓ Data returned to client', 'success');
+      }
+    }
+
+    // Write-Through
+    async function simulateWriteThrough() {
+      const logId = 'wt-log';
+      resetComponents('wt');
+      
+      addLog(logId, 'Client writes data...', 'info');
+      activateComponent('wt-client');
+      
+      await sleep(500);
+      addLog(logId, 'Writing to cache...', 'info');
+      activateComponent('wt-cache');
+      
+      await sleep(500);
+      addLog(logId, '✓ Cache updated', 'success');
+      
+      await sleep(300);
+      addLog(logId, 'Writing to database...', 'info');
+      activateComponent('wt-db');
+      
+      await sleep(500);
+      addLog(logId, '✓ Database updated', 'success');
+      
+      await sleep(300);
+      addLog(logId, '✓ Write operation complete', 'success');
+    }
+
+    // Write-Behind
+    async function simulateWriteBehind() {
+      const logId = 'wb-log';
+      resetComponents('wb');
+      
+      addLog(logId, 'Client writes data...', 'info');
+      activateComponent('wb-client');
+      
+      await sleep(500);
+      addLog(logId, 'Writing to cache...', 'info');
+      activateComponent('wb-cache');
+      
+      await sleep(500);
+      addLog(logId, '✓ Cache updated immediately', 'success');
+      
+      await sleep(300);
+      addLog(logId, '✓ Write acknowledged to client', 'success');
+      
+      await sleep(500);
+      addLog(logId, 'Async: Syncing to database...', 'info');
+      activateComponent('wb-db');
+      
+      await sleep(500);
+      addLog(logId, '✓ Database synced (async)', 'success');
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+  </script>
+</body>
+</html>

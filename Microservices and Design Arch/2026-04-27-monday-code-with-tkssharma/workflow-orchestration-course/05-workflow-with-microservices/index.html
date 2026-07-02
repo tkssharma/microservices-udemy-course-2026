@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 5: Workflow with Microservices</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>.gradient-bg { background: linear-gradient(135deg, #0891b2 0%, #0d9488 100%); }</style>
+</head>
+<body class="bg-gray-50">
+    <header class="gradient-bg text-white py-12">
+        <div class="container mx-auto px-6">
+            <p class="text-cyan-200 mb-2">Module 5</p>
+            <h1 class="text-4xl font-bold">Workflow Orchestration with Microservices</h1>
+            <p class="mt-4 text-xl opacity-90">Architecture, patterns, and implementation</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <!-- Architecture -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🏗️ Complete Architecture</h2>
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <svg viewBox="0 0 700 400" class="w-full">
+                    <rect x="200" y="10" width="300" height="40" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="350" y="35" text-anchor="middle" font-size="12" fill="#1d4ed8" font-weight="bold">FRONTEND (React/Vue)</text>
+                    <path d="M350,50 L350,70" stroke="#666" stroke-width="2" marker-end="url(#arr)"/>
+                    <rect x="200" y="75" width="300" height="40" rx="5" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                    <text x="350" y="100" text-anchor="middle" font-size="12" fill="#4338ca" font-weight="bold">WORKFLOW SERVICE</text>
+                    <path d="M350,115 L350,135" stroke="#666" stroke-width="2" marker-end="url(#arr)"/>
+                    <rect x="150" y="140" width="400" height="80" rx="8" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+                    <text x="350" y="165" text-anchor="middle" font-size="14" fill="#047857" font-weight="bold">CAMUNDA ENGINE</text>
+                    <text x="350" y="185" text-anchor="middle" font-size="10" fill="#059669">REST API | BPMN Definitions | State Management</text>
+                    <text x="350" y="205" text-anchor="middle" font-size="9" fill="#059669">POST /process-definition/start | GET /task | POST /external-task/fetchAndLock</text>
+                    <path d="M250,220 L150,260" stroke="#10b981" stroke-width="2"/>
+                    <path d="M350,220 L350,260" stroke="#10b981" stroke-width="2"/>
+                    <path d="M450,220 L550,260" stroke="#10b981" stroke-width="2"/>
+                    <rect x="80" y="265" width="140" height="50" rx="5" fill="#fce7f3" stroke="#ec4899" stroke-width="2"/>
+                    <text x="150" y="285" text-anchor="middle" font-size="10" fill="#be185d" font-weight="bold">Worker (Node.js)</text>
+                    <text x="150" y="300" text-anchor="middle" font-size="8" fill="#db2777">creditCheck, notify</text>
+                    <rect x="280" y="265" width="140" height="50" rx="5" fill="#fce7f3" stroke="#ec4899" stroke-width="2"/>
+                    <text x="350" y="285" text-anchor="middle" font-size="10" fill="#be185d" font-weight="bold">Worker (Java)</text>
+                    <text x="350" y="300" text-anchor="middle" font-size="8" fill="#db2777">payment, inventory</text>
+                    <rect x="480" y="265" width="140" height="50" rx="5" fill="#fce7f3" stroke="#ec4899" stroke-width="2"/>
+                    <text x="550" y="285" text-anchor="middle" font-size="10" fill="#be185d" font-weight="bold">Worker (Python)</text>
+                    <text x="550" y="300" text-anchor="middle" font-size="8" fill="#db2777">analytics, ML</text>
+                    <path d="M150,315 L150,340" stroke="#ec4899" stroke-width="2"/>
+                    <path d="M350,315 L350,340" stroke="#ec4899" stroke-width="2"/>
+                    <path d="M550,315 L550,340" stroke="#ec4899" stroke-width="2"/>
+                    <rect x="50" y="345" width="600" height="40" rx="5" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                    <text x="350" y="370" text-anchor="middle" font-size="11" fill="#b45309" font-weight="bold">MICROSERVICES: Order | Payment | Inventory | Shipping | Notification</text>
+                    <defs><marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#666"/></marker></defs>
+                </svg>
+            </div>
+        </section>
+
+        <!-- External Task Pattern -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">⚙️ External Task Pattern</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="font-bold text-gray-700 mb-4">How It Works</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                            <span class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">1</span>
+                            <div><strong>Workflow reaches task</strong><br><span class="text-sm text-gray-600">Task added to queue with topic</span></div>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                            <span class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">2</span>
+                            <div><strong>Worker polls for tasks</strong><br><span class="text-sm text-gray-600">fetchAndLock by topic</span></div>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                            <span class="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold">3</span>
+                            <div><strong>Execute business logic</strong><br><span class="text-sm text-gray-600">Call microservices</span></div>
+                        </div>
+                        <div class="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
+                            <span class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold">4</span>
+                            <div><strong>Complete or fail task</strong><br><span class="text-sm text-gray-600">Workflow continues</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-900 rounded-xl p-6 text-gray-100">
+                    <h3 class="font-bold text-white mb-4">Node.js Worker Example</h3>
+                    <pre class="text-sm overflow-x-auto"><code>const client = new Client({
+  baseUrl: "http://camunda:8080/engine-rest"
+});
+
+client.subscribe("credit-check", 
+  async ({ task, taskService }) => {
+    
+  const customerId = task.variables
+    .get("customerId");
+  
+  const score = await creditService
+    .checkScore(customerId);
+  
+  await taskService.complete(task, {
+    creditScore: score,
+    approved: score > 700
+  });
+});</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Camunda as Event Bus -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🚌 Camunda as Event Bus</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-red-50 rounded-xl p-6 border-2 border-red-200">
+                    <h3 class="font-bold text-red-700 mb-4">❌ Traditional Event Bus</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>• Just passes events</li>
+                        <li>• No state tracking</li>
+                        <li>• No sequence enforcement</li>
+                        <li>• No compensation</li>
+                    </ul>
+                </div>
+                <div class="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+                    <h3 class="font-bold text-green-700 mb-4">✅ Camunda as Event Bus</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li>• Manages overall state</li>
+                        <li>• Enforces business sequence</li>
+                        <li>• Built-in error handling</li>
+                        <li>• Automatic compensation</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Multi-Client -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">👥 Multi-Client Workflow Architecture</h2>
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="grid md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                        <h4 class="font-bold text-blue-700">Client A</h4>
+                        <p class="text-sm text-gray-600">3-step simple flow</p>
+                        <div class="text-xs mt-2 font-mono">Submit → Review → Done</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4 border-2 border-purple-200">
+                        <h4 class="font-bold text-purple-700">Client B</h4>
+                        <p class="text-sm text-gray-600">7-step parallel flow</p>
+                        <div class="text-xs mt-2 font-mono">Submit → [Legal | Tech] → Done</div>
+                    </div>
+                    <div class="bg-orange-50 rounded-lg p-4 border-2 border-orange-200">
+                        <h4 class="font-bold text-orange-700">Client C</h4>
+                        <p class="text-sm text-gray-600">5-step with AI + Human</p>
+                        <div class="text-xs mt-2 font-mono">Submit → AI → Human → Done</div>
+                    </div>
+                </div>
+                <div class="bg-gray-100 rounded-lg p-4 text-center">
+                    <p class="text-sm text-gray-600"><strong>Shared Worker Pool</strong> handles tasks from ALL client workflows</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Patterns -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 Key Integration Patterns</h2>
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-white rounded-lg shadow p-4">
+                    <span class="text-2xl">🔗</span>
+                    <h4 class="font-bold mt-2">REST API</h4>
+                    <p class="text-sm text-gray-600">Start workflows, query status via HTTP</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4">
+                    <span class="text-2xl">📨</span>
+                    <h4 class="font-bold mt-2">Message Correlation</h4>
+                    <p class="text-sm text-gray-600">Wait for external events, webhooks</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4">
+                    <span class="text-2xl">↩️</span>
+                    <h4 class="font-bold mt-2">Saga/Compensation</h4>
+                    <p class="text-sm text-gray-600">Automatic rollback on failure</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto px-6 text-center">
+            <p>Module 5: Workflow with Microservices | Code with TK Sharma</p>
+        </div>
+    </footer>
+</body>
+</html>

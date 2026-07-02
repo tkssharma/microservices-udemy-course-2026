@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 6: Popular Tools Comparison</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>.gradient-bg { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }</style>
+</head>
+<body class="bg-gray-50">
+    <header class="gradient-bg text-white py-12">
+        <div class="container mx-auto px-6">
+            <p class="text-orange-200 mb-2">Module 6</p>
+            <h1 class="text-4xl font-bold">Popular Tools Comparison</h1>
+            <p class="mt-4 text-xl opacity-90">Temporal vs Camunda vs Step Functions vs Airflow vs Conductor</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+        <!-- Tool Cards -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🛠️ The Top 5 Tools</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-500">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-3xl">⚡</span>
+                        <div><h3 class="text-xl font-bold">Temporal</h3><span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Code-First</span></div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">From Uber. Best for complex business logic with code.</p>
+                    <div class="text-sm space-y-1">
+                        <div>✓ Go, Java, TypeScript, Python</div>
+                        <div>✓ Excellent long-running</div>
+                        <div>✓ Native unit testing</div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-orange-500">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-3xl">📊</span>
+                        <div><h3 class="text-xl font-bold">Camunda</h3><span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">BPMN Visual</span></div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">BPMN 2.0 workflow automation with visual modeling.</p>
+                    <div class="text-sm space-y-1">
+                        <div>✓ Visual BPMN modeler</div>
+                        <div>✓ Excellent human tasks</div>
+                        <div>✓ DMN decision tables</div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-yellow-500">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-3xl">☁️</span>
+                        <div><h3 class="text-xl font-bold">Step Functions</h3><span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">AWS Managed</span></div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Serverless workflow service by AWS.</p>
+                    <div class="text-sm space-y-1">
+                        <div>✓ Zero infrastructure</div>
+                        <div>✓ 200+ AWS integrations</div>
+                        <div>✓ Pay per transition</div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-green-500">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-3xl">🌬️</span>
+                        <div><h3 class="text-xl font-bold">Apache Airflow</h3><span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Data Pipelines</span></div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Python-based platform for batch workflows & ETL.</p>
+                    <div class="text-sm space-y-1">
+                        <div>✓ Python DAGs</div>
+                        <div>✓ Rich operator library</div>
+                        <div>✓ Great for ETL/ML</div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-red-500">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-3xl">🎬</span>
+                        <div><h3 class="text-xl font-bold">Netflix Conductor</h3><span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Microservices</span></div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">JSON-based orchestration for Netflix-scale systems.</p>
+                    <div class="text-sm space-y-1">
+                        <div>✓ JSON workflow definitions</div>
+                        <div>✓ Dynamic workflows</div>
+                        <div>✓ High throughput</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison Table -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 Detailed Comparison</h2>
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Feature</th>
+                                <th class="px-4 py-3 text-center">⚡ Temporal</th>
+                                <th class="px-4 py-3 text-center">📊 Camunda</th>
+                                <th class="px-4 py-3 text-center">☁️ Step Func</th>
+                                <th class="px-4 py-3 text-center">🌬️ Airflow</th>
+                                <th class="px-4 py-3 text-center">🎬 Conductor</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium">Definition</td>
+                                <td class="px-4 py-3 text-center"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">Code</span></td>
+                                <td class="px-4 py-3 text-center"><span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs">BPMN</span></td>
+                                <td class="px-4 py-3 text-center"><span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">JSON</span></td>
+                                <td class="px-4 py-3 text-center"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Python</span></td>
+                                <td class="px-4 py-3 text-center"><span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">JSON</span></td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium">Best For</td>
+                                <td class="px-4 py-3 text-center">Complex Logic</td>
+                                <td class="px-4 py-3 text-center">Visual/Human</td>
+                                <td class="px-4 py-3 text-center">AWS Native</td>
+                                <td class="px-4 py-3 text-center">ETL/Data</td>
+                                <td class="px-4 py-3 text-center">Microservices</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium">Long-running</td>
+                                <td class="px-4 py-3 text-center">⭐ Excellent</td>
+                                <td class="px-4 py-3 text-center">🟢 Good</td>
+                                <td class="px-4 py-3 text-center">🟢 Good</td>
+                                <td class="px-4 py-3 text-center">🔴 Poor</td>
+                                <td class="px-4 py-3 text-center">🟢 Good</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium">Human Tasks</td>
+                                <td class="px-4 py-3 text-center">🟡 Limited</td>
+                                <td class="px-4 py-3 text-center">⭐ Excellent</td>
+                                <td class="px-4 py-3 text-center">🟡 Limited</td>
+                                <td class="px-4 py-3 text-center">🔴 N/A</td>
+                                <td class="px-4 py-3 text-center">🟡 Limited</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium">Learning Curve</td>
+                                <td class="px-4 py-3 text-center">🟡 Medium</td>
+                                <td class="px-4 py-3 text-center">🟡 Medium</td>
+                                <td class="px-4 py-3 text-center">🟢 Low</td>
+                                <td class="px-4 py-3 text-center">🟡 Medium</td>
+                                <td class="px-4 py-3 text-center">🟢 Low</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium">Scalability</td>
+                                <td class="px-4 py-3 text-center">🟢 High</td>
+                                <td class="px-4 py-3 text-center">🟢 High</td>
+                                <td class="px-4 py-3 text-center">⭐ Very High</td>
+                                <td class="px-4 py-3 text-center">🟡 Medium</td>
+                                <td class="px-4 py-3 text-center">🟢 High</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium">Pricing</td>
+                                <td class="px-4 py-3 text-center">Free OSS</td>
+                                <td class="px-4 py-3 text-center">Free/Paid</td>
+                                <td class="px-4 py-3 text-center">Pay per use</td>
+                                <td class="px-4 py-3 text-center">Free OSS</td>
+                                <td class="px-4 py-3 text-center">Free OSS</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Decision Tree -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🎯 Which Tool Should You Choose?</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
+                    <h4 class="font-bold text-blue-700 mb-3">⚡ Choose Temporal</h4>
+                    <ul class="text-sm space-y-2">
+                        <li>• Developer-centric team</li>
+                        <li>• Complex business logic</li>
+                        <li>• Long-running (months/years)</li>
+                        <li>• Strong testing needs</li>
+                    </ul>
+                </div>
+                <div class="bg-orange-50 rounded-xl p-6 border-2 border-orange-200">
+                    <h4 class="font-bold text-orange-700 mb-3">📊 Choose Camunda</h4>
+                    <ul class="text-sm space-y-2">
+                        <li>• Visual workflow design</li>
+                        <li>• Human task workflows</li>
+                        <li>• Compliance requirements</li>
+                        <li>• Business analyst involvement</li>
+                    </ul>
+                </div>
+                <div class="bg-yellow-50 rounded-xl p-6 border-2 border-yellow-200">
+                    <h4 class="font-bold text-yellow-700 mb-3">☁️ Choose Step Functions</h4>
+                    <ul class="text-sm space-y-2">
+                        <li>• Already on AWS</li>
+                        <li>• Serverless/managed</li>
+                        <li>• Quick setup needed</li>
+                        <li>• Lambda orchestration</li>
+                    </ul>
+                </div>
+                <div class="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+                    <h4 class="font-bold text-green-700 mb-3">🌬️ Choose Airflow</h4>
+                    <ul class="text-sm space-y-2">
+                        <li>• Data engineering</li>
+                        <li>• ETL pipelines</li>
+                        <li>• ML workflows</li>
+                        <li>• Batch/scheduled jobs</li>
+                    </ul>
+                </div>
+                <div class="bg-red-50 rounded-xl p-6 border-2 border-red-200">
+                    <h4 class="font-bold text-red-700 mb-3">🎬 Choose Conductor</h4>
+                    <ul class="text-sm space-y-2">
+                        <li>• Netflix-scale systems</li>
+                        <li>• Media processing</li>
+                        <li>• Dynamic workflows</li>
+                        <li>• High throughput</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Takeaway -->
+        <section class="mb-12">
+            <div class="bg-gray-900 text-white rounded-2xl p-8 text-center">
+                <p class="text-xl mb-2">💡 Key Takeaway</p>
+                <p class="text-2xl font-bold">"There's no single best tool. Choose based on your team's skills, use case, and constraints."</p>
+            </div>
+        </section>
+
+        <!-- Course Complete -->
+        <section class="mb-12">
+            <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl p-8 text-center">
+                <span class="text-5xl">🎉</span>
+                <h2 class="text-3xl font-bold mt-4">Course Complete!</h2>
+                <p class="mt-4 text-lg opacity-90">You've learned everything about Workflow Orchestration</p>
+                <div class="mt-6 grid md:grid-cols-3 gap-4 text-sm">
+                    <div class="bg-white/10 rounded-lg p-3">✓ What & Why</div>
+                    <div class="bg-white/10 rounded-lg p-3">✓ Use Cases</div>
+                    <div class="bg-white/10 rounded-lg p-3">✓ AI + BPMN</div>
+                    <div class="bg-white/10 rounded-lg p-3">✓ Microservices</div>
+                    <div class="bg-white/10 rounded-lg p-3">✓ Tools</div>
+                    <div class="bg-white/10 rounded-lg p-3">✓ Implementation</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto px-6 text-center">
+            <p>Module 6: Popular Tools Comparison | Code with TK Sharma</p>
+            <p class="text-gray-400 mt-2">Workflow Orchestration Complete Course</p>
+        </div>
+    </footer>
+</body>
+</html>

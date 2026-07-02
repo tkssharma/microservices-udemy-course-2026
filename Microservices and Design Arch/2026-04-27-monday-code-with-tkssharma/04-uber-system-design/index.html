@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Design: Uber Eats Food Delivery</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0a1628 0%, #1a365d 50%, #0a1628 100%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Animated Background */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+    
+    .food-icon {
+      position: absolute;
+      font-size: 24px;
+      animation: floatUp 18s linear infinite;
+      opacity: 0.1;
+    }
+    
+    @keyframes floatUp {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.15; }
+      90% { opacity: 0.15; }
+      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 3rem 2rem;
+      background: linear-gradient(180deg, rgba(34,197,94,0.2) 0%, transparent 100%);
+    }
+    
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #22c55e, #06b6d4, #f59e0b, #22c55e);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 5s ease infinite;
+    }
+    
+    @keyframes gradient {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    .subtitle {
+      color: #06b6d4;
+      font-size: 1.3rem;
+      margin-top: 0.5rem;
+    }
+    
+    .tech-stack {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .tech-badge {
+      padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      border: 1px solid rgba(34,197,94,0.3);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 0 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .tab {
+      padding: 1rem 1.5rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .tab:hover {
+      background: rgba(34,197,94,0.3);
+      transform: translateY(-2px);
+    }
+    
+    .tab.active {
+      background: linear-gradient(135deg, #22c55e, #06b6d4);
+      border: none;
+      box-shadow: 0 10px 40px rgba(34,197,94,0.5);
+    }
+
+    /* Content */
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      color: #22c55e;
+      text-shadow: 0 0 30px rgba(34,197,94,0.5);
+    }
+
+    /* Diagram Container */
+    .diagram-container {
+      background: rgba(10, 22, 40, 0.8);
+      border-radius: 24px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(34,197,94,0.3);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .diagram-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #22c55e, #06b6d4, #f59e0b);
+    }
+    
+    .diagram-title {
+      font-size: 1.5rem;
+      color: #06b6d4;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Architecture Diagram */
+    .architecture {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      align-items: center;
+    }
+    
+    .arch-row {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    
+    .arch-node {
+      padding: 1.5rem 2rem;
+      border-radius: 16px;
+      text-align: center;
+      min-width: 150px;
+      position: relative;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .arch-node:hover {
+      transform: scale(1.05);
+      z-index: 10;
+    }
+    
+    .arch-node-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .arch-node-label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    
+    .arch-node-sub {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin-top: 0.25rem;
+    }
+
+    /* Node Colors */
+    .node-client { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 40px rgba(59,130,246,0.4); }
+    .node-gateway { background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 10px 40px rgba(34,197,94,0.4); }
+    .node-service { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 40px rgba(245,158,11,0.4); }
+    .node-db { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 10px 40px rgba(6,182,212,0.4); }
+    .node-cache { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 10px 40px rgba(239,68,68,0.4); }
+    .node-queue { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 40px rgba(139,92,246,0.4); }
+    .node-search { background: linear-gradient(135deg, #ec4899, #be185d); box-shadow: 0 10px 40px rgba(236,72,153,0.4); }
+    .node-map { background: linear-gradient(135deg, #14b8a6, #0d9488); box-shadow: 0 10px 40px rgba(20,184,166,0.4); }
+    .node-payment { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 10px 40px rgba(99,102,241,0.4); }
+    .node-notification { background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 10px 40px rgba(249,115,22,0.4); }
+
+    /* Animated Connectors */
+    .connector-v {
+      width: 4px;
+      height: 40px;
+      background: linear-gradient(180deg, #22c55e, transparent);
+      position: relative;
+      margin: 0 auto;
+    }
+    
+    .connector-v::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse-down 1.5s ease infinite;
+    }
+    
+    @keyframes pulse-down {
+      0% { top: 0; opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* Flow Steps */
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      border-left: 4px solid;
+      animation: slideIn 0.5s ease forwards;
+      opacity: 0;
+    }
+    
+    .flow-step:nth-child(1) { border-color: #22c55e; animation-delay: 0.1s; }
+    .flow-step:nth-child(2) { border-color: #06b6d4; animation-delay: 0.2s; }
+    .flow-step:nth-child(3) { border-color: #f59e0b; animation-delay: 0.3s; }
+    .flow-step:nth-child(4) { border-color: #ef4444; animation-delay: 0.4s; }
+    .flow-step:nth-child(5) { border-color: #8b5cf6; animation-delay: 0.5s; }
+    .flow-step:nth-child(6) { border-color: #ec4899; animation-delay: 0.6s; }
+    .flow-step:nth-child(7) { border-color: #14b8a6; animation-delay: 0.7s; }
+    .flow-step:nth-child(8) { border-color: #6366f1; animation-delay: 0.8s; }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .step-number {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    
+    .step-content h4 { color: #fff; margin-bottom: 0.25rem; }
+    .step-content p { color: #a78bfa; font-size: 0.9rem; }
+
+    /* Info Grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    
+    .info-card {
+      background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(6,182,212,0.1));
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid rgba(34,197,94,0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .info-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(34,197,94,0.2);
+    }
+    
+    .info-card h4 {
+      color: #06b6d4;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .info-card p {
+      color: #d1d5db;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    /* Metrics */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    .metric-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .metric-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #22c55e, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .metric-label {
+      color: #a78bfa;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Service Box */
+    .services-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    .service-box {
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .service-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .service-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    
+    .service-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    
+    .service-tech {
+      font-size: 0.8rem;
+      color: #a78bfa;
+    }
+    
+    .service-features {
+      list-style: none;
+    }
+    
+    .service-features li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .service-features li:last-child { border-bottom: none; }
+
+    /* Data Flow Animation */
+    .data-flow {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 2rem 0;
+      position: relative;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .flow-node {
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .flow-arrow {
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #22c55e, transparent);
+      position: relative;
+    }
+    
+    .flow-arrow::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 10px solid #22c55e;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+    }
+    
+    .flow-arrow .dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #22c55e;
+      border-radius: 50%;
+      top: 50%;
+      transform: translateY(-50%);
+      animation: moveDot 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes moveDot {
+      0% { left: 0; opacity: 0; }
+      20% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { left: calc(100% - 10px); opacity: 0; }
+    }
+
+    /* Order Animation */
+    .order-demo {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      padding: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .order-card {
+      width: 200px;
+      height: 260px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #1a365d, #0a1628);
+      border: 2px solid rgba(34,197,94,0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      animation: orderPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes orderPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(34,197,94,0.3); }
+      50% { box-shadow: 0 0 40px rgba(34,197,94,0.6); }
+    }
+    
+    .order-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .order-status { font-size: 0.9rem; color: #22c55e; text-align: center; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1 { font-size: 2rem; }
+      .arch-row { flex-direction: column; align-items: center; }
+      .data-flow { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); margin: 1rem 0; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animation">
+    <span class="food-icon" style="left: 5%; animation-delay: 0s;">🍔</span>
+    <span class="food-icon" style="left: 15%; animation-delay: 2s;">🍕</span>
+    <span class="food-icon" style="left: 25%; animation-delay: 4s;">🌮</span>
+    <span class="food-icon" style="left: 35%; animation-delay: 1s;">🍜</span>
+    <span class="food-icon" style="left: 45%; animation-delay: 3s;">🍣</span>
+    <span class="food-icon" style="left: 55%; animation-delay: 5s;">🥗</span>
+    <span class="food-icon" style="left: 65%; animation-delay: 2s;">🍱</span>
+    <span class="food-icon" style="left: 75%; animation-delay: 4s;">🥡</span>
+    <span class="food-icon" style="left: 85%; animation-delay: 1s;">🍛</span>
+    <span class="food-icon" style="left: 95%; animation-delay: 3s;">🍲</span>
+  </div>
+
+  <header>
+    <h1>🍔 System Design: Uber Eats</h1>
+    <p class="subtitle">Scalable Food Delivery Platform Architecture</p>
+    <div class="tech-stack">
+      <span class="tech-badge">☁️ Microservices</span>
+      <span class="tech-badge">🚪 API Gateway</span>
+      <span class="tech-badge">📍 Geolocation</span>
+      <span class="tech-badge">🗄️ PostgreSQL</span>
+      <span class="tech-badge">📦 Redis</span>
+      <span class="tech-badge">📨 Kafka</span>
+      <span class="tech-badge">🔔 WebSocket</span>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('overview')">📊 Overview</button>
+    <button class="tab" onclick="showTab('architecture')">🏗️ Architecture</button>
+    <button class="tab" onclick="showTab('ordering')">🛒 Order Flow</button>
+    <button class="tab" onclick="showTab('delivery')">🚴 Delivery</button>
+    <button class="tab" onclick="showTab('services')">⚙️ Microservices</button>
+    <button class="tab" onclick="showTab('scaling')">📈 Scaling</button>
+    <button class="tab" onclick="showTab('database')">🗄️ Database</button>
+  </div>
+
+  <!-- Overview Tab -->
+  <div id="overview" class="content active">
+    <h2 class="section-title">🍔 Uber Eats System Overview</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Platform Scale</div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">66M+</div>
+          <div class="metric-label">Monthly Active Users</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">900K+</div>
+          <div class="metric-label">Restaurants</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">6M+</div>
+          <div class="metric-label">Daily Orders</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">30min</div>
+          <div class="metric-label">Avg Delivery Time</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🎯 Core Features</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>🔍 Restaurant Discovery</h4>
+          <p>Search by cuisine, ratings, distance, delivery time. Personalized recommendations using ML.</p>
+        </div>
+        <div class="info-card">
+          <h4>🛒 Order Management</h4>
+          <p>Cart, checkout, payment processing, order tracking in real-time.</p>
+        </div>
+        <div class="info-card">
+          <h4>📍 Real-time Tracking</h4>
+          <p>Live driver location, ETA updates, push notifications.</p>
+        </div>
+        <div class="info-card">
+          <h4>🚴 Driver Matching</h4>
+          <p>Optimal driver assignment based on location, ratings, and current orders.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Architecture Tab -->
+  <div id="architecture" class="content">
+    <h2 class="section-title">🏗️ High-Level Architecture</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">📱 System Components</div>
+      <div class="architecture">
+        <!-- Clients -->
+        <div class="arch-row">
+          <div class="arch-node node-client">
+            <div class="arch-node-icon">📱</div>
+            <div class="arch-node-label">Customer App</div>
+            <div class="arch-node-sub">iOS/Android</div>
+          </div>
+          <div class="arch-node node-client">
+            <div class="arch-node-icon">🏪</div>
+            <div class="arch-node-label">Restaurant App</div>
+            <div class="arch-node-sub">Order Management</div>
+          </div>
+          <div class="arch-node node-client">
+            <div class="arch-node-icon">🚴</div>
+            <div class="arch-node-label">Driver App</div>
+            <div class="arch-node-sub">Delivery Partner</div>
+          </div>
+        </div>
+
+        <div class="connector-v"></div>
+
+        <!-- API Gateway -->
+        <div class="arch-row">
+          <div class="arch-node node-gateway">
+            <div class="arch-node-icon">🚪</div>
+            <div class="arch-node-label">API Gateway</div>
+            <div class="arch-node-sub">Kong / AWS ALB</div>
+          </div>
+        </div>
+
+        <div class="connector-v"></div>
+
+        <!-- Core Services -->
+        <div class="arch-row">
+          <div class="arch-node node-service">
+            <div class="arch-node-icon">👤</div>
+            <div class="arch-node-label">User Service</div>
+            <div class="arch-node-sub">Auth & Profile</div>
+          </div>
+          <div class="arch-node node-service">
+            <div class="arch-node-icon">🍽️</div>
+            <div class="arch-node-label">Restaurant Service</div>
+            <div class="arch-node-sub">Menu & Catalog</div>
+          </div>
+          <div class="arch-node node-service">
+            <div class="arch-node-icon">📦</div>
+            <div class="arch-node-label">Order Service</div>
+            <div class="arch-node-sub">Order Management</div>
+          </div>
+          <div class="arch-node node-payment">
+            <div class="arch-node-icon">💳</div>
+            <div class="arch-node-label">Payment Service</div>
+            <div class="arch-node-sub">Stripe/Razorpay</div>
+          </div>
+        </div>
+
+        <div class="connector-v"></div>
+
+        <!-- Supporting Services -->
+        <div class="arch-row">
+          <div class="arch-node node-map">
+            <div class="arch-node-icon">📍</div>
+            <div class="arch-node-label">Location Service</div>
+            <div class="arch-node-sub">Geolocation</div>
+          </div>
+          <div class="arch-node node-search">
+            <div class="arch-node-icon">🔍</div>
+            <div class="arch-node-label">Search Service</div>
+            <div class="arch-node-sub">Elasticsearch</div>
+          </div>
+          <div class="arch-node node-notification">
+            <div class="arch-node-icon">🔔</div>
+            <div class="arch-node-label">Notification</div>
+            <div class="arch-node-sub">Push/SMS/Email</div>
+          </div>
+        </div>
+
+        <div class="connector-v"></div>
+
+        <!-- Data Layer -->
+        <div class="arch-row">
+          <div class="arch-node node-db">
+            <div class="arch-node-icon">🐘</div>
+            <div class="arch-node-label">PostgreSQL</div>
+            <div class="arch-node-sub">Primary DB</div>
+          </div>
+          <div class="arch-node node-cache">
+            <div class="arch-node-icon">⚡</div>
+            <div class="arch-node-label">Redis</div>
+            <div class="arch-node-sub">Cache & Session</div>
+          </div>
+          <div class="arch-node node-queue">
+            <div class="arch-node-icon">📨</div>
+            <div class="arch-node-label">Kafka</div>
+            <div class="arch-node-sub">Event Streaming</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Flow Tab -->
+  <div id="ordering" class="content">
+    <h2 class="section-title">🛒 Order Flow</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">📱 Customer Order Journey</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-number node-client">1</div>
+          <div class="step-content">
+            <h4>🔍 Browse & Search</h4>
+            <p>Customer opens app, searches restaurants by cuisine, ratings, or name</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-gateway">2</div>
+          <div class="step-content">
+            <h4>📍 Location Detection</h4>
+            <p>Get current location via GPS, show nearby restaurants within delivery radius</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-service">3</div>
+          <div class="step-content">
+            <h4>🍽️ Menu Selection</h4>
+            <p>Browse menu, add items to cart, customize (extra cheese, no onions)</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-payment">4</div>
+          <div class="step-content">
+            <h4>💳 Checkout & Payment</h4>
+            <p>Apply promo codes, select payment method, confirm order</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-notification">5</div>
+          <div class="step-content">
+            <h4>🏪 Restaurant Accepts</h4>
+            <p>Order sent to restaurant, they confirm and start preparing</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-map">6</div>
+          <div class="step-content">
+            <h4>🚴 Driver Assignment</h4>
+            <p>Match optimal driver based on location, ratings, current orders</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-queue">7</div>
+          <div class="step-content">
+            <h4>📍 Live Tracking</h4>
+            <p>Real-time driver location updates, ETA via WebSocket</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-search">8</div>
+          <div class="step-content">
+            <h4>✅ Delivery Complete</h4>
+            <p>Order delivered, customer rates driver & restaurant</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🔄 Order State Machine</div>
+      <div class="data-flow">
+        <div class="flow-node node-client">
+          <div style="font-size: 1.5rem;">📝</div>
+          <div>Placed</div>
+        </div>
+        <div class="flow-arrow"><span class="dot"></span></div>
+        <div class="flow-node node-service">
+          <div style="font-size: 1.5rem;">✅</div>
+          <div>Confirmed</div>
+        </div>
+        <div class="flow-arrow"><span class="dot"></span></div>
+        <div class="flow-node node-notification">
+          <div style="font-size: 1.5rem;">👨‍🍳</div>
+          <div>Preparing</div>
+        </div>
+        <div class="flow-arrow"><span class="dot"></span></div>
+        <div class="flow-node node-map">
+          <div style="font-size: 1.5rem;">🚴</div>
+          <div>Picked Up</div>
+        </div>
+        <div class="flow-arrow"><span class="dot"></span></div>
+        <div class="flow-node node-gateway">
+          <div style="font-size: 1.5rem;">🎉</div>
+          <div>Delivered</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delivery Tab -->
+  <div id="delivery" class="content">
+    <h2 class="section-title">🚴 Delivery System</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">📍 Driver Matching Algorithm</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>📍 Proximity</h4>
+          <p>Find drivers within 5km radius of restaurant using geospatial indexing (Redis GEO / PostGIS)</p>
+        </div>
+        <div class="info-card">
+          <h4>⭐ Driver Rating</h4>
+          <p>Prioritize high-rated drivers for better customer experience</p>
+        </div>
+        <div class="info-card">
+          <h4>📦 Current Load</h4>
+          <p>Check if driver already has pending deliveries, batch orders optimally</p>
+        </div>
+        <div class="info-card">
+          <h4>⏱️ Estimated Time</h4>
+          <p>Calculate ETA based on traffic, distance, and historical data</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🗺️ Real-time Tracking</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-number node-map">1</div>
+          <div class="step-content">
+            <h4>📡 Driver Location Update</h4>
+            <p>Driver app sends GPS coordinates every 3-5 seconds</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-cache">2</div>
+          <div class="step-content">
+            <h4>⚡ Redis Pub/Sub</h4>
+            <p>Location stored in Redis, published to tracking channel</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-notification">3</div>
+          <div class="step-content">
+            <h4>🔌 WebSocket Push</h4>
+            <p>Server pushes location to customer app via WebSocket</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-client">4</div>
+          <div class="step-content">
+            <h4>🗺️ Map Update</h4>
+            <p>Customer sees driver moving on map in real-time</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Microservices Tab -->
+  <div id="services" class="content">
+    <h2 class="section-title">⚙️ Microservices Architecture</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">🔧 Core Services</div>
+      <div class="services-container">
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-service">👤</div>
+            <div>
+              <div class="service-name">User Service</div>
+              <div class="service-tech">Node.js + PostgreSQL</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ User registration & login</li>
+            <li>✓ Profile management</li>
+            <li>✓ Address book</li>
+            <li>✓ Preferences & favorites</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-notification">🍽️</div>
+            <div>
+              <div class="service-name">Restaurant Service</div>
+              <div class="service-tech">Node.js + MongoDB</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Restaurant CRUD</li>
+            <li>✓ Menu management</li>
+            <li>✓ Operating hours</li>
+            <li>✓ Ratings & reviews</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-gateway">📦</div>
+            <div>
+              <div class="service-name">Order Service</div>
+              <div class="service-tech">Node.js + PostgreSQL</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Cart management</li>
+            <li>✓ Order creation</li>
+            <li>✓ Status tracking</li>
+            <li>✓ Order history</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-payment">💳</div>
+            <div>
+              <div class="service-name">Payment Service</div>
+              <div class="service-tech">Node.js + Stripe</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Payment processing</li>
+            <li>✓ Refund handling</li>
+            <li>✓ Wallet management</li>
+            <li>✓ Invoice generation</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-map">📍</div>
+            <div>
+              <div class="service-name">Location Service</div>
+              <div class="service-tech">Go + Redis GEO</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Driver tracking</li>
+            <li>✓ Geofencing</li>
+            <li>✓ ETA calculation</li>
+            <li>✓ Route optimization</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-search">🔍</div>
+            <div>
+              <div class="service-name">Search Service</div>
+              <div class="service-tech">Elasticsearch</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Full-text search</li>
+            <li>✓ Filters & facets</li>
+            <li>✓ Autocomplete</li>
+            <li>✓ Personalized ranking</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scaling Tab -->
+  <div id="scaling" class="content">
+    <h2 class="section-title">📈 Scaling Strategies</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">⚡ Performance Optimizations</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>🔴 Redis Caching</h4>
+          <p>Cache restaurant menus, user sessions, driver locations. 10x faster reads.</p>
+        </div>
+        <div class="info-card">
+          <h4>📨 Event-Driven</h4>
+          <p>Kafka for order events, status updates. Decouple services, handle spikes.</p>
+        </div>
+        <div class="info-card">
+          <h4>🌐 CDN</h4>
+          <p>CloudFront for images, static assets. Reduce latency globally.</p>
+        </div>
+        <div class="info-card">
+          <h4>📊 Read Replicas</h4>
+          <p>PostgreSQL replicas for read-heavy operations like search, browsing.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🔧 Resilience Patterns</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-number node-cache">1</div>
+          <div class="step-content">
+            <h4>🔌 Circuit Breaker</h4>
+            <p>Prevent cascade failures when payment service is down</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-queue">2</div>
+          <div class="step-content">
+            <h4>🔄 Retry with Backoff</h4>
+            <p>Exponential backoff for transient failures</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-notification">3</div>
+          <div class="step-content">
+            <h4>⏱️ Timeout Budgets</h4>
+            <p>Set timeouts at each service hop, fail fast</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-map">4</div>
+          <div class="step-content">
+            <h4>📦 Bulkhead Pattern</h4>
+            <p>Isolate critical paths (payments) from non-critical (reviews)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Database Tab -->
+  <div id="database" class="content">
+    <h2 class="section-title">🗄️ Database Design</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Database Per Service</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>👤 User DB (PostgreSQL)</h4>
+          <p>Users, addresses, preferences. ACID transactions for profile updates.</p>
+        </div>
+        <div class="info-card">
+          <h4>🍽️ Restaurant DB (MongoDB)</h4>
+          <p>Flexible schema for menus, items with variants. Document model fits well.</p>
+        </div>
+        <div class="info-card">
+          <h4>📦 Order DB (PostgreSQL)</h4>
+          <p>Orders, line items, status history. Strong consistency required.</p>
+        </div>
+        <div class="info-card">
+          <h4>📍 Location DB (Redis)</h4>
+          <p>Driver locations with GEO commands. Blazing fast geospatial queries.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">📋 Key Tables</div>
+      <div class="services-container">
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-service">👤</div>
+            <div>
+              <div class="service-name">users</div>
+              <div class="service-tech">PostgreSQL</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>id, email, phone</li>
+            <li>password_hash</li>
+            <li>name, avatar_url</li>
+            <li>created_at, updated_at</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-gateway">📦</div>
+            <div>
+              <div class="service-name">orders</div>
+              <div class="service-tech">PostgreSQL</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>id, user_id, restaurant_id</li>
+            <li>status, total_amount</li>
+            <li>delivery_address</li>
+            <li>driver_id, delivered_at</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-map">🚴</div>
+            <div>
+              <div class="service-name">drivers</div>
+              <div class="service-tech">PostgreSQL + Redis</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>id, name, phone</li>
+            <li>vehicle_type, license</li>
+            <li>rating, total_deliveries</li>
+            <li>is_online, current_location</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showTab(tabId) {
+      // Hide all content
+      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      
+      // Show selected
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

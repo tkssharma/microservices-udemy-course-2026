@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Design: Airbnb Booking Platform</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1a0a1e 0%, #2d1b3d 50%, #1a0a1e 100%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Animated Background */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+    
+    .travel-icon {
+      position: absolute;
+      font-size: 24px;
+      animation: floatUp 20s linear infinite;
+      opacity: 0.1;
+    }
+    
+    @keyframes floatUp {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.12; }
+      90% { opacity: 0.12; }
+      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 3rem 2rem;
+      background: linear-gradient(180deg, rgba(255,56,92,0.2) 0%, transparent 100%);
+    }
+    
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #ff385c, #e31c5f, #bd1e59, #ff385c);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 5s ease infinite;
+    }
+    
+    @keyframes gradient {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    .subtitle {
+      color: #ff385c;
+      font-size: 1.3rem;
+      margin-top: 0.5rem;
+    }
+    
+    .tech-stack {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .tech-badge {
+      padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      border: 1px solid rgba(255,56,92,0.3);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 0 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .tab {
+      padding: 1rem 1.5rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .tab:hover {
+      background: rgba(255,56,92,0.3);
+      transform: translateY(-2px);
+    }
+    
+    .tab.active {
+      background: linear-gradient(135deg, #ff385c, #e31c5f);
+      border: none;
+      box-shadow: 0 10px 40px rgba(255,56,92,0.5);
+    }
+
+    /* Content */
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      color: #ff385c;
+      text-shadow: 0 0 30px rgba(255,56,92,0.5);
+    }
+
+    /* Diagram Container */
+    .diagram-container {
+      background: rgba(26, 10, 30, 0.8);
+      border-radius: 24px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(255,56,92,0.3);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .diagram-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #ff385c, #e31c5f, #bd1e59);
+    }
+    
+    .diagram-title {
+      font-size: 1.5rem;
+      color: #ff385c;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Architecture Diagram */
+    .architecture {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      align-items: center;
+    }
+    
+    .arch-row {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    
+    .arch-node {
+      padding: 1.5rem 2rem;
+      border-radius: 16px;
+      text-align: center;
+      min-width: 150px;
+      position: relative;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .arch-node:hover {
+      transform: scale(1.05);
+      z-index: 10;
+    }
+    
+    .arch-node-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .arch-node-label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    
+    .arch-node-sub {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin-top: 0.25rem;
+    }
+
+    /* Node Colors */
+    .node-client { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 40px rgba(59,130,246,0.4); }
+    .node-gateway { background: linear-gradient(135deg, #ff385c, #e31c5f); box-shadow: 0 10px 40px rgba(255,56,92,0.4); }
+    .node-service { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 40px rgba(245,158,11,0.4); }
+    .node-db { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 40px rgba(16,185,129,0.4); }
+    .node-cache { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 10px 40px rgba(239,68,68,0.4); }
+    .node-search { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 40px rgba(139,92,246,0.4); }
+    .node-storage { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 10px 40px rgba(6,182,212,0.4); }
+    .node-payment { background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 10px 40px rgba(99,102,241,0.4); }
+    .node-notification { background: linear-gradient(135deg, #ec4899, #be185d); box-shadow: 0 10px 40px rgba(236,72,153,0.4); }
+    .node-map { background: linear-gradient(135deg, #14b8a6, #0d9488); box-shadow: 0 10px 40px rgba(20,184,166,0.4); }
+
+    /* Animated Connectors */
+    .connector-v {
+      width: 4px;
+      height: 40px;
+      background: linear-gradient(180deg, #ff385c, transparent);
+      position: relative;
+      margin: 0 auto;
+    }
+    
+    .connector-v::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      background: #ff385c;
+      border-radius: 50%;
+      animation: pulse-down 1.5s ease infinite;
+    }
+    
+    @keyframes pulse-down {
+      0% { top: 0; opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* Flow Steps */
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      border-left: 4px solid;
+      animation: slideIn 0.5s ease forwards;
+      opacity: 0;
+    }
+    
+    .flow-step:nth-child(1) { border-color: #ff385c; animation-delay: 0.1s; }
+    .flow-step:nth-child(2) { border-color: #e31c5f; animation-delay: 0.2s; }
+    .flow-step:nth-child(3) { border-color: #f59e0b; animation-delay: 0.3s; }
+    .flow-step:nth-child(4) { border-color: #10b981; animation-delay: 0.4s; }
+    .flow-step:nth-child(5) { border-color: #3b82f6; animation-delay: 0.5s; }
+    .flow-step:nth-child(6) { border-color: #8b5cf6; animation-delay: 0.6s; }
+    .flow-step:nth-child(7) { border-color: #ec4899; animation-delay: 0.7s; }
+    .flow-step:nth-child(8) { border-color: #06b6d4; animation-delay: 0.8s; }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .step-number {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    
+    .step-content h4 { color: #fff; margin-bottom: 0.25rem; }
+    .step-content p { color: #c4b5fd; font-size: 0.9rem; }
+
+    /* Info Grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    
+    .info-card {
+      background: linear-gradient(135deg, rgba(255,56,92,0.15), rgba(227,28,95,0.1));
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255,56,92,0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .info-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(255,56,92,0.2);
+    }
+    
+    .info-card h4 {
+      color: #ff385c;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .info-card p {
+      color: #d1d5db;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    /* Metrics */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    .metric-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .metric-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #ff385c, #e31c5f);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .metric-label {
+      color: #c4b5fd;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Service Box */
+    .services-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    .service-box {
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .service-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .service-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    
+    .service-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    
+    .service-tech {
+      font-size: 0.8rem;
+      color: #c4b5fd;
+    }
+    
+    .service-features {
+      list-style: none;
+    }
+    
+    .service-features li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .service-features li:last-child { border-bottom: none; }
+
+    /* Data Flow Animation */
+    .data-flow {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 2rem 0;
+      position: relative;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .flow-node {
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .flow-arrow {
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #ff385c, transparent);
+      position: relative;
+    }
+    
+    .flow-arrow::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 10px solid #ff385c;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+    }
+    
+    .flow-arrow .dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #ff385c;
+      border-radius: 50%;
+      top: 50%;
+      transform: translateY(-50%);
+      animation: moveDot 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes moveDot {
+      0% { left: 0; opacity: 0; }
+      20% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { left: calc(100% - 10px); opacity: 0; }
+    }
+
+    /* Listing Card Animation */
+    .listing-demo {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      padding: 2rem;
+    }
+    
+    .listing-card {
+      width: 220px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,56,92,0.3);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .listing-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(255,56,92,0.3);
+    }
+    
+    .listing-image {
+      height: 140px;
+      background: linear-gradient(135deg, #ff385c, #e31c5f);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+    
+    .listing-info {
+      padding: 1rem;
+    }
+    
+    .listing-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .listing-price {
+      color: #ff385c;
+      font-weight: 700;
+    }
+    
+    .listing-rating {
+      color: #f59e0b;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1 { font-size: 2rem; }
+      .arch-row { flex-direction: column; align-items: center; }
+      .data-flow { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); margin: 1rem 0; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animation">
+    <span class="travel-icon" style="left: 5%; animation-delay: 0s;">🏠</span>
+    <span class="travel-icon" style="left: 15%; animation-delay: 2s;">✈️</span>
+    <span class="travel-icon" style="left: 25%; animation-delay: 4s;">🏖️</span>
+    <span class="travel-icon" style="left: 35%; animation-delay: 1s;">🗺️</span>
+    <span class="travel-icon" style="left: 45%; animation-delay: 3s;">🏔️</span>
+    <span class="travel-icon" style="left: 55%; animation-delay: 5s;">🌴</span>
+    <span class="travel-icon" style="left: 65%; animation-delay: 2s;">🏰</span>
+    <span class="travel-icon" style="left: 75%; animation-delay: 4s;">🛖</span>
+    <span class="travel-icon" style="left: 85%; animation-delay: 1s;">⛵</span>
+    <span class="travel-icon" style="left: 95%; animation-delay: 3s;">🎒</span>
+  </div>
+
+  <header>
+    <h1>🏠 System Design: Airbnb</h1>
+    <p class="subtitle">Scalable Property Booking Platform Architecture</p>
+    <div class="tech-stack">
+      <span class="tech-badge">☁️ Microservices</span>
+      <span class="tech-badge">🔍 Elasticsearch</span>
+      <span class="tech-badge">📍 Geolocation</span>
+      <span class="tech-badge">🗄️ PostgreSQL</span>
+      <span class="tech-badge">📦 Redis</span>
+      <span class="tech-badge">📨 Kafka</span>
+      <span class="tech-badge">💳 Stripe</span>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('overview')">📊 Overview</button>
+    <button class="tab" onclick="showTab('architecture')">🏗️ Architecture</button>
+    <button class="tab" onclick="showTab('search')">🔍 Search</button>
+    <button class="tab" onclick="showTab('booking')">📅 Booking</button>
+    <button class="tab" onclick="showTab('services')">⚙️ Microservices</button>
+    <button class="tab" onclick="showTab('scaling')">📈 Scaling</button>
+    <button class="tab" onclick="showTab('database')">🗄️ Database</button>
+  </div>
+
+  <!-- Overview Tab -->
+  <div id="overview" class="content active">
+    <h2 class="section-title">🏠 Airbnb System Overview</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Platform Scale</div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">150M+</div>
+          <div class="metric-label">Active Users</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">7M+</div>
+          <div class="metric-label">Listings Worldwide</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">220+</div>
+          <div class="metric-label">Countries</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">1B+</div>
+          <div class="metric-label">Guest Arrivals</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🎯 Core Features</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>🔍 Property Search</h4>
+          <p>Search by location, dates, guests, price range, amenities, property type with instant results.</p>
+        </div>
+        <div class="info-card">
+          <h4>📅 Booking System</h4>
+          <p>Real-time availability, instant booking, reservation management, calendar sync.</p>
+        </div>
+        <div class="info-card">
+          <h4>💳 Payments</h4>
+          <p>Multi-currency support, split payments, refunds, host payouts, escrow system.</p>
+        </div>
+        <div class="info-card">
+          <h4>💬 Messaging</h4>
+          <p>Host-guest communication, automated responses, translation support.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🏠 Sample Listings</div>
+      <div class="listing-demo">
+        <div class="listing-card">
+          <div class="listing-image">🏖️</div>
+          <div class="listing-info">
+            <div class="listing-title">Beach House</div>
+            <div class="listing-price">$250/night</div>
+            <div class="listing-rating">⭐ 4.9 (128)</div>
+          </div>
+        </div>
+        <div class="listing-card">
+          <div class="listing-image">🏔️</div>
+          <div class="listing-info">
+            <div class="listing-title">Mountain Cabin</div>
+            <div class="listing-price">$180/night</div>
+            <div class="listing-rating">⭐ 4.8 (95)</div>
+          </div>
+        </div>
+        <div class="listing-card">
+          <div class="listing-image">🏙️</div>
+          <div class="listing-info">
+            <div class="listing-title">City Apartment</div>
+            <div class="listing-price">$120/night</div>
+            <div class="listing-rating">⭐ 4.7 (256)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Architecture Tab -->
+  <div id="architecture" class="content">
+    <h2 class="section-title">🏗️ High-Level Architecture</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">📱 System Components</div>
+      <div class="architecture">
+        <!-- Clients -->
+        <div class="arch-row">
+          <div class="arch-node node-client">
+            <div class="arch-node-icon">📱</div>
+            <div class="arch-node-label">Mobile App</div>
+            <div class="arch-node-sub">iOS/Android</div>
+          </div>
+          <div class="arch-node node-client">
+            <div class="arch-node-icon">💻</div>
+            <div class="arch-node-label">Web App</div>
+            <div class="arch-node-sub">React/Next.js</div>
+          </div>
+          <div class="arch-node node-client">
+            <div class="arch-node-icon">🏠</div>
+            <div class="arch-node-label">Host Portal</div>
+            <div class="arch-node-sub">Management</div>
+          </div>
+        </div>
+
+        <div class="connector-v"></div>
+
+        <!-- CDN & Gateway -->
+        <div class="arch-row">
+          <div class="arch-node node-storage">
+            <div class="arch-node-icon">🌐</div>
+            <div class="arch-node-label">CDN</div>
+            <div class="arch-node-sub">CloudFront</div>
+          </div>
+          <div class="arch-node node-gateway">
+            <div class="arch-node-icon">🚪</div>
+            <div class="arch-node-label">API Gateway</div>
+            <div class="arch-node-sub">Kong / AWS</div>
+          </div>
+        </div>
+
+        <div class="connector-v"></div>
+
+        <!-- Core Services -->
+        <div class="arch-row">
+          <div class="arch-node node-service">
+            <div class="arch-node-icon">👤</div>
+            <div class="arch-node-label">User Service</div>
+            <div class="arch-node-sub">Auth & Profile</div>
+          </div>
+          <div class="arch-node node-service">
+            <div class="arch-node-icon">🏠</div>
+            <div class="arch-node-label">Listing Service</div>
+            <div class="arch-node-sub">Properties</div>
+          </div>
+          <div class="arch-node node-search">
+            <div class="arch-node-icon">🔍</div>
+            <div class="arch-node-label">Search Service</div>
+            <div class="arch-node-sub">Elasticsearch</div>
+          </div>
+          <div class="arch-node node-notification">
+            <div class="arch-node-icon">📅</div>
+            <div class="arch-node-label">Booking Service</div>
+            <div class="arch-node-sub">Reservations</div>
+          </div>
+        </div>
+
+        <div class="connector-v"></div>
+
+        <!-- Supporting Services -->
+        <div class="arch-row">
+          <div class="arch-node node-payment">
+            <div class="arch-node-icon">💳</div>
+            <div class="arch-node-label">Payment</div>
+            <div class="arch-node-sub">Stripe</div>
+          </div>
+          <div class="arch-node node-map">
+            <div class="arch-node-icon">💬</div>
+            <div class="arch-node-label">Messaging</div>
+            <div class="arch-node-sub">Real-time</div>
+          </div>
+          <div class="arch-node node-notification">
+            <div class="arch-node-icon">🔔</div>
+            <div class="arch-node-label">Notification</div>
+            <div class="arch-node-sub">Push/Email</div>
+          </div>
+          <div class="arch-node node-service">
+            <div class="arch-node-icon">⭐</div>
+            <div class="arch-node-label">Review</div>
+            <div class="arch-node-sub">Ratings</div>
+          </div>
+        </div>
+
+        <div class="connector-v"></div>
+
+        <!-- Data Layer -->
+        <div class="arch-row">
+          <div class="arch-node node-db">
+            <div class="arch-node-icon">🐘</div>
+            <div class="arch-node-label">PostgreSQL</div>
+            <div class="arch-node-sub">Primary DB</div>
+          </div>
+          <div class="arch-node node-cache">
+            <div class="arch-node-icon">⚡</div>
+            <div class="arch-node-label">Redis</div>
+            <div class="arch-node-sub">Cache</div>
+          </div>
+          <div class="arch-node node-search">
+            <div class="arch-node-icon">🔎</div>
+            <div class="arch-node-label">Elasticsearch</div>
+            <div class="arch-node-sub">Search Index</div>
+          </div>
+          <div class="arch-node node-storage">
+            <div class="arch-node-icon">📦</div>
+            <div class="arch-node-label">S3</div>
+            <div class="arch-node-sub">Images</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Tab -->
+  <div id="search" class="content">
+    <h2 class="section-title">🔍 Search System</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">🔎 Search Architecture</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-number node-client">1</div>
+          <div class="step-content">
+            <h4>📝 User Query</h4>
+            <p>Location: "Paris", Dates: "Dec 20-25", Guests: 4, Price: $100-300</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-gateway">2</div>
+          <div class="step-content">
+            <h4>📍 Geocoding</h4>
+            <p>Convert "Paris" to coordinates: lat 48.8566, lng 2.3522</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-search">3</div>
+          <div class="step-content">
+            <h4>🔍 Elasticsearch Query</h4>
+            <p>Geo-distance filter + availability + price range + amenities</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-cache">4</div>
+          <div class="step-content">
+            <h4>⚡ Check Availability</h4>
+            <p>Redis bitmap for calendar availability check (O(1) lookup)</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-service">5</div>
+          <div class="step-content">
+            <h4>📊 Ranking & Scoring</h4>
+            <p>ML model ranks results by relevance, quality score, conversion likelihood</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-notification">6</div>
+          <div class="step-content">
+            <h4>📋 Return Results</h4>
+            <p>Paginated listings with images, prices, ratings, instant book badge</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🗺️ Geo-Search with Elasticsearch</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>📍 Geo-Distance Query</h4>
+          <p>Find all listings within 10km radius of search coordinates. Uses geo_distance filter.</p>
+        </div>
+        <div class="info-card">
+          <h4>📊 Faceted Search</h4>
+          <p>Filter by property type, amenities, price buckets. Aggregations for filter counts.</p>
+        </div>
+        <div class="info-card">
+          <h4>🔤 Autocomplete</h4>
+          <p>Completion suggester for location autocomplete. "Par..." → "Paris, France"</p>
+        </div>
+        <div class="info-card">
+          <h4>⚡ Caching Strategy</h4>
+          <p>Cache popular searches (Paris, NYC). Redis with TTL for dynamic availability.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Booking Tab -->
+  <div id="booking" class="content">
+    <h2 class="section-title">📅 Booking System</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">🔄 Booking Flow</div>
+      <div class="data-flow">
+        <div class="flow-node node-client">
+          <div style="font-size: 1.5rem;">🔍</div>
+          <div>Search</div>
+        </div>
+        <div class="flow-arrow"><span class="dot"></span></div>
+        <div class="flow-node node-service">
+          <div style="font-size: 1.5rem;">🏠</div>
+          <div>Select</div>
+        </div>
+        <div class="flow-arrow"><span class="dot"></span></div>
+        <div class="flow-node node-payment">
+          <div style="font-size: 1.5rem;">💳</div>
+          <div>Pay</div>
+        </div>
+        <div class="flow-arrow"><span class="dot"></span></div>
+        <div class="flow-node node-notification">
+          <div style="font-size: 1.5rem;">✅</div>
+          <div>Confirm</div>
+        </div>
+        <div class="flow-arrow"><span class="dot"></span></div>
+        <div class="flow-node node-gateway">
+          <div style="font-size: 1.5rem;">🎉</div>
+          <div>Booked!</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">⚡ Handling Double Booking</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-number node-cache">1</div>
+          <div class="step-content">
+            <h4>🔒 Optimistic Locking</h4>
+            <p>Use version field on reservations. Fail if version changed during transaction.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-db">2</div>
+          <div class="step-content">
+            <h4>📅 Calendar Locking</h4>
+            <p>Acquire distributed lock on listing+dates using Redis SETNX with expiry.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-service">3</div>
+          <div class="step-content">
+            <h4>✅ Availability Check</h4>
+            <p>Within lock, verify dates are still available in database.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-payment">4</div>
+          <div class="step-content">
+            <h4>💳 Payment Hold</h4>
+            <p>Authorize (not capture) payment. Reserve funds on guest's card.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-notification">5</div>
+          <div class="step-content">
+            <h4>📝 Create Reservation</h4>
+            <p>Insert reservation record, mark calendar dates as booked.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-gateway">6</div>
+          <div class="step-content">
+            <h4>🔓 Release Lock</h4>
+            <p>Release distributed lock. Other requests can now proceed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">💳 Payment Split</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>👤 Guest Pays</h4>
+          <p>Full amount charged at booking. Funds held in escrow until check-in + 24hrs.</p>
+        </div>
+        <div class="info-card">
+          <h4>🏠 Host Receives</h4>
+          <p>Payout after guest check-in. Amount minus Airbnb service fee (3%).</p>
+        </div>
+        <div class="info-card">
+          <h4>🏢 Platform Fee</h4>
+          <p>Guest service fee (14%) + Host fee (3%) = Platform revenue.</p>
+        </div>
+        <div class="info-card">
+          <h4>🔄 Refund Policy</h4>
+          <p>Flexible, Moderate, Strict policies. Automated refund based on cancellation timing.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Microservices Tab -->
+  <div id="services" class="content">
+    <h2 class="section-title">⚙️ Microservices Architecture</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">🔧 Core Services</div>
+      <div class="services-container">
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-service">👤</div>
+            <div>
+              <div class="service-name">User Service</div>
+              <div class="service-tech">Node.js + PostgreSQL</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Authentication (OAuth, Email)</li>
+            <li>✓ Profile management</li>
+            <li>✓ Identity verification</li>
+            <li>✓ Host/Guest roles</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-gateway">🏠</div>
+            <div>
+              <div class="service-name">Listing Service</div>
+              <div class="service-tech">Node.js + PostgreSQL</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Property CRUD</li>
+            <li>✓ Photos & descriptions</li>
+            <li>✓ Amenities & rules</li>
+            <li>✓ Pricing & calendar</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-search">🔍</div>
+            <div>
+              <div class="service-name">Search Service</div>
+              <div class="service-tech">Go + Elasticsearch</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Geo-search</li>
+            <li>✓ Filters & facets</li>
+            <li>✓ Autocomplete</li>
+            <li>✓ Ranking & personalization</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-notification">📅</div>
+            <div>
+              <div class="service-name">Booking Service</div>
+              <div class="service-tech">Node.js + PostgreSQL</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Reservation management</li>
+            <li>✓ Availability calendar</li>
+            <li>✓ Instant Book / Request</li>
+            <li>✓ Cancellation handling</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-payment">💳</div>
+            <div>
+              <div class="service-name">Payment Service</div>
+              <div class="service-tech">Node.js + Stripe</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Payment processing</li>
+            <li>✓ Host payouts</li>
+            <li>✓ Refunds</li>
+            <li>✓ Multi-currency</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-map">💬</div>
+            <div>
+              <div class="service-name">Messaging Service</div>
+              <div class="service-tech">Node.js + WebSocket</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Real-time chat</li>
+            <li>✓ Automated responses</li>
+            <li>✓ Translation</li>
+            <li>✓ Message templates</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scaling Tab -->
+  <div id="scaling" class="content">
+    <h2 class="section-title">📈 Scaling Strategies</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">⚡ Performance Optimizations</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>🖼️ Image CDN</h4>
+          <p>CloudFront + S3 for listing images. Responsive images, WebP format, lazy loading.</p>
+        </div>
+        <div class="info-card">
+          <h4>🔴 Redis Caching</h4>
+          <p>Cache listing data, search results, user sessions. 90% cache hit rate.</p>
+        </div>
+        <div class="info-card">
+          <h4>🔍 Search Sharding</h4>
+          <p>Elasticsearch sharded by region. Paris listings in EU cluster, NYC in US.</p>
+        </div>
+        <div class="info-card">
+          <h4>📊 Read Replicas</h4>
+          <p>PostgreSQL replicas for read-heavy search queries. Write to primary only.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🌍 Global Architecture</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-number node-storage">1</div>
+          <div class="step-content">
+            <h4>🌐 Multi-Region Deployment</h4>
+            <p>US-East, EU-West, AP-Southeast. Route users to nearest region.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-gateway">2</div>
+          <div class="step-content">
+            <h4>🔄 Data Replication</h4>
+            <p>Cross-region replication for disaster recovery. RPO < 1 min.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-cache">3</div>
+          <div class="step-content">
+            <h4>📍 Edge Caching</h4>
+            <p>CDN caches static content at edge. Dynamic content from nearest region.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-search">4</div>
+          <div class="step-content">
+            <h4>🔍 Regional Search</h4>
+            <p>Search clusters per region. Paris search queries stay in EU.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Database Tab -->
+  <div id="database" class="content">
+    <h2 class="section-title">🗄️ Database Design</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Data Models</div>
+      <div class="services-container">
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-service">👤</div>
+            <div>
+              <div class="service-name">users</div>
+              <div class="service-tech">PostgreSQL</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>id, email, phone</li>
+            <li>first_name, last_name</li>
+            <li>avatar_url, bio</li>
+            <li>is_host, is_verified</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-gateway">🏠</div>
+            <div>
+              <div class="service-name">listings</div>
+              <div class="service-tech">PostgreSQL</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>id, host_id, title</li>
+            <li>lat, lng, address</li>
+            <li>price_per_night, max_guests</li>
+            <li>property_type, amenities[]</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-notification">📅</div>
+            <div>
+              <div class="service-name">reservations</div>
+              <div class="service-tech">PostgreSQL</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>id, listing_id, guest_id</li>
+            <li>check_in, check_out</li>
+            <li>total_price, status</li>
+            <li>created_at, cancelled_at</li>
+          </ul>
+        </div>
+
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-cache">📅</div>
+            <div>
+              <div class="service-name">availability</div>
+              <div class="service-tech">Redis Bitmap</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>key: listing:{id}:2024</li>
+            <li>bit per day (365 bits)</li>
+            <li>0 = available, 1 = booked</li>
+            <li>BITCOUNT for range check</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🔍 Elasticsearch Index</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>📍 Geo-Point Field</h4>
+          <p>location: { lat, lon } - Enables geo_distance queries within radius.</p>
+        </div>
+        <div class="info-card">
+          <h4>🏷️ Keyword Fields</h4>
+          <p>property_type, amenities[] - Exact match filters, aggregations.</p>
+        </div>
+        <div class="info-card">
+          <h4>📊 Numeric Fields</h4>
+          <p>price, bedrooms, max_guests - Range queries, sorting.</p>
+        </div>
+        <div class="info-card">
+          <h4>📝 Text Fields</h4>
+          <p>title, description - Full-text search with analyzers.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showTab(tabId) {
+      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

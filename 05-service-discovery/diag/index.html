@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Service Discovery</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+        min-height: 100vh;
+        color: #e0e0e0;
+        padding: 2rem;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 1rem;
+        color: #fff;
+      }
+      h2 {
+        margin: 2rem 0 1rem;
+        color: #a78bfa;
+        border-bottom: 1px solid #333;
+        padding-bottom: 0.5rem;
+      }
+      .diagram-container {
+        background: #1e1e2e;
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      .mermaid {
+        display: flex;
+        justify-content: center;
+      }
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      .tab {
+        padding: 0.5rem 1rem;
+        background: #2d2d44;
+        border: none;
+        border-radius: 8px;
+        color: #e0e0e0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .tab:hover,
+      .tab.active {
+        background: #6366f1;
+        color: #fff;
+      }
+      .diagram-section {
+        display: none;
+      }
+      .diagram-section.active {
+        display: block;
+      }
+      .flow-dot {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, #fff 0%, #00f5d4 40%, #00bbf9 70%, transparent 100%);
+        border-radius: 50%;
+        box-shadow:
+          0 0 20px #00f5d4,
+          0 0 40px #00bbf9,
+          0 0 60px #00f5d4;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0;
+      }
+      .flow-dot.active {
+        animation: pulse 0.5s ease-in-out infinite alternate;
+      }
+      @keyframes pulse {
+        from {
+          transform: scale(1);
+          box-shadow:
+            0 0 20px #00f5d4,
+            0 0 40px #00bbf9;
+        }
+        to {
+          transform: scale(1.5);
+          box-shadow:
+            0 0 35px #00f5d4,
+            0 0 60px #00bbf9,
+            0 0 80px #00f5d4;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔍 Service Discovery</h1>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('client')">Client-Side Discovery</button>
+      <button class="tab" onclick="showTab('server')">Server-Side Discovery</button>
+      <button class="tab" onclick="showTab('registry')">Service Registry</button>
+      <button class="tab" onclick="showTab('health')">Health Checks</button>
+    </div>
+
+    <div id="client" class="diagram-section active">
+      <h2>Client-Side Discovery Pattern</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant C as Client Service
+    participant R as Service Registry
+    participant S1 as Service Instance 1
+    participant S2 as Service Instance 2
+    participant S3 as Service Instance 3
+    
+    C->>R: Query: Where is Order Service?
+    R-->>C: [Instance1:8081, Instance2:8082, Instance3:8083]
+    
+    Note over C: Client-side Load Balancing
+    
+    C->>S1: Request (Round Robin)
+    S1-->>C: Response
+    
+    C->>S2: Request (Round Robin)
+    S2-->>C: Response
+    
+    C->>S3: Request (Round Robin)
+    S3-->>C: Response
+      </pre
+        >
+      </div>
+    </div>
+
+    <div id="server" class="diagram-section">
+      <h2>Server-Side Discovery Pattern</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    C[Client] --> LB[Load Balancer]
+    
+    LB --> R[Service Registry]
+    R -->|service locations| LB
+    
+    subgraph Instances["Service Instances"]
+        S1[Instance 1]
+        S2[Instance 2]
+        S3[Instance 3]
+    end
+    
+    LB -->|route| S1
+    LB -->|route| S2
+    LB -->|route| S3
+    
+    S1 -.->|register| R
+    S2 -.->|register| R
+    S3 -.->|register| R
+    
+    style LB fill:#6366f1
+    style R fill:#10b981
+      </pre
+        >
+      </div>
+    </div>
+
+    <div id="registry" class="diagram-section">
+      <h2>Service Registry (Consul/Eureka)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Registry["Service Registry Cluster"]
+        R1[Registry Node 1]
+        R2[Registry Node 2]
+        R3[Registry Node 3]
+    end
+    
+    R1 <-->|sync| R2
+    R2 <-->|sync| R3
+    R1 <-->|sync| R3
+    
+    subgraph Services
+        US[User Service<br/>:8081, :8082]
+        OS[Order Service<br/>:8091, :8092, :8093]
+        PS[Payment Service<br/>:8071]
+    end
+    
+    US -->|register + heartbeat| R1
+    OS -->|register + heartbeat| R2
+    PS -->|register + heartbeat| R3
+    
+    GW[API Gateway] -->|discover| R1
+    
+    style Registry fill:#6366f1
+    style GW fill:#f59e0b
+      </pre>
+      </div>
+    </div>
+
+    <div id="health" class="diagram-section">
+      <h2>Health Check Flow</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant S as Service Instance
+    participant R as Service Registry
+    participant LB as Load Balancer
+    
+    loop Every 30 seconds
+        S->>R: Heartbeat (I'm alive!)
+        R-->>S: ACK
+    end
+    
+    Note over S: Service becomes unhealthy
+    
+    S--xR: Heartbeat timeout
+    R->>R: Mark instance unhealthy
+    R->>LB: Update: Remove unhealthy instance
+    LB->>LB: Remove from rotation
+    
+    Note over S: Service recovers
+    
+    S->>R: Re-register
+    R->>R: Health check passes
+    R->>LB: Update: Add healthy instance
+    LB->>LB: Add to rotation
+      </pre
+        >
+      </div>
+    </div>
+
+    <script>
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'dark',
+        themeVariables: {
+          primaryColor: '#6366f1',
+          primaryTextColor: '#fff',
+          primaryBorderColor: '#818cf8',
+          lineColor: '#a78bfa',
+          secondaryColor: '#1e1e2e',
+          tertiaryColor: '#2d2d44',
+        },
+      });
+
+      const renderedTabs = new Set();
+      let activeAnimations = [];
+
+      async function showTab(tabId) {
+        activeAnimations.forEach((id) => cancelAnimationFrame(id));
+        activeAnimations = [];
+        document.querySelectorAll('.flow-dot').forEach((d) => d.remove());
+        document.querySelectorAll('.diagram-section').forEach((s) => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+        if (!renderedTabs.has(tabId)) {
+          const section = document.getElementById(tabId);
+          const pre = section.querySelector('pre.mermaid');
+          if (pre && !pre.dataset.processed) {
+            await mermaid.run({ nodes: [pre] });
+            pre.dataset.processed = 'true';
+          }
+          renderedTabs.add(tabId);
+        }
+        setTimeout(() => startFlowAnimation(tabId), 300);
+      }
+
+      function startFlowAnimation(tabId) {
+        const section = document.getElementById(tabId);
+        if (!section) return;
+        const svg = section.querySelector('svg');
+        if (!svg) return;
+        const container = section.querySelector('.diagram-container');
+        container.style.position = 'relative';
+        const paths = svg.querySelectorAll(
+          '.edge-pattern-normal, .flowchart-link, [class*="edge"] path, .messageLine0, .messageLine1',
+        );
+        if (paths.length === 0) return;
+        paths.forEach((path, index) => {
+          const dot = document.createElement('div');
+          dot.className = 'flow-dot active';
+          container.appendChild(dot);
+          animateDotAlongPath(dot, path, svg, container, index * 400);
+        });
+      }
+
+      function animateDotAlongPath(dot, path, svg, container, delay) {
+        const duration = 2500;
+        let pathLength;
+        try {
+          pathLength = path.getTotalLength();
+          if (!pathLength || pathLength < 10) return;
+        } catch (e) {
+          return;
+        }
+        function animate() {
+          const startTime = performance.now();
+          function step(currentTime) {
+            if (!document.body.contains(dot)) return;
+            const elapsed = currentTime - startTime;
+            const progress = (elapsed % duration) / duration;
+            try {
+              const point = path.getPointAtLength(progress * pathLength);
+              const ctm = svg.getScreenCTM();
+              const containerRect = container.getBoundingClientRect();
+              if (ctm && point.x !== undefined && point.y !== undefined) {
+                const screenX = point.x * ctm.a + ctm.e;
+                const screenY = point.y * ctm.d + ctm.f;
+                dot.style.left = screenX - containerRect.left - 6 + 'px';
+                dot.style.top = screenY - containerRect.top - 6 + 'px';
+                dot.style.opacity = Math.sin(progress * Math.PI) * 0.9;
+              }
+            } catch (e) {
+              return;
+            }
+            const animId = requestAnimationFrame(step);
+            activeAnimations.push(animId);
+          }
+          requestAnimationFrame(step);
+        }
+        setTimeout(animate, delay);
+      }
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        const firstTab = document.getElementById('client');
+        const pre = firstTab.querySelector('pre.mermaid');
+        await mermaid.run({ nodes: [pre] });
+        pre.dataset.processed = 'true';
+        renderedTabs.add('client');
+        setTimeout(() => startFlowAnimation('client'), 500);
+      });
+    </script>
+  </body>
+</html>

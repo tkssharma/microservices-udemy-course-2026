@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docker vs Kubernetes</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); min-height: 100vh; color: #fff; }
+    .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+    .bg-animation span { position: absolute; display: block; width: 20px; height: 20px; background: rgba(59,130,246,0.1); animation: move 25s linear infinite; bottom: -150px; border-radius: 50%; }
+    .bg-animation span:nth-child(1) { left: 25%; width: 80px; height: 80px; }
+    .bg-animation span:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; }
+    .bg-animation span:nth-child(3) { left: 70%; width: 30px; height: 30px; animation-delay: 4s; }
+    .bg-animation span:nth-child(4) { left: 40%; width: 60px; height: 60px; }
+    @keyframes move { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-1000px); opacity: 0; } }
+    header { text-align: center; padding: 3rem 2rem; }
+    h1 { font-size: 3rem; font-weight: 700; background: linear-gradient(90deg, #2563eb, #7c3aed, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: #93c5fd; font-size: 1.2rem; margin-top: 0.5rem; }
+    .tabs { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; padding: 0 2rem; margin-bottom: 2rem; }
+    .tab { padding: 1rem 1.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    .tab:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+    .tab.active { background: linear-gradient(135deg, #2563eb, #7c3aed); border: none; }
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 2rem; color: #3b82f6; }
+    .diagram-container { background: rgba(15,23,42,0.8); border-radius: 24px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(59,130,246,0.3); position: relative; }
+    .diagram-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #2563eb, #7c3aed, #06b6d4); }
+    .diagram-title { font-size: 1.5rem; color: #fbbf24; margin-bottom: 1.5rem; }
+    .comparison-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; }
+    @media (max-width: 768px) { .comparison-grid { grid-template-columns: 1fr; } }
+    .comparison-box { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 1.5rem; border: 2px solid; text-align: center; }
+    .comparison-box.docker { border-color: rgba(37,99,235,0.5); }
+    .comparison-box.k8s { border-color: rgba(124,58,237,0.5); }
+    .comparison-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .comparison-box h3 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .docker h3 { color: #3b82f6; }
+    .k8s h3 { color: #8b5cf6; }
+    .comparison-box p { color: #d1d5db; margin-bottom: 1rem; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .info-card { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(124,58,237,0.1)); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(59,130,246,0.3); transition: transform 0.3s ease; }
+    .info-card:hover { transform: translateY(-5px); }
+    .info-card h4 { color: #93c5fd; font-size: 1.2rem; margin-bottom: 0.75rem; }
+    .info-card p { color: #d1d5db; line-height: 1.6; }
+    .feature-list { list-style: none; text-align: left; }
+    .feature-list li { padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .feature-list li:last-child { border-bottom: none; }
+    .vs-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .vs-table th, .vs-table td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .vs-table th { color: #fbbf24; }
+    .vs-table td:nth-child(2) { color: #3b82f6; }
+    .vs-table td:nth-child(3) { color: #8b5cf6; }
+  </style>
+</head>
+<body>
+  <div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+  <header>
+    <h1>🐳 Docker vs ☸️ Kubernetes</h1>
+    <p class="subtitle">Containers vs Container Orchestration</p>
+  </header>
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="docker">Docker</button>
+    <button class="tab" data-tab="kubernetes">Kubernetes</button>
+    <button class="tab" data-tab="comparison">Comparison</button>
+    <button class="tab" data-tab="when">When to Use</button>
+  </div>
+
+  <div id="overview" class="content active">
+    <h2 class="section-title">🎯 Quick Overview</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🤔 What's the Difference?</div>
+      <div class="comparison-grid">
+        <div class="comparison-box docker">
+          <div class="comparison-icon">🐳</div>
+          <h3>Docker</h3>
+          <p><strong>Container Runtime</strong></p>
+          <ul class="feature-list">
+            <li>📦 Creates containers</li>
+            <li>🏗️ Builds images</li>
+            <li>🚀 Runs applications</li>
+            <li>💻 Single host focus</li>
+          </ul>
+        </div>
+        <div class="comparison-box k8s">
+          <div class="comparison-icon">☸️</div>
+          <h3>Kubernetes</h3>
+          <p><strong>Container Orchestrator</strong></p>
+          <ul class="feature-list">
+            <li>🎼 Orchestrates containers</li>
+            <li>📈 Auto-scaling</li>
+            <li>🔄 Self-healing</li>
+            <li>🌐 Multi-host cluster</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="docker" class="content">
+    <h2 class="section-title">🐳 Docker</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📦 What Docker Does</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>📦 Containers</h4><p>Lightweight, isolated environments. Package app + dependencies.</p></div>
+        <div class="info-card"><h4>🏗️ Images</h4><p>Immutable snapshots. Build once, run anywhere.</p></div>
+        <div class="info-card"><h4>📝 Dockerfile</h4><p>Instructions to build images. Reproducible builds.</p></div>
+        <div class="info-card"><h4>🗄️ Registry</h4><p>Docker Hub, ECR, GCR. Store and share images.</p></div>
+      </div>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">✅ Docker Features</div>
+      <ul class="feature-list">
+        <li>🚀 <strong>Fast startup:</strong> Containers start in seconds</li>
+        <li>💾 <strong>Lightweight:</strong> Share OS kernel, less overhead than VMs</li>
+        <li>🔄 <strong>Portable:</strong> Same image runs on dev, staging, prod</li>
+        <li>🔒 <strong>Isolated:</strong> Containers don't affect each other</li>
+        <li>📦 <strong>Versioned:</strong> Image tags for version control</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="kubernetes" class="content">
+    <h2 class="section-title">☸️ Kubernetes</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🎼 What Kubernetes Does</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>📊 Orchestration</h4><p>Manage hundreds of containers across multiple nodes.</p></div>
+        <div class="info-card"><h4>📈 Auto-Scaling</h4><p>Scale up/down based on CPU, memory, custom metrics.</p></div>
+        <div class="info-card"><h4>🔄 Self-Healing</h4><p>Restart failed containers, replace unhealthy pods.</p></div>
+        <div class="info-card"><h4>⚖️ Load Balancing</h4><p>Distribute traffic across pod replicas.</p></div>
+      </div>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">🔧 K8s Components</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>📦 Pod</h4><p>Smallest unit. One or more containers.</p></div>
+        <div class="info-card"><h4>🔄 Deployment</h4><p>Manages pod replicas, rolling updates.</p></div>
+        <div class="info-card"><h4>🌐 Service</h4><p>Network endpoint for pods.</p></div>
+        <div class="info-card"><h4>💾 ConfigMap/Secret</h4><p>Configuration and sensitive data.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="comparison" class="content">
+    <h2 class="section-title">⚔️ Side-by-Side</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Comparison Table</div>
+      <table class="vs-table">
+        <tr><th>Aspect</th><th>🐳 Docker</th><th>☸️ Kubernetes</th></tr>
+        <tr><td>Purpose</td><td>Container runtime</td><td>Container orchestration</td></tr>
+        <tr><td>Scope</td><td>Single host</td><td>Cluster of hosts</td></tr>
+        <tr><td>Scaling</td><td>Manual</td><td>Automatic</td></tr>
+        <tr><td>Self-healing</td><td>No</td><td>Yes</td></tr>
+        <tr><td>Complexity</td><td>Simple</td><td>Complex</td></tr>
+        <tr><td>Use case</td><td>Dev, small apps</td><td>Production at scale</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div id="when" class="content">
+    <h2 class="section-title">🎯 When to Use What?</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📋 Decision Guide</div>
+      <div class="comparison-grid">
+        <div class="comparison-box docker">
+          <h3>Use Docker Alone</h3>
+          <ul class="feature-list">
+            <li>✅ Local development</li>
+            <li>✅ Small applications</li>
+            <li>✅ Single server deployment</li>
+            <li>✅ Learning containers</li>
+            <li>✅ CI/CD pipelines</li>
+          </ul>
+        </div>
+        <div class="comparison-box k8s">
+          <h3>Add Kubernetes</h3>
+          <ul class="feature-list">
+            <li>✅ Production workloads</li>
+            <li>✅ High availability needed</li>
+            <li>✅ Auto-scaling required</li>
+            <li>✅ Multiple services</li>
+            <li>✅ Multi-region deployment</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

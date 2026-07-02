@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Load Balancing - Interactive Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0d0d0d;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 48px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 20px;
+      margin-bottom: 40px;
+    }
+
+    .cyan-underline {
+      width: 150px;
+      height: 4px;
+      background: linear-gradient(90deg, #06b6d4, #22d3ee);
+      margin-bottom: 40px;
+      border-radius: 2px;
+    }
+
+    .algorithm-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 15px 30px;
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+
+    .tab:hover {
+      border-color: #06b6d4;
+      color: #22d3ee;
+    }
+
+    .tab.active {
+      background: rgba(6, 182, 212, 0.2);
+      border-color: #06b6d4;
+      color: #22d3ee;
+    }
+
+    .demo-container {
+      background: #12121a;
+      border: 1px solid #1e293b;
+      border-radius: 20px;
+      padding: 40px;
+      min-height: 500px;
+    }
+
+    .demo-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+
+    .demo-description {
+      color: #94a3b8;
+      font-size: 16px;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .architecture {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      margin: 40px 0;
+      flex-wrap: wrap;
+    }
+
+    .component {
+      background: #1a1a2e;
+      border: 2px solid #334155;
+      border-radius: 15px;
+      padding: 30px;
+      text-align: center;
+      min-width: 150px;
+      transition: all 0.3s;
+    }
+
+    .component:hover {
+      border-color: #06b6d4;
+      transform: translateY(-5px);
+    }
+
+    .component.active {
+      border-color: #06b6d4;
+      background: rgba(6, 182, 212, 0.1);
+      box-shadow: 0 0 30px rgba(6, 182, 212, 0.3);
+    }
+
+    .component .icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    .component .label {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .component .stats {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 10px;
+    }
+
+    .arrow {
+      font-size: 40px;
+      color: #06b6d4;
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 15px 30px;
+      background: #06b6d4;
+      border: none;
+      border-radius: 10px;
+      color: #0d0d0d;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn:hover {
+      background: #22d3ee;
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      background: #334155;
+      color: #64748b;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .metric-card {
+      background: #1a1a2e;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #22d3ee;
+    }
+
+    .metric-label {
+      color: #64748b;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    .server-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin: 30px 0;
+    }
+
+    .server {
+      background: #1a1a2e;
+      border: 2px solid #334155;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .server.healthy {
+      border-color: #10b981;
+    }
+
+    .server.unhealthy {
+      border-color: #ef4444;
+      opacity: 0.5;
+    }
+
+    .server.selected {
+      border-color: #06b6d4;
+      background: rgba(6, 182, 212, 0.1);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+    }
+
+    .server .icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .server .label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .server .connections {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 5px;
+    }
+
+    .log-container {
+      background: #0d0d0d;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 30px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .log-title {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .log-entry {
+      color: #94a3b8;
+      font-size: 14px;
+      padding: 8px 0;
+      border-bottom: 1px solid #1e293b;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .log-entry.info { color: #06b6d4; }
+    .log-entry.success { color: #10b981; }
+    .log-entry.error { color: #ef4444; }
+
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 40px;
+    }
+
+    .pros-cons-box {
+      background: #12121a;
+      border: 1px solid #1e293b;
+      border-radius: 15px;
+      padding: 25px;
+    }
+
+    .pros-cons-box h3 {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .pros-cons-box.pros h3 { color: #10b981; }
+    .pros-cons-box.cons h3 { color: #ef4444; }
+
+    .pros-cons-box ul {
+      list-style: none;
+    }
+
+    .pros-cons-box li {
+      padding: 10px 0;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pros-cons-box.pros li::before {
+      content: "✓";
+      color: #10b981;
+      font-weight: bold;
+    }
+
+    .pros-cons-box.cons li::before {
+      content: "✗";
+      color: #ef4444;
+      font-weight: bold;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Load Balancing Algorithms</h1>
+    <div class="cyan-underline"></div>
+    <p class="subtitle">Interactive visualization of different load balancing strategies</p>
+
+    <div class="algorithm-tabs">
+      <div class="tab active" onclick="showAlgorithm('round-robin')">Round Robin</div>
+      <div class="tab" onclick="showAlgorithm('least-connections')">Least Connections</div>
+      <div class="tab" onclick="showAlgorithm('ip-hash')">IP Hash</div>
+      <div class="tab" onclick="showAlgorithm('weighted')">Weighted Round Robin</div>
+    </div>
+
+    <!-- Round Robin -->
+    <div id="round-robin" class="demo-container">
+      <h2 class="demo-title">Round Robin</h2>
+      <p class="demo-description">Requests distributed sequentially to each server in order</p>
+      
+      <div class="architecture">
+        <div class="component" id="rr-client">
+          <div class="icon">👤</div>
+          <div class="label">Clients</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="component" id="rr-lb">
+          <div class="icon">⚖️</div>
+          <div class="label">Load Balancer</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="server-grid" style="grid-template-columns: repeat(4, 1fr); gap: 15px;">
+          <div class="server healthy" id="rr-s1">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 1</div>
+            <div class="connections">0 reqs</div>
+          </div>
+          <div class="server healthy" id="rr-s2">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 2</div>
+            <div class="connections">0 reqs</div>
+          </div>
+          <div class="server healthy" id="rr-s3">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 3</div>
+            <div class="connections">0 reqs</div>
+          </div>
+          <div class="server healthy" id="rr-s4">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 4</div>
+            <div class="connections">0 reqs</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" onclick="sendRequest('rr')">📨 Send Request</button>
+        <button class="btn" onclick="toggleServerHealth('rr')">🔄 Toggle Server Health</button>
+        <button class="btn" onclick="resetStats('rr')">🔄 Reset Stats</button>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-value" id="rr-total">0</div>
+          <div class="metric-label">Total Requests</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="rr-servers">4</div>
+          <div class="metric-label">Active Servers</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="rr-distribution">0%</div>
+          <div class="metric-label">Distribution</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="rr-current">Server 1</div>
+          <div class="metric-label">Current Target</div>
+        </div>
+      </div>
+
+      <div class="log-container">
+        <div class="log-title">Request Log</div>
+        <div id="rr-log"></div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pros-cons-box pros">
+          <h3>Pros</h3>
+          <ul>
+            <li>Simple to implement</li>
+            <li>Fair distribution</li>
+            <li>No server state needed</li>
+            <li>Works well for similar servers</li>
+          </ul>
+        </div>
+        <div class="pros-cons-box cons">
+          <h3>Cons</h3>
+          <ul>
+            <li>Doesn't consider server load</li>
+            <li>Uneven with varying request times</li>
+            <li>Can overload slower servers</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Least Connections -->
+    <div id="least-connections" class="demo-container hidden">
+      <h2 class="demo-title">Least Connections</h2>
+      <p class="demo-description">Routes to server with fewest active connections</p>
+      
+      <div class="architecture">
+        <div class="component" id="lc-client">
+          <div class="icon">👤</div>
+          <div class="label">Clients</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="component" id="lc-lb">
+          <div class="icon">⚖️</div>
+          <div class="label">Load Balancer</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="server-grid" style="grid-template-columns: repeat(4, 1fr); gap: 15px;">
+          <div class="server healthy" id="lc-s1">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 1</div>
+            <div class="connections">0 conns</div>
+          </div>
+          <div class="server healthy" id="lc-s2">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 2</div>
+            <div class="connections">0 conns</div>
+          </div>
+          <div class="server healthy" id="lc-s3">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 3</div>
+            <div class="connections">0 conns</div>
+          </div>
+          <div class="server healthy" id="lc-s4">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 4</div>
+            <div class="connections">0 conns</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" onclick="sendRequest('lc')">📨 Send Request</button>
+        <button class="btn" onclick="completeRequest('lc')">✅ Complete Random Request</button>
+        <button class="btn" onclick="toggleServerHealth('lc')">🔄 Toggle Server Health</button>
+        <button class="btn" onclick="resetStats('lc')">🔄 Reset Stats</button>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-value" id="lc-total">0</div>
+          <div class="metric-label">Total Requests</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="lc-active">0</div>
+          <div class="metric-label">Active Connections</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="lc-servers">4</div>
+          <div class="metric-label">Active Servers</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="lc-selected">-</div>
+          <div class="metric-label">Last Selected</div>
+        </div>
+      </div>
+
+      <div class="log-container">
+        <div class="log-title">Request Log</div>
+        <div id="lc-log"></div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pros-cons-box pros">
+          <h3>Pros</h3>
+          <ul>
+            <li>Considers actual server load</li>
+            <li>Better for varying request times</li>
+            <li>Prevents server overload</li>
+            <li>Dynamic load balancing</li>
+          </ul>
+        </div>
+        <div class="pros-cons-box cons">
+          <h3>Cons</h3>
+          <ul>
+            <li>Requires connection tracking</li>
+            <li>More complex to implement</li>
+            <li>State management overhead</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- IP Hash -->
+    <div id="ip-hash" class="demo-container hidden">
+      <h2 class="demo-title">IP Hash</h2>
+      <p class="demo-description">Routes based on client IP hash. Same client always goes to same server.</p>
+      
+      <div class="architecture">
+        <div class="component" id="ih-client">
+          <div class="icon">👤</div>
+          <div class="label">Clients</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="component" id="ih-lb">
+          <div class="icon">⚖️</div>
+          <div class="label">Load Balancer</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="server-grid" style="grid-template-columns: repeat(4, 1fr); gap: 15px;">
+          <div class="server healthy" id="ih-s1">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 1</div>
+            <div class="connections">0 reqs</div>
+          </div>
+          <div class="server healthy" id="ih-s2">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 2</div>
+            <div class="connections">0 reqs</div>
+          </div>
+          <div class="server healthy" id="ih-s3">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 3</div>
+            <div class="connections">0 reqs</div>
+          </div>
+          <div class="server healthy" id="ih-s4">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 4</div>
+            <div class="connections">0 reqs</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" onclick="sendRequest('ih', 'client1')">📨 Client 1 Request</button>
+        <button class="btn" onclick="sendRequest('ih', 'client2')">📨 Client 2 Request</button>
+        <button class="btn" onclick="sendRequest('ih', 'client3')">📨 Client 3 Request</button>
+        <button class="btn" onclick="resetStats('ih')">🔄 Reset Stats</button>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-value" id="ih-total">0</div>
+          <div class="metric-label">Total Requests</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="ih-servers">4</div>
+          <div class="metric-label">Active Servers</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="ih-sessions">0</div>
+          <div class="metric-label">Active Sessions</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="ih-last">-</div>
+          <div class="metric-label">Last Target</div>
+        </div>
+      </div>
+
+      <div class="log-container">
+        <div class="log-title">Request Log</div>
+        <div id="ih-log"></div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pros-cons-box pros">
+          <h3>Pros</h3>
+          <ul>
+            <li>Session persistence</li>
+            <li>No shared session storage needed</li>
+            <li>Consistent routing</li>
+            <li>Good for stateful apps</li>
+          </ul>
+        </div>
+        <div class="pros-cons-box cons">
+          <h3>Cons</h3>
+          <ul>
+            <li>Uneven distribution</li>
+            <li>Server failure breaks sessions</li>
+            <li>Not truly load balanced</li>
+            <li>Can overload specific servers</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weighted Round Robin -->
+    <div id="weighted" class="demo-container hidden">
+      <h2 class="demo-title">Weighted Round Robin</h2>
+      <p class="demo-description">Servers with higher capacity get more requests</p>
+      
+      <div class="architecture">
+        <div class="component" id="wr-client">
+          <div class="icon">👤</div>
+          <div class="label">Clients</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="component" id="wr-lb">
+          <div class="icon">⚖️</div>
+          <div class="label">Load Balancer</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="server-grid" style="grid-template-columns: repeat(4, 1fr); gap: 15px;">
+          <div class="server healthy" id="wr-s1">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 1</div>
+            <div class="connections">Weight: 1<br>0 reqs</div>
+          </div>
+          <div class="server healthy" id="wr-s2">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 2</div>
+            <div class="connections">Weight: 2<br>0 reqs</div>
+          </div>
+          <div class="server healthy" id="wr-s3">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 3</div>
+            <div class="connections">Weight: 3<br>0 reqs</div>
+          </div>
+          <div class="server healthy" id="wr-s4">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 4</div>
+            <div class="connections">Weight: 4<br>0 reqs</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" onclick="sendRequest('wr')">📨 Send Request</button>
+        <button class="btn" onclick="resetStats('wr')">🔄 Reset Stats</button>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-value" id="wr-total">0</div>
+          <div class="metric-label">Total Requests</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="wr-servers">4</div>
+          <div class="metric-label">Active Servers</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="wr-ratio">1:2:3:4</div>
+          <div class="metric-label">Weight Ratio</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="wr-current">Server 1</div>
+          <div class="metric-label">Current Target</div>
+        </div>
+      </div>
+
+      <div class="log-container">
+        <div class="log-title">Request Log</div>
+        <div id="wr-log"></div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pros-cons-box pros">
+          <h3>Pros</h3>
+          <ul>
+            <li>Accounts for server capacity</li>
+            <li>Better resource utilization</li>
+            <li>Flexible configuration</li>
+            <li>Works with heterogeneous servers</li>
+          </ul>
+        </div>
+        <div class="pros-cons-box cons">
+          <h3>Cons</h3>
+          <ul>
+            <li>Requires capacity knowledge</li>
+            <li>Manual weight configuration</li>
+            <li>Complex to tune</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      rr: { current: 0, total: 0, servers: [0, 0, 0, 0], healthy: [true, true, true, true] },
+      lc: { connections: [0, 0, 0, 0], total: 0, healthy: [true, true, true, true] },
+      ih: { sessions: {}, total: 0, servers: [0, 0, 0, 0], healthy: [true, true, true, true] },
+      wr: { current: 0, total: 0, servers: [0, 0, 0, 0], weights: [1, 2, 3, 4], healthy: [true, true, true, true] }
+    };
+
+    function showAlgorithm(algo) {
+      document.querySelectorAll('.demo-container').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(algo).classList.remove('hidden');
+      event.target.classList.add('active');
+    }
+
+    function addLog(algo, message, type = 'info') {
+      const container = document.getElementById(`${algo}-log`);
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      container.insertBefore(entry, container.firstChild);
+      
+      while (container.children.length > 20) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    function selectServer(prefix, serverId) {
+      document.querySelectorAll(`[id^="${prefix}-s"]`).forEach(el => el.classList.remove('selected'));
+      document.getElementById(`${prefix}-s${serverId}`).classList.add('selected');
+      setTimeout(() => {
+        document.getElementById(`${prefix}-s${serverId}`).classList.remove('selected');
+      }, 500);
+    }
+
+    // Round Robin
+    function sendRequest(algo, client = null) {
+      if (algo === 'rr') {
+        const s = state.rr;
+        let attempts = 0;
+        let serverId;
+        
+        do {
+          serverId = (s.current % 4) + 1;
+          s.current++;
+          attempts++;
+        } while (!s.healthy[serverId - 1] && attempts < 4);
+        
+        if (s.healthy[serverId - 1]) {
+          s.servers[serverId - 1]++;
+          s.total++;
+          selectServer('rr', serverId);
+          addLog('rr', `Request routed to Server ${serverId}`, 'success');
+          updateRR();
+        } else {
+          addLog('rr', 'No healthy servers available', 'error');
+        }
+      } else if (algo === 'lc') {
+        const s = state.lc;
+        let minConns = Infinity;
+        let serverId = 1;
+        
+        for (let i = 0; i < 4; i++) {
+          if (s.healthy[i] && s.connections[i] < minConns) {
+            minConns = s.connections[i];
+            serverId = i + 1;
+          }
+        }
+        
+        if (minConns !== Infinity) {
+          s.connections[serverId - 1]++;
+          s.total++;
+          selectServer('lc', serverId);
+          addLog('lc', `Request routed to Server ${serverId} (${minConns} conns)`, 'success');
+          updateLC();
+        } else {
+          addLog('lc', 'No healthy servers available', 'error');
+        }
+      } else if (algo === 'ih') {
+        const s = state.ih;
+        const clientIp = client || 'client' + Math.floor(Math.random() * 100);
+        
+        if (!s.sessions[clientIp]) {
+          let serverId;
+          let attempts = 0;
+          do {
+            serverId = (Math.floor(Math.random() * 1000) % 4) + 1;
+            attempts++;
+          } while (!s.healthy[serverId - 1] && attempts < 4);
+          
+          if (s.healthy[serverId - 1]) {
+            s.sessions[clientIp] = serverId;
+            addLog('ih', `New session: ${clientIp} → Server ${serverId}`, 'info');
+          } else {
+            addLog('ih', 'No healthy servers available', 'error');
+            return;
+          }
+        }
+        
+        const serverId = s.sessions[clientIp];
+        s.servers[serverId - 1]++;
+        s.total++;
+        selectServer('ih', serverId);
+        addLog('ih', `${clientIp} → Server ${serverId} (sticky session)`, 'success');
+        updateIH();
+      } else if (algo === 'wr') {
+        const s = state.wr;
+        let serverId;
+        let attempts = 0;
+        
+        do {
+          serverId = (s.current % 10) + 1;
+          s.current++;
+          attempts++;
+          
+          // Map to weighted server
+          if (serverId <= 1) serverId = 1;
+          else if (serverId <= 3) serverId = 2;
+          else if (serverId <= 6) serverId = 3;
+          else serverId = 4;
+        } while (!s.healthy[serverId - 1] && attempts < 10);
+        
+        if (s.healthy[serverId - 1]) {
+          s.servers[serverId - 1]++;
+          s.total++;
+          selectServer('wr', serverId);
+          addLog('wr', `Request routed to Server ${serverId} (weight: ${s.weights[serverId - 1]})`, 'success');
+          updateWR();
+        } else {
+          addLog('wr', 'No healthy servers available', 'error');
+        }
+      }
+    }
+
+    function completeRequest(algo) {
+      if (algo === 'lc') {
+        const s = state.lc;
+        const activeServers = s.connections.map((c, i) => c > 0 ? i + 1 : -1).filter(i => i > 0);
+        
+        if (activeServers.length > 0) {
+          const serverId = activeServers[Math.floor(Math.random() * activeServers.length)];
+          s.connections[serverId - 1]--;
+          addLog('lc', `Connection completed on Server ${serverId}`, 'info');
+          updateLC();
+        }
+      }
+    }
+
+    function toggleServerHealth(algo) {
+      const s = state[algo];
+      const serverId = Math.floor(Math.random() * 4) + 1;
+      s.healthy[serverId - 1] = !s.healthy[serverId - 1];
+      
+      const el = document.getElementById(`${algo === 'rr' ? 'rr' : algo === 'lc' ? 'lc' : algo === 'ih' ? 'ih' : 'wr'}-s${serverId}`);
+      el.classList.toggle('healthy');
+      el.classList.toggle('unhealthy');
+      
+      addLog(algo, `Server ${serverId} is now ${s.healthy[serverId - 1] ? 'healthy' : 'unhealthy'}`, s.healthy[serverId - 1] ? 'success' : 'error');
+      
+      if (algo === 'rr') updateRR();
+      else if (algo === 'lc') updateLC();
+      else if (algo === 'ih') updateIH();
+      else if (algo === 'wr') updateWR();
+    }
+
+    function resetStats(algo) {
+      if (algo === 'rr') {
+        state.rr = { current: 0, total: 0, servers: [0, 0, 0, 0], healthy: [true, true, true, true] };
+        document.querySelectorAll('[id^="rr-s"]').forEach(el => {
+          el.classList.add('healthy');
+          el.classList.remove('unhealthy');
+        });
+        updateRR();
+      } else if (algo === 'lc') {
+        state.lc = { connections: [0, 0, 0, 0], total: 0, healthy: [true, true, true, true] };
+        document.querySelectorAll('[id^="lc-s"]').forEach(el => {
+          el.classList.add('healthy');
+          el.classList.remove('unhealthy');
+        });
+        updateLC();
+      } else if (algo === 'ih') {
+        state.ih = { sessions: {}, total: 0, servers: [0, 0, 0, 0], healthy: [true, true, true, true] };
+        document.querySelectorAll('[id^="ih-s"]').forEach(el => {
+          el.classList.add('healthy');
+          el.classList.remove('unhealthy');
+        });
+        updateIH();
+      } else if (algo === 'wr') {
+        state.wr = { current: 0, total: 0, servers: [0, 0, 0, 0], weights: [1, 2, 3, 4], healthy: [true, true, true, true] };
+        document.querySelectorAll('[id^="wr-s"]').forEach(el => {
+          el.classList.add('healthy');
+          el.classList.remove('unhealthy');
+        });
+        updateWR();
+      }
+      
+      document.getElementById(`${algo}-log`).innerHTML = '';
+    }
+
+    function updateRR() {
+      const s = state.rr;
+      document.getElementById('rr-total').textContent = s.total;
+      document.getElementById('rr-servers').textContent = s.healthy.filter(h => h).length;
+      document.getElementById('rr-current').textContent = 'Server ' + ((s.current % 4) + 1);
+      
+      const avg = s.total > 0 ? Math.round(s.servers[0] / s.total * 100) : 0;
+      document.getElementById('rr-distribution').textContent = avg + '%';
+      
+      for (let i = 0; i < 4; i++) {
+        document.querySelector(`#rr-s${i + 1} .connections`).textContent = s.servers[i] + ' reqs';
+      }
+    }
+
+    function updateLC() {
+      const s = state.lc;
+      document.getElementById('lc-total').textContent = s.total;
+      document.getElementById('lc-active').textContent = s.connections.reduce((a, b) => a + b, 0);
+      document.getElementById('lc-servers').textContent = s.healthy.filter(h => h).length;
+      
+      for (let i = 0; i < 4; i++) {
+        document.querySelector(`#lc-s${i + 1} .connections`).textContent = s.connections[i] + ' conns';
+      }
+    }
+
+    function updateIH() {
+      const s = state.ih;
+      document.getElementById('ih-total').textContent = s.total;
+      document.getElementById('ih-servers').textContent = s.healthy.filter(h => h).length;
+      document.getElementById('ih-sessions').textContent = Object.keys(s.sessions).length;
+      
+      for (let i = 0; i < 4; i++) {
+        document.querySelector(`#ih-s${i + 1} .connections`).textContent = s.servers[i] + ' reqs';
+      }
+    }
+
+    function updateWR() {
+      const s = state.wr;
+      document.getElementById('wr-total').textContent = s.total;
+      document.getElementById('wr-servers').textContent = s.healthy.filter(h => h).length;
+      
+      const next = (s.current % 10) + 1;
+      let serverId;
+      if (next <= 1) serverId = 1;
+      else if (next <= 3) serverId = 2;
+      else if (next <= 6) serverId = 3;
+      else serverId = 4;
+      document.getElementById('wr-current').textContent = 'Server ' + serverId;
+      
+      for (let i = 0; i < 4; i++) {
+        document.querySelector(`#wr-s${i + 1} .connections`).textContent = `Weight: ${s.weights[i]}<br>${s.servers[i]} reqs`;
+      }
+    }
+  </script>
+</body>
+</html>

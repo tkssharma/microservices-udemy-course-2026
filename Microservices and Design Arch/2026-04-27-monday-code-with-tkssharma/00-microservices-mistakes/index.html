@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Microservices Production Failures & Solutions</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Animated Background */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+    
+    .bg-animation span {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: rgba(239, 68, 68, 0.1);
+      border-radius: 50%;
+      animation: float 20s linear infinite;
+    }
+    
+    .bg-animation span:nth-child(odd) {
+      background: rgba(34, 197, 94, 0.1);
+    }
+    
+    .bg-animation span:nth-child(1) { left: 10%; animation-delay: 0s; width: 30px; height: 30px; }
+    .bg-animation span:nth-child(2) { left: 20%; animation-delay: 2s; width: 15px; height: 15px; }
+    .bg-animation span:nth-child(3) { left: 30%; animation-delay: 4s; width: 25px; height: 25px; }
+    .bg-animation span:nth-child(4) { left: 40%; animation-delay: 1s; width: 20px; height: 20px; }
+    .bg-animation span:nth-child(5) { left: 50%; animation-delay: 3s; width: 35px; height: 35px; }
+    .bg-animation span:nth-child(6) { left: 60%; animation-delay: 5s; width: 18px; height: 18px; }
+    .bg-animation span:nth-child(7) { left: 70%; animation-delay: 2s; width: 28px; height: 28px; }
+    .bg-animation span:nth-child(8) { left: 80%; animation-delay: 4s; width: 22px; height: 22px; }
+    .bg-animation span:nth-child(9) { left: 90%; animation-delay: 1s; width: 16px; height: 16px; }
+    
+    @keyframes float {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.3; }
+      90% { opacity: 0.3; }
+      100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 3rem 2rem;
+      background: linear-gradient(180deg, rgba(239, 68, 68, 0.15) 0%, transparent 100%);
+    }
+    
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #ef4444, #f59e0b, #22c55e, #ef4444);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 5s ease infinite;
+    }
+    
+    @keyframes gradient {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    .subtitle {
+      color: #94a3b8;
+      font-size: 1.2rem;
+      margin-top: 0.5rem;
+    }
+    
+    .challenge-badges {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .challenge-badge {
+      padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      border: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 0 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .tab {
+      padding: 1rem 1.25rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .tab:hover {
+      background: rgba(239, 68, 68, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .tab.active {
+      background: linear-gradient(135deg, #ef4444, #f59e0b);
+      border: none;
+      box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Content */
+    .content { display: none; padding: 0 2rem 3rem; max-width: 1400px; margin: 0 auto; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2.2rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+    
+    .badge-problem { background: linear-gradient(135deg, #ef4444, #dc2626); padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; }
+    .badge-solution { background: linear-gradient(135deg, #22c55e, #16a34a); padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.8rem; }
+
+    /* Diagram Container */
+    .diagram-container {
+      background: rgba(15, 23, 42, 0.8);
+      border-radius: 24px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .diagram-container.problem { border-left: 4px solid #ef4444; }
+    .diagram-container.solution { border-left: 4px solid #22c55e; }
+    
+    .diagram-title {
+      font-size: 1.4rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .diagram-title.red { color: #ef4444; }
+    .diagram-title.green { color: #22c55e; }
+    .diagram-title.blue { color: #3b82f6; }
+    .diagram-title.orange { color: #f59e0b; }
+
+    /* Service Flow Diagram */
+    .service-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding: 2rem 0;
+    }
+    
+    .service-node {
+      padding: 1.25rem 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+      min-width: 120px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .service-node:hover { transform: scale(1.05); }
+    
+    .service-icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .service-name { font-weight: 600; font-size: 0.9rem; }
+    .service-status { font-size: 0.75rem; margin-top: 0.25rem; opacity: 0.8; }
+    
+    .node-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 30px rgba(59,130,246,0.3); }
+    .node-green { background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 10px 30px rgba(34,197,94,0.3); }
+    .node-red { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 10px 30px rgba(239,68,68,0.3); }
+    .node-orange { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 30px rgba(245,158,11,0.3); }
+    .node-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 30px rgba(139,92,246,0.3); }
+    .node-gray { background: linear-gradient(135deg, #6b7280, #4b5563); box-shadow: 0 10px 30px rgba(107,114,128,0.3); }
+    .node-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 10px 30px rgba(6,182,212,0.3); }
+    .node-pink { background: linear-gradient(135deg, #ec4899, #be185d); box-shadow: 0 10px 30px rgba(236,72,153,0.3); }
+
+    /* Animated Arrow */
+    .arrow {
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+    
+    .arrow-line {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #64748b, transparent);
+      position: relative;
+    }
+    
+    .arrow-head {
+      width: 0;
+      height: 0;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+      border-left: 12px solid #64748b;
+    }
+    
+    .arrow-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: moveDot 1.5s ease-in-out infinite;
+      box-shadow: 0 0 10px #22c55e;
+    }
+    
+    .arrow.blocked .arrow-dot {
+      background: #ef4444;
+      box-shadow: 0 0 10px #ef4444;
+      animation: pulse 0.5s ease-in-out infinite;
+    }
+    
+    @keyframes moveDot {
+      0% { left: 0; opacity: 0; }
+      20% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { left: calc(100% - 8px); opacity: 0; }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.5); }
+    }
+
+    /* Circuit Breaker Visual */
+    .circuit-breaker {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      padding: 2rem 0;
+    }
+    
+    .cb-state {
+      padding: 2rem;
+      border-radius: 16px;
+      text-align: center;
+      min-width: 150px;
+      position: relative;
+    }
+    
+    .cb-state.closed { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .cb-state.open { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .cb-state.half-open { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    
+    .cb-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .cb-label { font-weight: 700; font-size: 1.1rem; }
+    .cb-desc { font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.9; }
+    
+    .cb-arrow {
+      display: flex;
+      align-items: center;
+      font-size: 1.5rem;
+      color: #64748b;
+    }
+
+    /* Flow Steps */
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1.25rem;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      border-left: 4px solid;
+      animation: slideIn 0.5s ease forwards;
+      opacity: 0;
+    }
+    
+    .flow-step:nth-child(1) { border-color: #ef4444; animation-delay: 0.1s; }
+    .flow-step:nth-child(2) { border-color: #f59e0b; animation-delay: 0.2s; }
+    .flow-step:nth-child(3) { border-color: #22c55e; animation-delay: 0.3s; }
+    .flow-step:nth-child(4) { border-color: #3b82f6; animation-delay: 0.4s; }
+    .flow-step:nth-child(5) { border-color: #8b5cf6; animation-delay: 0.5s; }
+    .flow-step:nth-child(6) { border-color: #ec4899; animation-delay: 0.6s; }
+    
+    .flow-step.success { border-color: #22c55e; }
+    .flow-step.error { border-color: #ef4444; }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .step-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    
+    .step-content h4 { color: #fff; margin-bottom: 0.25rem; font-size: 1rem; }
+    .step-content p { color: #94a3b8; font-size: 0.9rem; line-height: 1.5; }
+
+    /* Info Grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    .info-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .info-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255,255,255,0.2);
+    }
+    
+    .info-card h4 {
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .info-card p {
+      color: #94a3b8;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    /* Code Block */
+    .code-block {
+      background: #0d1117;
+      border-radius: 12px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .code-block .comment { color: #6e7681; }
+    .code-block .keyword { color: #ff7b72; }
+    .code-block .string { color: #a5d6ff; }
+    .code-block .function { color: #d2a8ff; }
+    .code-block .number { color: #79c0ff; }
+
+    /* Table Visual */
+    .outbox-visual {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 1rem 0;
+    }
+    
+    .db-table {
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      overflow: hidden;
+      min-width: 250px;
+    }
+    
+    .db-header {
+      padding: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .db-rows {
+      padding: 0.5rem;
+    }
+    
+    .db-row {
+      padding: 0.75rem 1rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+      font-family: monospace;
+    }
+
+    /* Trace Visual */
+    .trace-visual {
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      padding: 1.5rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    
+    .trace-line {
+      padding: 0.5rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .trace-line.indent-1 { padding-left: 1.5rem; }
+    .trace-line.indent-2 { padding-left: 3rem; }
+    .trace-line.indent-3 { padding-left: 4.5rem; }
+    
+    .trace-success { color: #22c55e; }
+    .trace-error { color: #ef4444; }
+    .trace-time { color: #94a3b8; font-size: 0.8rem; }
+
+    /* Timeout Visual */
+    .timeout-visual {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
+    
+    .timeout-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .timeout-label {
+      min-width: 150px;
+      font-size: 0.9rem;
+    }
+    
+    .timeout-track {
+      flex: 1;
+      height: 30px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .timeout-fill {
+      height: 100%;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* Summary Checklist */
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.25rem;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .checklist-item:hover {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: #22c55e;
+    }
+    
+    .check-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    
+    .check-content h4 { font-size: 1rem; margin-bottom: 0.25rem; }
+    .check-content p { font-size: 0.85rem; color: #94a3b8; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1 { font-size: 1.8rem; }
+      .service-flow { flex-direction: column; }
+      .arrow { transform: rotate(90deg); }
+      .circuit-breaker { flex-direction: column; }
+      .cb-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animation">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+  </div>
+
+  <header>
+    <h1>🔥 Microservices Production Failures</h1>
+    <p class="subtitle">5 Common Challenges & How to Solve Them</p>
+    <div class="challenge-badges">
+      <span class="challenge-badge">⚡ Circuit Breaker</span>
+      <span class="challenge-badge">📤 Transactional Outbox</span>
+      <span class="challenge-badge">🔑 Idempotency</span>
+      <span class="challenge-badge">🔍 Distributed Tracing</span>
+      <span class="challenge-badge">⏱️ Timeout Budgets</span>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="circuit-breaker">⚡ Circuit Breaker</button>
+    <button class="tab" data-tab="outbox">📤 Transactional Outbox</button>
+    <button class="tab" data-tab="idempotency">🔑 Idempotency</button>
+    <button class="tab" data-tab="tracing">🔍 Distributed Tracing</button>
+    <button class="tab" data-tab="timeouts">⏱️ Timeout Budgets</button>
+  </div>
+
+  <!-- Overview -->
+  <div id="overview" class="content active">
+    <h2 class="section-title">📋 The 5 Production Challenges</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title blue">🎯 Challenge Overview</div>
+      <div class="checklist">
+        <div class="checklist-item">
+          <div class="check-icon">⚡</div>
+          <div class="check-content">
+            <h4>Challenge #1: Service Dependencies</h4>
+            <p>One slow service kills everything → Circuit Breaker</p>
+          </div>
+        </div>
+        <div class="checklist-item">
+          <div class="check-icon">📤</div>
+          <div class="check-content">
+            <h4>Challenge #2: Reliable Messaging</h4>
+            <p>Messages lost on crash → Transactional Outbox</p>
+          </div>
+        </div>
+        <div class="checklist-item">
+          <div class="check-icon">🔑</div>
+          <div class="check-content">
+            <h4>Challenge #3: Duplicate Messages</h4>
+            <p>Same message processed twice → Idempotency Keys</p>
+          </div>
+        </div>
+        <div class="checklist-item">
+          <div class="check-icon">🔍</div>
+          <div class="check-content">
+            <h4>Challenge #4: Debugging Chaos</h4>
+            <p>Can't find where it failed → Distributed Tracing</p>
+          </div>
+        </div>
+        <div class="checklist-item">
+          <div class="check-icon">⏱️</div>
+          <div class="check-content">
+            <h4>Challenge #5: Latency Hell</h4>
+            <p>Requests hang forever → Timeout Budgets</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title orange">🏗️ Typical Microservices Architecture</div>
+      <div class="service-flow">
+        <div class="service-node node-blue">
+          <div class="service-icon">📱</div>
+          <div class="service-name">API Gateway</div>
+        </div>
+        <div class="arrow">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+          <div class="arrow-head"></div>
+        </div>
+        <div class="service-node node-purple">
+          <div class="service-icon">📦</div>
+          <div class="service-name">Order Service</div>
+        </div>
+        <div class="arrow">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+          <div class="arrow-head"></div>
+        </div>
+        <div class="service-node node-orange">
+          <div class="service-icon">💳</div>
+          <div class="service-name">Payment Service</div>
+        </div>
+        <div class="arrow">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+          <div class="arrow-head"></div>
+        </div>
+        <div class="service-node node-green">
+          <div class="service-icon">🏦</div>
+          <div class="service-name">Bank API</div>
+        </div>
+      </div>
+      <p style="text-align: center; color: #94a3b8; margin-top: 1rem;">Everything looks great... until production hits 🔥</p>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title red">💀 Production Reality</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4 style="color: #ef4444;">❌ Services timeout randomly</h4>
+          <p>External APIs slow down, your whole system grinds to a halt</p>
+        </div>
+        <div class="info-card">
+          <h4 style="color: #ef4444;">❌ Messages disappear</h4>
+          <p>App crashes between DB save and message publish - data inconsistency</p>
+        </div>
+        <div class="info-card">
+          <h4 style="color: #ef4444;">❌ Duplicate processing</h4>
+          <p>Customer charged twice because message was retried</p>
+        </div>
+        <div class="info-card">
+          <h4 style="color: #ef4444;">❌ Can't debug errors</h4>
+          <p>Error happened somewhere in 10 services - good luck finding it</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Circuit Breaker -->
+  <div id="circuit-breaker" class="content">
+    <h2 class="section-title">⚡ Challenge #1: Service Dependencies</h2>
+    
+    <div class="diagram-container problem">
+      <div class="diagram-title red">❌ The Problem: Cascading Failure</div>
+      <div class="service-flow">
+        <div class="service-node node-blue">
+          <div class="service-icon">📦</div>
+          <div class="service-name">Order Service</div>
+          <div class="service-status">Waiting...</div>
+        </div>
+        <div class="arrow blocked">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+          <div class="arrow-head"></div>
+        </div>
+        <div class="service-node node-red">
+          <div class="service-icon">💳</div>
+          <div class="service-name">Payment Service</div>
+          <div class="service-status">30s timeout...</div>
+        </div>
+        <div class="arrow blocked">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+          <div class="arrow-head"></div>
+        </div>
+        <div class="service-node node-gray">
+          <div class="service-icon">🏦</div>
+          <div class="service-name">Bank API</div>
+          <div class="service-status">💀 DOWN</div>
+        </div>
+      </div>
+      
+      <div class="flow-steps" style="margin-top: 2rem;">
+        <div class="flow-step error">
+          <div class="step-icon node-red">1</div>
+          <div class="step-content">
+            <h4>Bank API is slow (30s timeout)</h4>
+            <p>External service having issues</p>
+          </div>
+        </div>
+        <div class="flow-step error">
+          <div class="step-icon node-red">2</div>
+          <div class="step-content">
+            <h4>Payment Service threads blocked</h4>
+            <p>Waiting for Bank API response</p>
+          </div>
+        </div>
+        <div class="flow-step error">
+          <div class="step-icon node-red">3</div>
+          <div class="step-content">
+            <h4>Order Service threads blocked</h4>
+            <p>Waiting for Payment Service</p>
+          </div>
+        </div>
+        <div class="flow-step error">
+          <div class="step-icon node-red">4</div>
+          <div class="step-content">
+            <h4>💀 ENTIRE SYSTEM DEAD</h4>
+            <p>One slow service killed everything</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container solution">
+      <div class="diagram-title green">✅ The Solution: Circuit Breaker Pattern</div>
+      
+      <div class="circuit-breaker">
+        <div class="cb-state closed">
+          <div class="cb-icon">✅</div>
+          <div class="cb-label">CLOSED</div>
+          <div class="cb-desc">Normal operation</div>
+        </div>
+        <div class="cb-arrow">→</div>
+        <div class="cb-state open">
+          <div class="cb-icon">🚫</div>
+          <div class="cb-label">OPEN</div>
+          <div class="cb-desc">Failures exceed threshold</div>
+        </div>
+        <div class="cb-arrow">→</div>
+        <div class="cb-state half-open">
+          <div class="cb-icon">🔄</div>
+          <div class="cb-label">HALF-OPEN</div>
+          <div class="cb-desc">Test if recovered</div>
+        </div>
+      </div>
+
+      <div class="info-grid" style="margin-top: 2rem;">
+        <div class="info-card">
+          <h4 style="color: #22c55e;">✅ CLOSED State</h4>
+          <p>Requests flow through normally. Circuit monitors for failures.</p>
+        </div>
+        <div class="info-card">
+          <h4 style="color: #ef4444;">🚫 OPEN State</h4>
+          <p>After 3 failures, circuit OPENS. Returns fast failure immediately. No waiting!</p>
+        </div>
+        <div class="info-card">
+          <h4 style="color: #f59e0b;">🔄 HALF-OPEN State</h4>
+          <p>After 30s, allows one test request. Success → CLOSED. Failure → OPEN again.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title blue">💻 Code Example</div>
+      <div class="code-block">
+        <span class="comment">// Circuit Breaker with NestJS</span><br>
+        <span class="keyword">@Injectable</span>()<br>
+        <span class="keyword">export class</span> <span class="function">PaymentService</span> {<br>
+        &nbsp;&nbsp;<span class="keyword">private</span> circuitBreaker = <span class="keyword">new</span> <span class="function">CircuitBreaker</span>({<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;failureThreshold: <span class="number">3</span>,&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Open after 3 failures</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;resetTimeout: <span class="number">30000</span>,&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Try again after 30s</span><br>
+        &nbsp;&nbsp;});<br><br>
+        &nbsp;&nbsp;<span class="keyword">async</span> <span class="function">processPayment</span>(data) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="keyword">this</span>.circuitBreaker.<span class="function">execute</span>(() => {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="keyword">this</span>.<span class="function">callBankAPI</span>(data);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;});<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Transactional Outbox -->
+  <div id="outbox" class="content">
+    <h2 class="section-title">📤 Challenge #2: Reliable Messaging</h2>
+    
+    <div class="diagram-container problem">
+      <div class="diagram-title red">❌ The Problem: Dual-Write Failure</div>
+      
+      <div class="flow-steps">
+        <div class="flow-step success">
+          <div class="step-icon node-green">1</div>
+          <div class="step-content">
+            <h4>✅ Save order to Database</h4>
+            <p>await db.save(order) - Success!</p>
+          </div>
+        </div>
+        <div class="flow-step error">
+          <div class="step-icon node-red">💥</div>
+          <div class="step-content">
+            <h4>APP CRASHES HERE</h4>
+            <p>Server restarts, pod killed, exception thrown...</p>
+          </div>
+        </div>
+        <div class="flow-step error">
+          <div class="step-icon node-red">2</div>
+          <div class="step-content">
+            <h4>❌ Publish event to RabbitMQ</h4>
+            <p>await rabbitMQ.publish(event) - NEVER EXECUTED!</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-grid" style="margin-top: 2rem;">
+        <div class="info-card">
+          <h4 style="color: #ef4444;">💀 Result</h4>
+          <p>Order exists in DB, but Payment Service never gets notified. Customer charged? Maybe. Maybe not. <strong>DATA INCONSISTENCY!</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container solution">
+      <div class="diagram-title green">✅ The Solution: Transactional Outbox Pattern</div>
+      
+      <div class="outbox-visual">
+        <div class="db-table">
+          <div class="db-header" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+            📦 Orders Table
+          </div>
+          <div class="db-rows">
+            <div class="db-row">order_id: "abc-123"</div>
+            <div class="db-row">status: "pending"</div>
+            <div class="db-row">amount: $99.99</div>
+          </div>
+        </div>
+        
+        <div style="font-size: 2rem; display: flex; align-items: center;">+</div>
+        
+        <div class="db-table">
+          <div class="db-header" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+            📤 Outbox Table
+          </div>
+          <div class="db-rows">
+            <div class="db-row">event_type: "order.created"</div>
+            <div class="db-row">payload: {...}</div>
+            <div class="db-row">published: false</div>
+          </div>
+        </div>
+      </div>
+      
+      <p style="text-align: center; color: #22c55e; font-weight: 600; margin: 1rem 0;">
+        ☝️ BOTH saved in SAME database transaction - Atomic!
+      </p>
+
+      <div class="flow-steps" style="margin-top: 1.5rem;">
+        <div class="flow-step success">
+          <div class="step-icon node-green">1</div>
+          <div class="step-content">
+            <h4>Single Transaction</h4>
+            <p>Save order + outbox event in ONE atomic transaction</p>
+          </div>
+        </div>
+        <div class="flow-step success">
+          <div class="step-icon node-green">2</div>
+          <div class="step-content">
+            <h4>Background Worker Polls</h4>
+            <p>Every 5s, find events where published = false</p>
+          </div>
+        </div>
+        <div class="flow-step success">
+          <div class="step-icon node-green">3</div>
+          <div class="step-content">
+            <h4>Publish to RabbitMQ</h4>
+            <p>Send event, then mark published = true</p>
+          </div>
+        </div>
+        <div class="flow-step success">
+          <div class="step-icon node-green">4</div>
+          <div class="step-content">
+            <h4>Crash Safe!</h4>
+            <p>If app crashes, event stays in outbox. Worker picks it up later.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Idempotency -->
+  <div id="idempotency" class="content">
+    <h2 class="section-title">🔑 Challenge #3: Duplicate Messages</h2>
+    
+    <div class="diagram-container problem">
+      <div class="diagram-title red">❌ The Problem: Double Processing</div>
+      
+      <div class="flow-steps">
+        <div class="flow-step success">
+          <div class="step-icon node-green">1</div>
+          <div class="step-content">
+            <h4>Payment Service processes payment ✅</h4>
+            <p>Customer charged $99.99</p>
+          </div>
+        </div>
+        <div class="flow-step success">
+          <div class="step-icon node-blue">2</div>
+          <div class="step-content">
+            <h4>Try to ACK the message</h4>
+            <p>Sending acknowledgment to RabbitMQ...</p>
+          </div>
+        </div>
+        <div class="flow-step error">
+          <div class="step-icon node-red">3</div>
+          <div class="step-content">
+            <h4>💥 Network blip - ACK fails!</h4>
+            <p>Connection dropped before ACK received</p>
+          </div>
+        </div>
+        <div class="flow-step error">
+          <div class="step-icon node-orange">4</div>
+          <div class="step-content">
+            <h4>RabbitMQ thinks message wasn't processed</h4>
+            <p>No ACK received, must be unprocessed...</p>
+          </div>
+        </div>
+        <div class="flow-step error">
+          <div class="step-icon node-red">5</div>
+          <div class="step-content">
+            <h4>RabbitMQ re-delivers message</h4>
+            <p>Payment processed AGAIN! 💀</p>
+          </div>
+        </div>
+        <div class="flow-step error">
+          <div class="step-icon node-red">6</div>
+          <div class="step-content">
+            <h4>Customer charged TWICE! 😱</h4>
+            <p>$99.99 + $99.99 = Angry customer + Refund + Bad reviews</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container solution">
+      <div class="diagram-title green">✅ The Solution: Idempotency Keys</div>
+      
+      <div class="service-flow">
+        <div class="service-node node-blue">
+          <div class="service-icon">📨</div>
+          <div class="service-name">Message</div>
+          <div class="service-status">ID: abc-123</div>
+        </div>
+        <div class="arrow">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+          <div class="arrow-head"></div>
+        </div>
+        <div class="service-node node-orange">
+          <div class="service-icon">🔍</div>
+          <div class="service-name">Check Redis</div>
+          <div class="service-status">processed:abc-123?</div>
+        </div>
+        <div class="arrow">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+          <div class="arrow-head"></div>
+        </div>
+        <div class="service-node node-green">
+          <div class="service-icon">✅</div>
+          <div class="service-name">Process Once</div>
+          <div class="service-status">Skip if exists</div>
+        </div>
+      </div>
+
+      <div class="info-grid" style="margin-top: 2rem;">
+        <div class="info-card">
+          <h4>🔑 How It Works</h4>
+          <p>Every message has a unique ID. Before processing, check Redis if this ID was already processed. If yes, skip it.</p>
+        </div>
+        <div class="info-card">
+          <h4>⏰ TTL for Cleanup</h4>
+          <p>Store processed IDs with TTL (e.g., 24 hours). Old entries auto-expire to prevent memory bloat.</p>
+        </div>
+        <div class="info-card">
+          <h4>📜 The Rule</h4>
+          <p><strong>Design EVERY message handler to be idempotent.</strong> Assume messages WILL be duplicated.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Distributed Tracing -->
+  <div id="tracing" class="content">
+    <h2 class="section-title">🔍 Challenge #4: Debugging Chaos</h2>
+    
+    <div class="diagram-container problem">
+      <div class="diagram-title red">❌ The Problem: Where Did It Fail?</div>
+      
+      <div class="code-block" style="background: #1a1a2e;">
+        <span style="color: #3b82f6;">[Order Service]</span> <span style="color: #94a3b8;">[INFO]</span> Processing order abc-123<br>
+        <span style="color: #f59e0b;">[Payment Service]</span> <span style="color: #ef4444;">[ERROR]</span> Something went wrong<br>
+        <span style="color: #22c55e;">[Notification]</span> <span style="color: #94a3b8;">[INFO]</span> Waiting for events...<br>
+        <span style="color: #8b5cf6;">[Inventory]</span> <span style="color: #94a3b8;">[DEBUG]</span> Stock check complete<br>
+        <span style="color: #3b82f6;">[Order Service]</span> <span style="color: #94a3b8;">[INFO]</span> Order complete???<br><br>
+        <span style="color: #ef4444;">Which service failed? WHY? No idea. 🤷</span>
+      </div>
+    </div>
+
+    <div class="diagram-container solution">
+      <div class="diagram-title green">✅ The Solution: Distributed Tracing with OpenTelemetry</div>
+      
+      <div class="trace-visual">
+        <div class="trace-line">
+          <strong style="color: #f59e0b;">Trace ID:</strong> <span style="color: #94a3b8;">abc-123-def-456</span>
+        </div>
+        <div class="trace-line">
+          ├── <span style="color: #3b82f6;">Order Service</span> <span class="trace-time">(200ms)</span>
+        </div>
+        <div class="trace-line indent-1">
+          ├── Validate order <span class="trace-time">(10ms)</span> <span class="trace-success">✅</span>
+        </div>
+        <div class="trace-line indent-1">
+          └── Call Payment Service <span class="trace-time">(150ms)</span>
+        </div>
+        <div class="trace-line indent-2">
+          └── <span style="color: #f59e0b;">Payment Service</span> <span class="trace-time">(140ms)</span>
+        </div>
+        <div class="trace-line indent-3">
+          ├── Check balance <span class="trace-time">(20ms)</span> <span class="trace-success">✅</span>
+        </div>
+        <div class="trace-line indent-3">
+          ├── Process payment <span class="trace-time">(50ms)</span> <span class="trace-success">✅</span>
+        </div>
+        <div class="trace-line indent-3">
+          └── Call Bank API <span class="trace-time">(60ms)</span> <span class="trace-error">❌ TIMEOUT</span>
+        </div>
+        <div class="trace-line">
+          <strong style="color: #ef4444;">└── Total: 200ms - FAILED at Bank API call</strong>
+        </div>
+      </div>
+
+      <div class="info-grid" style="margin-top: 2rem;">
+        <div class="info-card">
+          <h4>🔗 One Trace ID</h4>
+          <p>Single ID follows request across ALL services. Complete request journey visibility.</p>
+        </div>
+        <div class="info-card">
+          <h4>📊 Spans & Timing</h4>
+          <p>See exactly how long each step took. Identify bottlenecks instantly.</p>
+        </div>
+        <div class="info-card">
+          <h4>🎯 Pinpoint Errors</h4>
+          <p>Know exactly WHERE and WHY it failed. No more log hunting!</p>
+        </div>
+        <div class="info-card">
+          <h4>🛠️ Tools</h4>
+          <p>Jaeger, Zipkin, AWS X-Ray, Datadog - all work with OpenTelemetry</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeout Budgets -->
+  <div id="timeouts" class="content">
+    <h2 class="section-title">⏱️ Challenge #5: Latency Management</h2>
+    
+    <div class="diagram-container problem">
+      <div class="diagram-title red">❌ The Problem: Timeout Chain Disaster</div>
+      
+      <div class="timeout-visual">
+        <div class="timeout-bar">
+          <div class="timeout-label">API Gateway</div>
+          <div class="timeout-track">
+            <div class="timeout-fill" style="width: 100%; background: linear-gradient(90deg, #ef4444, #dc2626);">30s</div>
+          </div>
+        </div>
+        <div class="timeout-bar">
+          <div class="timeout-label" style="padding-left: 1rem;">└ Order Service</div>
+          <div class="timeout-track">
+            <div class="timeout-fill" style="width: 100%; background: linear-gradient(90deg, #ef4444, #dc2626);">30s</div>
+          </div>
+        </div>
+        <div class="timeout-bar">
+          <div class="timeout-label" style="padding-left: 2rem;">└ Payment Service</div>
+          <div class="timeout-track">
+            <div class="timeout-fill" style="width: 100%; background: linear-gradient(90deg, #ef4444, #dc2626);">30s</div>
+          </div>
+        </div>
+        <div class="timeout-bar">
+          <div class="timeout-label" style="padding-left: 3rem;">└ Bank API</div>
+          <div class="timeout-track">
+            <div class="timeout-fill" style="width: 100%; background: linear-gradient(90deg, #ef4444, #dc2626);">30s</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="info-card" style="margin-top: 1.5rem; border-color: #ef4444;">
+        <h4 style="color: #ef4444;">💀 Result</h4>
+        <p>User waits 30 seconds... then gets error. All resources held for 30 seconds... then released. <strong>Terrible UX!</strong></p>
+      </div>
+    </div>
+
+    <div class="diagram-container solution">
+      <div class="diagram-title green">✅ The Solution: Timeout Budgets</div>
+      
+      <div class="timeout-visual">
+        <div class="timeout-bar">
+          <div class="timeout-label">API Gateway</div>
+          <div class="timeout-track">
+            <div class="timeout-fill" style="width: 100%; background: linear-gradient(90deg, #22c55e, #16a34a);">10s (total budget)</div>
+          </div>
+        </div>
+        <div class="timeout-bar">
+          <div class="timeout-label" style="padding-left: 1rem;">└ Order Service</div>
+          <div class="timeout-track">
+            <div class="timeout-fill" style="width: 80%; background: linear-gradient(90deg, #3b82f6, #1d4ed8);">8s</div>
+          </div>
+        </div>
+        <div class="timeout-bar">
+          <div class="timeout-label" style="padding-left: 2rem;">└ Payment Service</div>
+          <div class="timeout-track">
+            <div class="timeout-fill" style="width: 50%; background: linear-gradient(90deg, #f59e0b, #d97706);">5s</div>
+          </div>
+        </div>
+        <div class="timeout-bar">
+          <div class="timeout-label" style="padding-left: 3rem;">└ Bank API</div>
+          <div class="timeout-track">
+            <div class="timeout-fill" style="width: 30%; background: linear-gradient(90deg, #8b5cf6, #6d28d9);">3s</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="info-grid" style="margin-top: 2rem;">
+        <div class="info-card">
+          <h4 style="color: #22c55e;">⚡ Fail FAST</h4>
+          <p>Inner services timeout first. Fail quickly, release resources, let caller decide next step.</p>
+        </div>
+        <div class="info-card">
+          <h4 style="color: #22c55e;">🔄 Room for Retries</h4>
+          <p>Outer timeout > inner timeout + retries. Otherwise you retry after caller gave up!</p>
+        </div>
+        <div class="info-card">
+          <h4 style="color: #22c55e;">📉 Budget Propagation</h4>
+          <p>Pass remaining budget downstream. Services know how much time they have.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title blue">💻 Code Example</div>
+      <div class="code-block">
+        <span class="comment">// Proper timeout + retry strategy</span><br>
+        <span class="keyword">const</span> axiosInstance = axios.<span class="function">create</span>({<br>
+        &nbsp;&nbsp;timeout: <span class="number">3000</span>, <span class="comment">// 3 second timeout</span><br>
+        });<br><br>
+        <span class="keyword">async function</span> <span class="function">callExternalAPI</span>(data) {<br>
+        &nbsp;&nbsp;<span class="keyword">return</span> <span class="function">retry</span>(<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;() => axiosInstance.<span class="function">post</span>(<span class="string">'/api'</span>, data),<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;retries: <span class="number">3</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;minTimeout: <span class="number">1000</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;maxTimeout: <span class="number">3000</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;);<br>
+        }
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

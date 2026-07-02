@@ -1,0 +1,54 @@
+# Factor X: Dev/Prod Parity - Same backing services in development
+version: '3.8'
+
+services:
+  order-service:
+    build: ./nestjs-twelve-factor
+    ports:
+      - "3000:3000"
+    environment:
+      # Factor III: Config - Environment variables
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/orders
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Factor IV: Backing Services - Database as attached resource
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Factor IV: Backing Services - Redis as attached resource
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:

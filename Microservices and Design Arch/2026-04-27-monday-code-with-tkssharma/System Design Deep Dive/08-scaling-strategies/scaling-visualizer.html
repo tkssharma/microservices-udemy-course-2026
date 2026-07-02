@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scaling Strategies - Interactive Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0d0d0d;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 48px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 20px;
+      margin-bottom: 40px;
+    }
+
+    .cyan-underline {
+      width: 150px;
+      height: 4px;
+      background: linear-gradient(90deg, #06b6d4, #22d3ee);
+      margin-bottom: 40px;
+      border-radius: 2px;
+    }
+
+    .strategy-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 15px 30px;
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+
+    .tab:hover {
+      border-color: #06b6d4;
+      color: #22d3ee;
+    }
+
+    .tab.active {
+      background: rgba(6, 182, 212, 0.2);
+      border-color: #06b6d4;
+      color: #22d3ee;
+    }
+
+    .demo-container {
+      background: #12121a;
+      border: 1px solid #1e293b;
+      border-radius: 20px;
+      padding: 40px;
+      min-height: 500px;
+    }
+
+    .demo-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+
+    .demo-description {
+      color: #94a3b8;
+      font-size: 16px;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .scaling-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      margin: 40px 0;
+      flex-wrap: wrap;
+    }
+
+    .server {
+      background: #1a1a2e;
+      border: 2px solid #334155;
+      border-radius: 15px;
+      padding: 30px;
+      text-align: center;
+      min-width: 150px;
+      transition: all 0.5s ease;
+    }
+
+    .server.adding {
+      animation: scaleIn 0.5s ease;
+    }
+
+    .server.removing {
+      animation: scaleOut 0.5s ease;
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes scaleOut {
+      from { transform: scale(1); opacity: 1; }
+      to { transform: scale(0); opacity: 0; }
+    }
+
+    .server .icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    .server .label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .server .specs {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 10px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 15px 30px;
+      background: #06b6d4;
+      border: none;
+      border-radius: 10px;
+      color: #0d0d0d;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn:hover {
+      background: #22d3ee;
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      background: #334155;
+      color: #64748b;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .metric-card {
+      background: #1a1a2e;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #22d3ee;
+    }
+
+    .metric-label {
+      color: #64748b;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 40px;
+    }
+
+    .pros-cons-box {
+      background: #12121a;
+      border: 1px solid #1e293b;
+      border-radius: 15px;
+      padding: 25px;
+    }
+
+    .pros-cons-box h3 {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .pros-cons-box.pros h3 { color: #10b981; }
+    .pros-cons-box.cons h3 { color: #ef4444; }
+
+    .pros-cons-box ul {
+      list-style: none;
+    }
+
+    .pros-cons-box li {
+      padding: 10px 0;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pros-cons-box.pros li::before {
+      content: "✓";
+      color: #10b981;
+      font-weight: bold;
+    }
+
+    .pros-cons-box.cons li::before {
+      content: "✗";
+      color: #ef4444;
+      font-weight: bold;
+    }
+
+    .hidden { display: none; }
+
+    .arrow {
+      font-size: 40px;
+      color: #06b6d4;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Scaling Strategies</h1>
+    <div class="cyan-underline"></div>
+    <p class="subtitle">Interactive visualization of vertical and horizontal scaling</p>
+
+    <div class="strategy-tabs">
+      <div class="tab active" onclick="showStrategy('vertical')">Vertical Scaling</div>
+      <div class="tab" onclick="showStrategy('horizontal')">Horizontal Scaling</div>
+    </div>
+
+    <!-- Vertical Scaling -->
+    <div id="vertical" class="demo-container">
+      <h2 class="demo-title">Vertical Scaling (Scale Up)</h2>
+      <p class="demo-description">Increase the resources of a single server (CPU, RAM, Storage)</p>
+      
+      <div class="scaling-visual" id="vertical-visual">
+        <div class="server" id="v-server">
+          <div class="icon">🖥️</div>
+          <div class="label">Server</div>
+          <div class="specs" id="v-specs">CPU: 4 cores<br>RAM: 16GB</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" onclick="scaleVertical('up')">⬆️ Scale Up</button>
+        <button class="btn" onclick="scaleVertical('down')">⬇️ Scale Down</button>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-value" id="v-cpu">4</div>
+          <div class="metric-label">CPU Cores</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="v-ram">16</div>
+          <div class="metric-label">RAM (GB)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="v-cost">$100</div>
+          <div class="metric-label">Monthly Cost</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="v-capacity">1000</div>
+          <div class="metric-label">Requests/sec</div>
+        </div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pros-cons-box pros">
+          <h3>Pros</h3>
+          <ul>
+            <li>Simple to implement</li>
+            <li>No code changes needed</li>
+            <li>Easier to manage</li>
+            <li>Lower complexity</li>
+          </ul>
+        </div>
+        <div class="pros-cons-box cons">
+          <h3>Cons</h3>
+          <ul>
+            <li>Hardware limits exist</li>
+            <li>Single point of failure</li>
+            <li>Downtime during upgrade</li>
+            <li>Expensive at high scale</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Horizontal Scaling -->
+    <div id="horizontal" class="demo-container hidden">
+      <h2 class="demo-title">Horizontal Scaling (Scale Out)</h2>
+      <p class="demo-description">Add more servers to handle increased load</p>
+      
+      <div class="scaling-visual" id="horizontal-visual">
+        <div class="server" id="h-server-1">
+          <div class="icon">🖥️</div>
+          <div class="label">Server 1</div>
+          <div class="specs">CPU: 4 cores<br>RAM: 16GB</div>
+        </div>
+        <div class="arrow">+</div>
+        <div class="server" id="h-server-2">
+          <div class="icon">🖥️</div>
+          <div class="label">Server 2</div>
+          <div class="specs">CPU: 4 cores<br>RAM: 16GB</div>
+        </div>
+        <div class="arrow">+</div>
+        <div class="server" id="h-server-3">
+          <div class="icon">🖥️</div>
+          <div class="label">Server 3</div>
+          <div class="specs">CPU: 4 cores<br>RAM: 16GB</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" onclick="scaleHorizontal('add')">➕ Add Server</button>
+        <button class="btn" onclick="scaleHorizontal('remove')">➖ Remove Server</button>
+      </div>
+
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-value" id="h-servers">3</div>
+          <div class="metric-label">Total Servers</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="h-cpu">12</div>
+          <div class="metric-label">Total CPU Cores</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="h-cost">$300</div>
+          <div class="metric-label">Monthly Cost</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="h-capacity">3000</div>
+          <div class="metric-label">Requests/sec</div>
+        </div>
+      </div>
+
+      <div class="pros-cons">
+        <div class="pros-cons-box pros">
+          <h3>Pros</h3>
+          <ul>
+            <li>Theoretically unlimited scale</li>
+            <li>No single point of failure</li>
+            <li>Zero downtime scaling</li>
+            <li>Cost-effective at scale</li>
+          </ul>
+        </div>
+        <div class="pros-cons-box cons">
+          <h3>Cons</h3>
+          <ul>
+            <li>Complex to implement</li>
+            <li>Requires load balancer</li>
+            <li>State management challenges</li>
+            <li>Higher infrastructure complexity</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let vCpu = 4;
+    let vRam = 16;
+    let vCost = 100;
+    let vCapacity = 1000;
+
+    let hServers = 3;
+    const hServerCpu = 4;
+    const hServerRam = 16;
+    const hServerCost = 100;
+    const hServerCapacity = 1000;
+
+    function showStrategy(strategy) {
+      document.querySelectorAll('.demo-container').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(strategy).classList.remove('hidden');
+      event.target.classList.add('active');
+    }
+
+    function scaleVertical(direction) {
+      if (direction === 'up') {
+        if (vCpu < 64) {
+          vCpu *= 2;
+          vRam *= 2;
+          vCost += 150;
+          vCapacity *= 2;
+        }
+      } else {
+        if (vCpu > 4) {
+          vCpu /= 2;
+          vRam /= 2;
+          vCost -= 150;
+          vCapacity /= 2;
+        }
+      }
+
+      document.getElementById('v-cpu').textContent = vCpu;
+      document.getElementById('v-ram').textContent = vRam;
+      document.getElementById('v-cost').textContent = '$' + vCost;
+      document.getElementById('v-capacity').textContent = vCapacity;
+      document.getElementById('v-specs').innerHTML = `CPU: ${vCpu} cores<br>RAM: ${vRam}GB`;
+    }
+
+    function scaleHorizontal(action) {
+      const visual = document.getElementById('horizontal-visual');
+      
+      if (action === 'add') {
+        if (hServers < 10) {
+          hServers++;
+          const newServer = document.createElement('div');
+          newServer.className = 'server adding';
+          newServer.id = `h-server-${hServers}`;
+          newServer.innerHTML = `
+            <div class="icon">🖥️</div>
+            <div class="label">Server ${hServers}</div>
+            <div class="specs">CPU: ${hServerCpu} cores<br>RAM: ${hServerRam}GB</div>
+          `;
+          
+          const lastServer = document.getElementById(`h-server-${hServers - 1}`);
+          if (lastServer) {
+            const arrow = document.createElement('div');
+            arrow.className = 'arrow';
+            arrow.textContent = '+';
+            lastServer.after(arrow);
+            arrow.after(newServer);
+          }
+        }
+      } else {
+        if (hServers > 1) {
+          const lastServer = document.getElementById(`h-server-${hServers}`);
+          const prevArrow = lastServer.previousElementSibling;
+          
+          if (prevArrow && prevArrow.classList.contains('arrow')) {
+            prevArrow.remove();
+          }
+          
+          lastServer.classList.add('removing');
+          setTimeout(() => lastServer.remove(), 500);
+          hServers--;
+        }
+      }
+
+      setTimeout(() => {
+        document.getElementById('h-servers').textContent = hServers;
+        document.getElementById('h-cpu').textContent = hServers * hServerCpu;
+        document.getElementById('h-cost').textContent = '$' + (hServers * hServerCost);
+        document.getElementById('h-capacity').textContent = hServers * hServerCapacity;
+      }, 100);
+    }
+  </script>
+</body>
+</html>

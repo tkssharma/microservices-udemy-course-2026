@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Message Queues: Kafka vs RabbitMQ vs SQS</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .bg-animation {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .bg-animation span {
+      position: absolute;
+      display: block;
+      width: 20px; height: 20px;
+      background: rgba(255,255,255,0.05);
+      animation: move 25s linear infinite;
+      bottom: -150px;
+      border-radius: 50%;
+    }
+
+    .bg-animation span:nth-child(1) { left: 25%; width: 80px; height: 80px; animation-delay: 0s; }
+    .bg-animation span:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; animation-duration: 12s; }
+    .bg-animation span:nth-child(3) { left: 70%; width: 20px; height: 20px; animation-delay: 4s; }
+    .bg-animation span:nth-child(4) { left: 40%; width: 60px; height: 60px; animation-delay: 0s; animation-duration: 18s; }
+    .bg-animation span:nth-child(5) { left: 65%; width: 20px; height: 20px; animation-delay: 0s; }
+    .bg-animation span:nth-child(6) { left: 75%; width: 110px; height: 110px; animation-delay: 3s; }
+
+    @keyframes move {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; }
+    }
+
+    header {
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #00d4ff, #7c3aed, #f59e0b);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 5s ease infinite;
+    }
+
+    @keyframes gradient {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .subtitle { color: #a78bfa; font-size: 1.2rem; margin-top: 0.5rem; }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 0 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .tab {
+      padding: 1rem 1.5rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .tab:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, #7c3aed, #00d4ff);
+      border: none;
+      box-shadow: 0 10px 40px rgba(124,58,237,0.5);
+    }
+
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      color: #00d4ff;
+    }
+
+    .diagram-container {
+      background: rgba(15,15,35,0.8);
+      border-radius: 24px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(124,58,237,0.3);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      backdrop-filter: blur(20px);
+      position: relative;
+    }
+
+    .diagram-container::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #00d4ff, #7c3aed, #f59e0b);
+    }
+
+    .diagram-title {
+      font-size: 1.5rem;
+      color: #f59e0b;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .comparison-grid { grid-template-columns: 1fr; }
+    }
+
+    .comparison-box {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 2px solid;
+      transition: transform 0.3s ease;
+    }
+
+    .comparison-box:hover { transform: translateY(-5px); }
+
+    .comparison-box.kafka { border-color: rgba(239,68,68,0.5); }
+    .comparison-box.rabbitmq { border-color: rgba(245,158,11,0.5); }
+    .comparison-box.sqs { border-color: rgba(59,130,246,0.5); }
+
+    .comparison-header {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .kafka .comparison-header { color: #ef4444; }
+    .rabbitmq .comparison-header { color: #f59e0b; }
+    .sqs .comparison-header { color: #3b82f6; }
+
+    .feature-list { list-style: none; }
+
+    .feature-list li {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .feature-list li:last-child { border-bottom: none; }
+
+    .flow-diagram {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      min-height: 200px;
+    }
+
+    .node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 2rem;
+      border-radius: 16px;
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .node:hover { transform: scale(1.05); }
+
+    .node-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .node-label { font-size: 0.9rem; opacity: 0.8; margin-top: 0.25rem; }
+
+    .node-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 40px rgba(59,130,246,0.4); }
+    .node-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 40px rgba(139,92,246,0.4); }
+    .node-green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 40px rgba(16,185,129,0.4); }
+    .node-orange { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 40px rgba(245,158,11,0.4); }
+    .node-red { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 10px 40px rgba(239,68,68,0.4); }
+    .node-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 10px 40px rgba(6,182,212,0.4); }
+
+    .arrow-container {
+      display: flex;
+      align-items: center;
+      position: relative;
+      width: 80px;
+    }
+
+    .arrow-line {
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #00d4ff, transparent);
+      border-radius: 2px;
+    }
+
+    .arrow-dot {
+      position: absolute;
+      width: 12px; height: 12px;
+      background: #00d4ff;
+      border-radius: 50%;
+      box-shadow: 0 0 20px #00d4ff;
+      animation: moveRight 1.5s ease-in-out infinite;
+    }
+
+    @keyframes moveRight {
+      0% { left: 0; opacity: 0; }
+      20% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { left: calc(100% - 12px); opacity: 0; }
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .info-card {
+      background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(0,212,255,0.1));
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid rgba(124,58,237,0.3);
+      transition: all 0.3s ease;
+    }
+
+    .info-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(124,58,237,0.3);
+    }
+
+    .info-card h4 {
+      color: #00d4ff;
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-card p { color: #d1d5db; line-height: 1.6; }
+
+    .use-case-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .use-case-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border-left: 4px solid;
+    }
+
+    .use-case-card.kafka { border-color: #ef4444; }
+    .use-case-card.rabbitmq { border-color: #f59e0b; }
+    .use-case-card.sqs { border-color: #3b82f6; }
+
+    .use-case-card h4 { margin-bottom: 0.5rem; }
+    .use-case-card p { color: #a78bfa; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <div class="bg-animation">
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+  </div>
+
+  <header>
+    <h1>📨 Message Queues Comparison</h1>
+    <p class="subtitle">Kafka vs RabbitMQ vs Amazon SQS — When to Use What?</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="kafka">Apache Kafka</button>
+    <button class="tab" data-tab="rabbitmq">RabbitMQ</button>
+    <button class="tab" data-tab="sqs">Amazon SQS</button>
+    <button class="tab" data-tab="comparison">Comparison</button>
+    <button class="tab" data-tab="when-to-use">When to Use</button>
+  </div>
+
+  <!-- Overview -->
+  <div id="overview" class="content active">
+    <h2 class="section-title">🔄 Message Queue Overview</h2>
+
+    <div class="diagram-container">
+      <div class="diagram-title">📬 How Message Queues Work</div>
+      <div class="flow-diagram">
+        <div class="node node-blue">
+          <div class="node-icon">📤</div>
+          <div>Producer</div>
+          <div class="node-label">Sends Messages</div>
+        </div>
+        <div class="arrow-container">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+        </div>
+        <div class="node node-purple">
+          <div class="node-icon">📬</div>
+          <div>Message Queue</div>
+          <div class="node-label">Stores & Routes</div>
+        </div>
+        <div class="arrow-container">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+        </div>
+        <div class="node node-green">
+          <div class="node-icon">📥</div>
+          <div>Consumer</div>
+          <div class="node-label">Processes Messages</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🎯 Why Use Message Queues?</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>🔗 Decoupling</h4>
+          <p>Services communicate without direct dependencies. Producer doesn't need to know about consumers.</p>
+        </div>
+        <div class="info-card">
+          <h4>⚖️ Load Leveling</h4>
+          <p>Handle traffic spikes by buffering messages. Process at your own pace.</p>
+        </div>
+        <div class="info-card">
+          <h4>🔄 Async Processing</h4>
+          <p>Fire and forget. Process heavy tasks in background without blocking.</p>
+        </div>
+        <div class="info-card">
+          <h4>🛡️ Fault Tolerance</h4>
+          <p>Messages persist even if consumers are down. Retry failed processing.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kafka -->
+  <div id="kafka" class="content">
+    <h2 class="section-title">🔴 Apache Kafka</h2>
+
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Kafka Architecture</div>
+      <div class="flow-diagram">
+        <div class="node node-blue">
+          <div class="node-icon">📤</div>
+          <div>Producers</div>
+        </div>
+        <div class="arrow-container">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+        </div>
+        <div class="node node-red">
+          <div class="node-icon">📚</div>
+          <div>Kafka Cluster</div>
+          <div class="node-label">Topics & Partitions</div>
+        </div>
+        <div class="arrow-container">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+        </div>
+        <div class="node node-green">
+          <div class="node-icon">👥</div>
+          <div>Consumer Groups</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>📚 Topics</h4>
+          <p>Logical channels for messages. Each topic can have multiple partitions for parallelism.</p>
+        </div>
+        <div class="info-card">
+          <h4>📦 Partitions</h4>
+          <p>Messages within a partition are ordered. Partitions enable horizontal scaling.</p>
+        </div>
+        <div class="info-card">
+          <h4>👥 Consumer Groups</h4>
+          <p>Multiple consumers can share load. Each partition is consumed by one consumer in group.</p>
+        </div>
+        <div class="info-card">
+          <h4>💾 Retention</h4>
+          <p>Messages are persisted on disk. Can replay old messages. Configurable retention period.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">✅ Kafka Strengths</div>
+      <ul class="feature-list">
+        <li>🚀 Extremely high throughput (millions of messages/sec)</li>
+        <li>💾 Durable storage with configurable retention</li>
+        <li>🔄 Message replay capability</li>
+        <li>📊 Real-time stream processing (Kafka Streams)</li>
+        <li>⚖️ Horizontal scaling with partitions</li>
+        <li>🔗 Strong ordering within partitions</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- RabbitMQ -->
+  <div id="rabbitmq" class="content">
+    <h2 class="section-title">🟠 RabbitMQ</h2>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🐰 RabbitMQ Architecture</div>
+      <div class="flow-diagram">
+        <div class="node node-blue">
+          <div class="node-icon">📤</div>
+          <div>Publisher</div>
+        </div>
+        <div class="arrow-container">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+        </div>
+        <div class="node node-orange">
+          <div class="node-icon">🔀</div>
+          <div>Exchange</div>
+          <div class="node-label">Routes Messages</div>
+        </div>
+        <div class="arrow-container">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+        </div>
+        <div class="node node-purple">
+          <div class="node-icon">📬</div>
+          <div>Queues</div>
+        </div>
+        <div class="arrow-container">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+        </div>
+        <div class="node node-green">
+          <div class="node-icon">📥</div>
+          <div>Consumer</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>🔀 Exchanges</h4>
+          <p>Direct, Fanout, Topic, Headers. Flexible routing based on routing keys and patterns.</p>
+        </div>
+        <div class="info-card">
+          <h4>📬 Queues</h4>
+          <p>Messages wait in queues until consumed. Supports priority queues and TTL.</p>
+        </div>
+        <div class="info-card">
+          <h4>🔗 Bindings</h4>
+          <p>Rules connecting exchanges to queues. Define which messages go where.</p>
+        </div>
+        <div class="info-card">
+          <h4>✅ Acknowledgments</h4>
+          <p>Consumer confirms message processing. Failed messages can be requeued or dead-lettered.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">✅ RabbitMQ Strengths</div>
+      <ul class="feature-list">
+        <li>🔀 Flexible routing with exchanges</li>
+        <li>📊 Multiple messaging protocols (AMQP, MQTT, STOMP)</li>
+        <li>🎯 Message acknowledgment & delivery guarantees</li>
+        <li>⚡ Low latency for simple use cases</li>
+        <li>🔧 Rich plugin ecosystem</li>
+        <li>📈 Management UI included</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SQS -->
+  <div id="sqs" class="content">
+    <h2 class="section-title">🔵 Amazon SQS</h2>
+
+    <div class="diagram-container">
+      <div class="diagram-title">☁️ SQS Architecture</div>
+      <div class="flow-diagram">
+        <div class="node node-blue">
+          <div class="node-icon">📤</div>
+          <div>Producer</div>
+          <div class="node-label">AWS Service/App</div>
+        </div>
+        <div class="arrow-container">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+        </div>
+        <div class="node node-cyan">
+          <div class="node-icon">☁️</div>
+          <div>SQS Queue</div>
+          <div class="node-label">Managed Service</div>
+        </div>
+        <div class="arrow-container">
+          <div class="arrow-line"></div>
+          <div class="arrow-dot"></div>
+        </div>
+        <div class="node node-green">
+          <div class="node-icon">⚡</div>
+          <div>Lambda/EC2</div>
+          <div class="node-label">Consumer</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>📋 Standard Queue</h4>
+          <p>Nearly unlimited throughput. At-least-once delivery. Best-effort ordering.</p>
+        </div>
+        <div class="info-card">
+          <h4>📑 FIFO Queue</h4>
+          <p>Exactly-once processing. Strict ordering. 300 msg/sec (3000 with batching).</p>
+        </div>
+        <div class="info-card">
+          <h4>⏰ Visibility Timeout</h4>
+          <p>Message hidden while being processed. Prevents duplicate processing.</p>
+        </div>
+        <div class="info-card">
+          <h4>💀 Dead Letter Queue</h4>
+          <p>Failed messages moved to DLQ after max retries. Debug and reprocess later.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">✅ SQS Strengths</div>
+      <ul class="feature-list">
+        <li>☁️ Fully managed - zero operations</li>
+        <li>📈 Auto-scaling with demand</li>
+        <li>💰 Pay per use - cost effective</li>
+        <li>🔗 Native AWS integrations (Lambda, SNS, S3)</li>
+        <li>🛡️ Built-in encryption & IAM</li>
+        <li>♾️ Virtually unlimited throughput (Standard)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Comparison -->
+  <div id="comparison" class="content">
+    <h2 class="section-title">⚔️ Side-by-Side Comparison</h2>
+
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Feature Comparison</div>
+      <div class="comparison-grid">
+        <div class="comparison-box kafka">
+          <div class="comparison-header">🔴 Kafka</div>
+          <ul class="feature-list">
+            <li>📊 Throughput: Millions/sec</li>
+            <li>💾 Retention: Configurable</li>
+            <li>🔄 Replay: Yes</li>
+            <li>📐 Ordering: Per Partition</li>
+            <li>🏗️ Setup: Complex</li>
+            <li>💰 Cost: Self-managed</li>
+          </ul>
+        </div>
+        <div class="comparison-box rabbitmq">
+          <div class="comparison-header">🟠 RabbitMQ</div>
+          <ul class="feature-list">
+            <li>📊 Throughput: Thousands/sec</li>
+            <li>💾 Retention: Until consumed</li>
+            <li>🔄 Replay: No</li>
+            <li>📐 Ordering: Per Queue</li>
+            <li>🏗️ Setup: Moderate</li>
+            <li>💰 Cost: Self-managed</li>
+          </ul>
+        </div>
+        <div class="comparison-box sqs">
+          <div class="comparison-header">🔵 SQS</div>
+          <ul class="feature-list">
+            <li>📊 Throughput: Unlimited*</li>
+            <li>💾 Retention: 14 days max</li>
+            <li>🔄 Replay: No</li>
+            <li>📐 Ordering: FIFO only</li>
+            <li>🏗️ Setup: Easy</li>
+            <li>💰 Cost: Pay per use</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- When to Use -->
+  <div id="when-to-use" class="content">
+    <h2 class="section-title">🎯 When to Use What?</h2>
+
+    <div class="diagram-container">
+      <div class="diagram-title">📋 Use Case Recommendations</div>
+      <div class="use-case-grid">
+        <div class="use-case-card kafka">
+          <h4>🔴 Choose Kafka for:</h4>
+          <p>• Event streaming & real-time analytics<br>• Log aggregation at scale<br>• Audit trails & event sourcing<br>• High-throughput data pipelines<br>• When you need message replay</p>
+        </div>
+        <div class="use-case-card rabbitmq">
+          <h4>🟠 Choose RabbitMQ for:</h4>
+          <p>• Complex routing requirements<br>• Multiple protocols needed<br>• Request-reply patterns<br>• Low latency requirements<br>• Traditional task queues</p>
+        </div>
+        <div class="use-case-card sqs">
+          <h4>🔵 Choose SQS for:</h4>
+          <p>• AWS-native applications<br>• Serverless architectures<br>• Simple queue needs<br>• Zero ops requirement<br>• Cost-sensitive projects</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

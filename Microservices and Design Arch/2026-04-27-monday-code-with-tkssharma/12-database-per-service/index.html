@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Per Service Pattern</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%); min-height: 100vh; color: #fff; }
+    .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+    .bg-animation span { position: absolute; display: block; width: 20px; height: 20px; background: rgba(6,182,212,0.1); animation: move 25s linear infinite; bottom: -150px; border-radius: 50%; }
+    .bg-animation span:nth-child(1) { left: 25%; width: 80px; height: 80px; }
+    .bg-animation span:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; }
+    .bg-animation span:nth-child(3) { left: 70%; width: 30px; height: 30px; animation-delay: 4s; }
+    .bg-animation span:nth-child(4) { left: 40%; width: 60px; height: 60px; }
+    @keyframes move { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-1000px); opacity: 0; } }
+    header { text-align: center; padding: 3rem 2rem; }
+    h1 { font-size: 3rem; font-weight: 700; background: linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: #67e8f9; font-size: 1.2rem; margin-top: 0.5rem; }
+    .tabs { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; padding: 0 2rem; margin-bottom: 2rem; }
+    .tab { padding: 1rem 1.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    .tab:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+    .tab.active { background: linear-gradient(135deg, #06b6d4, #3b82f6); border: none; }
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 2rem; color: #06b6d4; }
+    .diagram-container { background: rgba(15,23,42,0.8); border-radius: 24px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(6,182,212,0.3); position: relative; }
+    .diagram-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6); }
+    .diagram-title { font-size: 1.5rem; color: #fbbf24; margin-bottom: 1.5rem; }
+    .architecture-visual { display: flex; flex-direction: column; align-items: center; gap: 2rem; padding: 2rem; }
+    .services-row { display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center; }
+    .service-block { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+    .node { padding: 1rem 1.5rem; border-radius: 12px; font-weight: 600; text-align: center; transition: transform 0.3s ease; min-width: 120px; }
+    .node:hover { transform: scale(1.05); }
+    .node-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 10px 30px rgba(6,182,212,0.4); }
+    .node-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 30px rgba(59,130,246,0.4); }
+    .node-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 30px rgba(139,92,246,0.4); }
+    .node-green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 30px rgba(16,185,129,0.4); }
+    .node-orange { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 30px rgba(245,158,11,0.4); }
+    .db-node { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.9rem; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3); }
+    .arrow-down { font-size: 1.5rem; color: #67e8f9; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .info-card { background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(59,130,246,0.1)); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(6,182,212,0.3); transition: transform 0.3s ease; }
+    .info-card:hover { transform: translateY(-5px); }
+    .info-card h4 { color: #67e8f9; font-size: 1.2rem; margin-bottom: 0.75rem; }
+    .info-card p { color: #d1d5db; line-height: 1.6; }
+    .feature-list { list-style: none; }
+    .feature-list li { padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 0.5rem; }
+    .feature-list li:last-child { border-bottom: none; }
+    .comparison-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+    @media (max-width: 768px) { .comparison-grid { grid-template-columns: 1fr; } }
+    .comparison-box { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 1.5rem; border: 2px solid; }
+    .comparison-box.shared { border-color: rgba(239,68,68,0.5); }
+    .comparison-box.separate { border-color: rgba(16,185,129,0.5); }
+    .comparison-box h4 { margin-bottom: 1rem; font-size: 1.3rem; }
+    .shared h4 { color: #ef4444; }
+    .separate h4 { color: #10b981; }
+  </style>
+</head>
+<body>
+  <div class="bg-animation"><span></span><span></span><span></span><span></span></div>
+  <header>
+    <h1>💾 Database Per Service</h1>
+    <p class="subtitle">Microservices Data Management Pattern</p>
+  </header>
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="pattern">The Pattern</button>
+    <button class="tab" data-tab="benefits">Benefits</button>
+    <button class="tab" data-tab="challenges">Challenges</button>
+    <button class="tab" data-tab="strategies">Strategies</button>
+  </div>
+
+  <div id="overview" class="content active">
+    <h2 class="section-title">🎯 What is Database Per Service?</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">💡 Core Principle</div>
+      <div class="info-card" style="margin-bottom: 1.5rem;">
+        <h4>📖 Definition</h4>
+        <p>Each microservice owns its data exclusively. No other service can access it directly. Services communicate through APIs, not shared databases.</p>
+      </div>
+      <div class="comparison-grid">
+        <div class="comparison-box shared">
+          <h4>❌ Shared Database (Anti-pattern)</h4>
+          <p>All services access one database. Tight coupling. Schema changes break everyone. No independence.</p>
+        </div>
+        <div class="comparison-box separate">
+          <h4>✅ Database Per Service</h4>
+          <p>Each service has own database. Loose coupling. Independent deployment. Technology freedom.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="pattern" class="content">
+    <h2 class="section-title">🏗️ The Pattern</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Architecture</div>
+      <div class="architecture-visual">
+        <div class="services-row">
+          <div class="service-block">
+            <div class="node node-cyan">User Service</div>
+            <div class="arrow-down">⬇️</div>
+            <div class="db-node">PostgreSQL</div>
+          </div>
+          <div class="service-block">
+            <div class="node node-blue">Order Service</div>
+            <div class="arrow-down">⬇️</div>
+            <div class="db-node">MongoDB</div>
+          </div>
+          <div class="service-block">
+            <div class="node node-purple">Product Service</div>
+            <div class="arrow-down">⬇️</div>
+            <div class="db-node">Elasticsearch</div>
+          </div>
+          <div class="service-block">
+            <div class="node node-green">Analytics Service</div>
+            <div class="arrow-down">⬇️</div>
+            <div class="db-node">ClickHouse</div>
+          </div>
+        </div>
+        <p style="color: #67e8f9; text-align: center;">Each service chooses the best database for its needs</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="benefits" class="content">
+    <h2 class="section-title">✅ Benefits</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🎯 Why Use This Pattern?</div>
+      <ul class="feature-list">
+        <li>🔓 <strong>Loose Coupling:</strong> Services are independent. No shared schema.</li>
+        <li>🚀 <strong>Independent Deployment:</strong> Deploy without affecting others.</li>
+        <li>📈 <strong>Independent Scaling:</strong> Scale each database based on service needs.</li>
+        <li>🔧 <strong>Technology Freedom:</strong> Choose the right database for each use case.</li>
+        <li>🛡️ <strong>Fault Isolation:</strong> Database failure affects only one service.</li>
+        <li>👥 <strong>Team Autonomy:</strong> Teams own their data completely.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="challenges" class="content">
+    <h2 class="section-title">⚠️ Challenges</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🚧 Problems to Solve</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>🔍 Cross-Service Queries</h4><p>Can't JOIN across databases. Need API composition or CQRS.</p></div>
+        <div class="info-card"><h4>🔄 Distributed Transactions</h4><p>No ACID across services. Use Saga pattern instead.</p></div>
+        <div class="info-card"><h4>📊 Data Consistency</h4><p>Eventually consistent by default. Design for it.</p></div>
+        <div class="info-card"><h4>📦 Data Duplication</h4><p>Some data may be duplicated across services. Sync via events.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="strategies" class="content">
+    <h2 class="section-title">🎯 Implementation Strategies</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📋 How to Implement</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>📨 Event-Driven Sync</h4><p>Publish events when data changes. Other services subscribe and maintain local copies.</p></div>
+        <div class="info-card"><h4>🔄 Saga Pattern</h4><p>Coordinate distributed transactions using choreography or orchestration.</p></div>
+        <div class="info-card"><h4>📊 CQRS</h4><p>Separate read and write models. Build materialized views for queries.</p></div>
+        <div class="info-card"><h4>🔗 API Composition</h4><p>Aggregate data from multiple services at the API layer.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

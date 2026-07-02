@@ -1,0 +1,1713 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Authentication & Authorization Strategies</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+        min-height: 100vh;
+        color: #e0e0e0;
+        padding: 2rem;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 1rem;
+        color: #fff;
+      }
+      h2 {
+        margin: 2rem 0 1rem;
+        color: #a78bfa;
+        border-bottom: 1px solid #333;
+        padding-bottom: 0.5rem;
+      }
+      .diagram-container {
+        background: #1e1e2e;
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      .mermaid {
+        display: flex;
+        justify-content: center;
+      }
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      .tab {
+        padding: 0.5rem 1rem;
+        background: #2d2d44;
+        border: none;
+        border-radius: 8px;
+        color: #e0e0e0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .tab:hover,
+      .tab.active {
+        background: #6366f1;
+        color: #fff;
+      }
+      .diagram-section {
+        display: none;
+      }
+      .diagram-section.active {
+        display: block;
+      }
+      .flow-dot {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, #fff 0%, #00f5d4 40%, #00bbf9 70%, transparent 100%);
+        border-radius: 50%;
+        box-shadow:
+          0 0 20px #00f5d4,
+          0 0 40px #00bbf9,
+          0 0 60px #00f5d4;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0;
+      }
+      .flow-dot.active {
+        animation: pulse 0.5s ease-in-out infinite alternate;
+      }
+      @keyframes pulse {
+        from {
+          transform: scale(1);
+          box-shadow:
+            0 0 20px #00f5d4,
+            0 0 40px #00bbf9;
+        }
+        to {
+          transform: scale(1.5);
+          box-shadow:
+            0 0 35px #00f5d4,
+            0 0 60px #00bbf9,
+            0 0 80px #00f5d4;
+        }
+      }
+      .info-box {
+        background: #2d2d44;
+        border-left: 4px solid #6366f1;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .info-box h3 {
+        color: #a78bfa;
+        margin-bottom: 0.5rem;
+      }
+      .info-box ul {
+        margin-left: 1.5rem;
+      }
+      .info-box li {
+        margin: 0.25rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔐 Authentication & Authorization Strategies</h1>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('overview')">Auth Overview</button>
+      <button class="tab" onclick="showTab('cookie')">Cookie-Based</button>
+      <button class="tab" onclick="showTab('session')">Session-Based</button>
+      <button class="tab" onclick="showTab('token')">Token-Based (JWT)</button>
+      <button class="tab" onclick="showTab('oauth')">OAuth 2.0</button>
+      <button class="tab" onclick="showTab('sso')">SSO</button>
+      <button class="tab" onclick="showTab('saml')">SAML</button>
+      <button class="tab" onclick="showTab('oidc')">OIDC</button>
+      <button class="tab" onclick="showTab('providers')">Auth Providers</button>
+    </div>
+
+    <!-- Overview: Authentication vs Authorization -->
+    <div id="overview" class="diagram-section active">
+      <h2>Authentication vs Authorization</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    U[👤 User]
+    
+    subgraph Authentication["🔐 Authentication (AuthN)"]
+        direction TB
+        A1[Who are you?]
+        A2[Verify Identity]
+        A3[Username/Password]
+        A4[Biometrics]
+        A5[MFA/2FA]
+    end
+    
+    subgraph Authorization["🛡️ Authorization (AuthZ)"]
+        direction TB
+        Z1[What can you do?]
+        Z2[Check Permissions]
+        Z3[Roles]
+        Z4[Policies]
+        Z5[Access Control]
+    end
+    
+    subgraph Resources["📦 Protected Resources"]
+        R1[API Endpoints]
+        R2[Database]
+        R3[Files]
+        R4[Services]
+    end
+    
+    U -->|Step 1| Authentication
+    A1 --> A2
+    A2 --> A3
+    A2 --> A4
+    A2 --> A5
+    
+    Authentication -->|Identity Verified| Authorization
+    Z1 --> Z2
+    Z2 --> Z3
+    Z2 --> Z4
+    Z2 --> Z5
+    
+    Authorization -->|Access Granted| Resources
+    
+    style Authentication fill:#10b981
+    style Authorization fill:#f59e0b
+    style Resources fill:#6366f1
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>Key Differences</h3>
+        <ul>
+          <li><strong>Authentication (AuthN)</strong>: Verifies WHO you are (identity verification)</li>
+          <li><strong>Authorization (AuthZ)</strong>: Determines WHAT you can access (permission verification)</li>
+          <li>Authentication always comes BEFORE Authorization</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Cookie-Based Authentication -->
+    <div id="cookie" class="diagram-section">
+      <h2>Cookie-Based Authentication</h2>
+
+      <!-- Generic Cookie Auth -->
+      <h3 style="color: #10b981; margin: 1.5rem 0 1rem">Generic Implementation</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Browser["Browser"]
+        REQ[HTTP Request]
+        COOKIE[Cookie Storage]
+    end
+    
+    subgraph Server["Web Server"]
+        AUTH[Auth Handler]
+        SESS[Session Manager]
+    end
+    
+    subgraph CookieProps["Cookie Properties"]
+        HP[HttpOnly - No JS Access]
+        SC[Secure - HTTPS Only]
+        SS[SameSite - CSRF Protection]
+        EX[Expires/MaxAge]
+    end
+    
+    REQ -->|1. Login Request| AUTH
+    AUTH -->|2. Validate Credentials| SESS
+    SESS -->|3. Create Session| SESS
+    SESS -->|4. Set-Cookie Header| COOKIE
+    COOKIE -->|5. Auto-attach on requests| REQ
+    
+    CookieProps --> COOKIE
+    
+    style Browser fill:#3b82f6
+    style Server fill:#10b981
+    style CookieProps fill:#f59e0b
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant B as Browser
+    participant S as Server
+    participant DB as Database
+    
+    Note over B,DB: Generic Cookie Login Flow
+    B->>S: POST /login credentials
+    S->>DB: Validate credentials
+    DB-->>S: User found
+    S->>S: Create session token
+    S-->>B: Set-Cookie session_id HttpOnly Secure
+    
+    Note over B,DB: Subsequent Requests
+    B->>S: GET /dashboard with Cookie
+    S->>S: Validate cookie
+    S->>DB: Get user data
+    DB-->>S: User data
+    S-->>B: 200 OK Dashboard
+    
+    Note over B,DB: Logout
+    B->>S: POST /logout with Cookie
+    S->>S: Invalidate session
+    S-->>B: Clear Cookie
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>Cookie Attributes</h3>
+        <ul>
+          <li><strong>HttpOnly</strong>: Prevents JavaScript access (XSS protection)</li>
+          <li><strong>Secure</strong>: Only sent over HTTPS</li>
+          <li><strong>SameSite</strong>: CSRF protection (Strict/Lax/None)</li>
+          <li><strong>Domain/Path</strong>: Scope of cookie validity</li>
+        </ul>
+      </div>
+
+      <!-- NestJS Cookie Auth -->
+      <h3 style="color: #e0234e; margin: 2rem 0 1rem">NestJS Implementation</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Browser["Browser"]
+        REQ[HTTP Request]
+        COOKIE[Cookie Storage]
+    end
+    
+    subgraph NestJS["NestJS Application"]
+        MAIN[main.ts<br/>app.use cookieParser]
+        CTRL[AuthController<br/>@Post login]
+        SVC[AuthService<br/>validateUser]
+        RES[@Res response.cookie]
+    end
+    
+    subgraph CookieConfig["Cookie Configuration"]
+        HP[httpOnly: true]
+        SC[secure: true]
+        SS[sameSite: strict]
+        EX[maxAge: 3600000]
+    end
+    
+    REQ -->|1. POST /auth/login| CTRL
+    CTRL -->|2. Validate| SVC
+    SVC -->|3. Return user| CTRL
+    CTRL -->|4. res.cookie| RES
+    RES -->|5. Set-Cookie header| COOKIE
+    COOKIE -->|6. Auto-attach| REQ
+    
+    CookieConfig --> RES
+    
+    style Browser fill:#3b82f6
+    style NestJS fill:#e0234e
+    style CookieConfig fill:#f59e0b
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant B as Browser
+    participant C as AuthController
+    participant S as AuthService
+    participant G as CookieGuard
+    participant DB as Database
+    
+    Note over B,DB: NestJS Cookie Login Flow
+    B->>C: POST /auth/login body credentials
+    C->>S: validateUser email password
+    S->>DB: findOne email
+    DB-->>S: User entity
+    S->>S: bcrypt.compare password
+    S-->>C: Return user object
+    C->>C: res.cookie auth_token jwt options
+    C-->>B: Set-Cookie header with response
+    
+    Note over B,DB: Protected Route Access
+    B->>G: GET /profile with Cookie
+    G->>G: Extract token from @Req cookies
+    G->>S: validateToken token
+    S-->>G: Decoded payload
+    G->>G: Attach user to request
+    G-->>C: Allow request
+    C-->>B: Protected data
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>NestJS Cookie Implementation</h3>
+        <ul>
+          <li><strong>cookie-parser</strong>: npm install cookie-parser @types/cookie-parser</li>
+          <li><strong>main.ts</strong>: app.use(cookieParser())</li>
+          <li><strong>@Res()</strong>: Inject response to set cookies</li>
+          <li><strong>@Req()</strong>: Access req.cookies in guards</li>
+          <li><strong>Custom Guard</strong>: Extract and validate cookie token</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Session-Based Authentication -->
+    <div id="session" class="diagram-section">
+      <h2>Session-Based Authentication</h2>
+
+      <!-- Generic Session Auth -->
+      <h3 style="color: #10b981; margin: 1.5rem 0 1rem">Generic Implementation</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Client["Browser"]
+        C1[Cookie: sessionId]
+    end
+    
+    subgraph Server["Application Server"]
+        S1[Session Middleware]
+        S2[Session Lookup]
+        S3[Request Handler]
+    end
+    
+    subgraph SessionStore["Session Store Options"]
+        SS1[(Memory Store)]
+        SS2[(Redis)]
+        SS3[(Database)]
+    end
+    
+    subgraph SessionData["Session Object"]
+        SD1[userId: 123]
+        SD2[username: john]
+        SD3[roles: admin]
+        SD4[expiresAt: timestamp]
+    end
+    
+    Client -->|Request + Session Cookie| S1
+    S1 --> S2
+    S2 -->|sessionId lookup| SessionStore
+    SS1 --> SessionData
+    SS2 --> SessionData
+    SS3 --> SessionData
+    SessionData --> S3
+    S3 -->|Response| Client
+    
+    style Client fill:#3b82f6
+    style Server fill:#10b981
+    style SessionStore fill:#f59e0b
+    style SessionData fill:#8b5cf6
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant B as Browser
+    participant S as Server
+    participant SS as Session Store
+    participant DB as Database
+    
+    Note over B,DB: Generic Session Login
+    B->>S: POST /login credentials
+    S->>DB: Validate credentials
+    DB-->>S: User found
+    S->>SS: Create session with userId
+    SS-->>S: sessionId generated
+    S-->>B: Set-Cookie sessionId
+    
+    Note over B,DB: Session Validation
+    B->>S: GET /profile with sessionId
+    S->>SS: Lookup sessionId
+    SS-->>S: Session data userId
+    S->>DB: Get user by userId
+    DB-->>S: User object
+    S-->>B: Protected response
+    
+    Note over B,DB: Session Expiry
+    S->>SS: Check session expiry
+    SS-->>S: Session expired
+    S-->>B: 401 Redirect to login
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>Session Storage Options</h3>
+        <ul>
+          <li><strong>In-Memory</strong>: Fast but not scalable, lost on restart</li>
+          <li><strong>Redis</strong>: Fast, scalable, supports expiration</li>
+          <li><strong>Database</strong>: Persistent, slower, good for auditing</li>
+          <li><strong>Sticky Sessions</strong>: Required for in-memory in load-balanced envs</li>
+        </ul>
+      </div>
+
+      <!-- NestJS Session Auth -->
+      <h3 style="color: #e0234e; margin: 2rem 0 1rem">NestJS Implementation</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Browser["Browser"]
+        C1[Cookie: connect.sid]
+    end
+    
+    subgraph NestJS["NestJS Application"]
+        MAIN[main.ts<br/>express-session config]
+        CTRL[AuthController]
+        GUARD[SessionGuard]
+        SER[SessionSerializer]
+    end
+    
+    subgraph Packages["Required Packages"]
+        P1[express-session]
+        P2[passport]
+        P3[passport-local]
+        P4[connect-redis]
+    end
+    
+    subgraph SessionStore["Session Store Options"]
+        SS1[(MemoryStore<br/>Development)]
+        SS2[(Redis<br/>Production)]
+        SS3[(TypeORM/Prisma<br/>Database)]
+    end
+    
+    Browser -->|Request with cookie| GUARD
+    GUARD -->|Deserialize| SER
+    SER -->|Lookup session| SessionStore
+    SessionStore -->|User object| CTRL
+    
+    Packages --> MAIN
+    
+    style Browser fill:#3b82f6
+    style NestJS fill:#e0234e
+    style SessionStore fill:#f59e0b
+    style Packages fill:#8b5cf6
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant B as Browser
+    participant C as AuthController
+    participant PS as PassportStrategy
+    participant SER as SessionSerializer
+    participant R as Redis Store
+    
+    Note over B,R: NestJS Session Login with Passport
+    B->>C: POST /auth/login credentials
+    C->>PS: LocalStrategy.validate
+    PS->>PS: Validate user credentials
+    PS-->>C: Return user object
+    C->>SER: serializeUser user
+    SER->>R: Store session userId
+    R-->>SER: Session ID created
+    SER-->>B: Set-Cookie connect.sid
+    
+    Note over B,R: Session Validation on Request
+    B->>C: GET /profile with connect.sid
+    C->>SER: deserializeUser sessionId
+    SER->>R: Get session data
+    R-->>SER: userId from session
+    SER->>SER: Load full user from DB
+    SER-->>C: Attach user to req.user
+    C-->>B: Protected response
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>NestJS Session Setup</h3>
+        <ul>
+          <li><strong>Packages</strong>: express-session, passport, @nestjs/passport</li>
+          <li><strong>SessionSerializer</strong>: Serialize/deserialize user to session</li>
+          <li><strong>LocalStrategy</strong>: @nestjs/passport PassportStrategy</li>
+          <li><strong>@UseGuards(AuthenticatedGuard)</strong>: Protect routes</li>
+          <li><strong>Redis</strong>: connect-redis for production session store</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Token-Based Authentication (JWT) -->
+    <div id="token" class="diagram-section">
+      <h2>Token-Based Authentication (JWT)</h2>
+
+      <!-- Generic JWT Auth -->
+      <h3 style="color: #10b981; margin: 1.5rem 0 1rem">Generic Implementation</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph JWT["JSON Web Token Structure"]
+        direction LR
+        H[Header<br/>alg typ]
+        P[Payload<br/>claims]
+        S[Signature<br/>HMAC/RSA]
+    end
+    
+    H -->|.| P
+    P -->|.| S
+    
+    subgraph Flow["Authentication Flow"]
+        C[Client]
+        AS[Auth Server]
+        RS[Resource Server]
+    end
+    
+    C -->|1. Login credentials| AS
+    AS -->|2. Validate and Issue JWT| C
+    C -->|3. Request + Bearer Token| RS
+    RS -->|4. Validate JWT signature| RS
+    RS -->|5. Protected Resource| C
+    
+    subgraph Claims["Common JWT Claims"]
+        CL1[sub: subject userId]
+        CL2[iat: issued at]
+        CL3[exp: expiration]
+        CL4[iss: issuer]
+        CL5[aud: audience]
+    end
+    
+    style JWT fill:#f59e0b
+    style Flow fill:#10b981
+    style Claims fill:#6366f1
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant A as Auth Server
+    participant R as Resource Server
+    
+    Note over C,R: Generic JWT Login Flow
+    C->>A: POST /auth/login credentials
+    A->>A: Validate credentials
+    A->>A: Generate JWT sign with secret
+    A-->>C: accessToken refreshToken
+    
+    Note over C: Store tokens securely
+    
+    C->>R: GET /api/data Authorization Bearer JWT
+    R->>R: Extract token from header
+    R->>R: Verify signature
+    R->>R: Check expiration
+    R->>R: Extract claims
+    R-->>C: 200 OK Protected Data
+    
+    Note over C,R: Token Refresh Flow
+    C->>A: POST /auth/refresh refreshToken
+    A->>A: Validate refresh token
+    A-->>C: New accessToken
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph TokenTypes["Token Types"]
+        AT[Access Token<br/>Short lived 15m]
+        RT[Refresh Token<br/>Long lived 7d]
+    end
+    
+    subgraph Storage["Storage Options"]
+        MEM[Memory/LocalStorage<br/>Access Token]
+        HTTP[HttpOnly Cookie<br/>Refresh Token]
+    end
+    
+    subgraph Security["Security Considerations"]
+        XSS[XSS Protection]
+        CSRF[CSRF Protection]
+        EXP[Short Expiry]
+    end
+    
+    AT --> MEM
+    RT --> HTTP
+    HTTP --> CSRF
+    MEM --> XSS
+    AT --> EXP
+    
+    style TokenTypes fill:#6366f1
+    style Storage fill:#10b981
+    style Security fill:#f59e0b
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>JWT Pros and Cons</h3>
+        <ul>
+          <li><strong>Stateless</strong>: No server-side session storage needed</li>
+          <li><strong>Scalable</strong>: Works great with microservices</li>
+          <li><strong>Cross-domain</strong>: Works across different domains</li>
+          <li><strong>Size</strong>: Larger than session IDs</li>
+          <li><strong>Revocation</strong>: Cannot easily invalidate before expiry</li>
+        </ul>
+      </div>
+
+      <!-- NestJS JWT Auth -->
+      <h3 style="color: #e0234e; margin: 2rem 0 1rem">NestJS Implementation</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph NestJSAuth["NestJS JWT Architecture"]
+        AM[AuthModule]
+        JM[JwtModule.register]
+        PM[PassportModule]
+    end
+    
+    subgraph Components["Key Components"]
+        AS[AuthService<br/>login signToken]
+        JS[JwtStrategy<br/>extends PassportStrategy]
+        JG[JwtAuthGuard<br/>extends AuthGuard jwt]
+        UD[@CurrentUser<br/>Custom Decorator]
+    end
+    
+    subgraph JWTConfig["JWT Configuration"]
+        SEC[secret: JWT_SECRET]
+        EXP[expiresIn: 15m]
+        ALG[algorithm: HS256]
+        ISS[issuer: your-app]
+    end
+    
+    AM --> JM
+    AM --> PM
+    JM --> JWTConfig
+    
+    AS --> Components
+    JS --> Components
+    JG --> Components
+    
+    style NestJSAuth fill:#e0234e
+    style Components fill:#10b981
+    style JWTConfig fill:#f59e0b
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant AC as AuthController
+    participant AS as AuthService
+    participant JWT as JwtService
+    participant JS as JwtStrategy
+    participant G as JwtAuthGuard
+    
+    Note over C,G: NestJS JWT Login Flow
+    C->>AC: POST /auth/login credentials
+    AC->>AS: validateUser email password
+    AS->>AS: Find user and verify password
+    AS-->>AC: User object
+    AC->>AS: login user
+    AS->>JWT: jwtService.sign payload
+    JWT-->>AS: accessToken string
+    AS-->>C: Return accessToken refreshToken
+    
+    Note over C,G: Protected Route with JwtAuthGuard
+    C->>G: GET /profile Bearer token
+    G->>G: @UseGuards JwtAuthGuard
+    G->>JS: JwtStrategy.validate payload
+    JS->>JS: Extract userId from payload
+    JS->>JS: Load user from database
+    JS-->>G: Return user to req.user
+    G-->>AC: Request with user attached
+    AC->>AC: @CurrentUser decorator
+    AC-->>C: Protected user data
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph TokenFlow["Access and Refresh Token Flow"]
+        AT[Access Token<br/>Short lived 15m]
+        RT[Refresh Token<br/>Long lived 7d]
+    end
+    
+    subgraph Storage["Token Storage"]
+        MEM[Memory/State<br/>Access Token]
+        HTTP[HttpOnly Cookie<br/>Refresh Token]
+        DB[(Database<br/>Refresh Token Hash)]
+    end
+    
+    subgraph Refresh["Token Refresh"]
+        EXP[Access Token Expired]
+        REF[POST /auth/refresh]
+        NEW[New Access Token]
+    end
+    
+    AT --> MEM
+    RT --> HTTP
+    RT --> DB
+    
+    EXP --> REF
+    REF --> NEW
+    
+    style TokenFlow fill:#6366f1
+    style Storage fill:#10b981
+    style Refresh fill:#f59e0b
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>NestJS JWT Implementation</h3>
+        <ul>
+          <li><strong>Packages</strong>: @nestjs/jwt, @nestjs/passport, passport-jwt</li>
+          <li><strong>JwtModule.register()</strong>: Configure secret, expiration in AuthModule</li>
+          <li><strong>JwtStrategy</strong>: Validate token and extract user from payload</li>
+          <li><strong>@UseGuards(JwtAuthGuard)</strong>: Protect routes with decorator</li>
+          <li><strong>@CurrentUser()</strong>: Custom param decorator for req.user</li>
+          <li><strong>Refresh Tokens</strong>: Store hashed in DB, send via HttpOnly cookie</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- OAuth 2.0 -->
+    <div id="oauth" class="diagram-section">
+      <h2>OAuth 2.0 Authorization Framework</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Actors["OAuth 2.0 Actors"]
+        RO[👤 Resource Owner<br/>The User]
+        C[📱 Client<br/>Your Application]
+        AS[🔐 Authorization Server<br/>Google, GitHub, etc.]
+        RS[📦 Resource Server<br/>API with user data]
+    end
+    
+    RO -->|Owns resources at| RS
+    RO -->|Grants permission to| C
+    C -->|Requests authorization from| AS
+    AS -->|Issues tokens to| C
+    C -->|Accesses resources with token| RS
+    
+    style RO fill:#3b82f6
+    style C fill:#10b981
+    style AS fill:#f59e0b
+    style RS fill:#8b5cf6
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>OAuth 2.0 Grant Types</h3>
+        <ul>
+          <li><strong>Authorization Code</strong>: For server-side apps (most secure)</li>
+          <li><strong>Authorization Code + PKCE</strong>: For SPAs and mobile apps</li>
+          <li><strong>Client Credentials</strong>: For machine-to-machine (M2M)</li>
+          <li><strong>Implicit (deprecated)</strong>: Was for SPAs, use PKCE instead</li>
+        </ul>
+      </div>
+
+      <!-- Login with Google Example -->
+      <h3 style="color: #ea4335; margin: 2rem 0 1rem">Login with Google Example</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph YourApp["Your Application"]
+        BTN[Login with Google Button]
+        CB[/auth/google/callback]
+        DB[(Users Database)]
+    end
+    
+    subgraph Google["Google OAuth 2.0"]
+        AUTH[accounts.google.com/oauth]
+        CONSENT[Consent Screen]
+        TOKEN[Token Endpoint]
+        API[Google User API]
+    end
+    
+    BTN -->|1. Redirect| AUTH
+    AUTH -->|2. Show| CONSENT
+    CONSENT -->|3. Code| CB
+    CB -->|4. Exchange code| TOKEN
+    TOKEN -->|5. Access token| CB
+    CB -->|6. Get profile| API
+    API -->|7. User info| CB
+    CB -->|8. Create/Find user| DB
+    
+    style YourApp fill:#10b981
+    style Google fill:#ea4335
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant App as Your App
+    participant G as Google OAuth
+    participant API as Google API
+    
+    Note over U,API: Step 1 - User clicks Login with Google
+    U->>App: Click Login with Google button
+    App->>G: Redirect to accounts.google.com/o/oauth2/auth
+    Note right of App: client_id redirect_uri scope state
+    
+    Note over U,API: Step 2 - Google authenticates user
+    G->>U: Show Google login page
+    U->>G: Enter Google credentials
+    G->>U: Show consent Allow access to profile email
+    U->>G: Click Allow
+    
+    Note over U,API: Step 3 - Exchange code for tokens
+    G->>App: Redirect to callback with code
+    App->>G: POST oauth2/token with code and client_secret
+    G-->>App: access_token id_token refresh_token
+    
+    Note over U,API: Step 4 - Get user profile
+    App->>API: GET googleapis.com/userinfo with Bearer token
+    API-->>App: name email picture sub
+    
+    Note over U,API: Step 5 - Create session
+    App->>App: Find or create user in database
+    App->>App: Create session or JWT
+    App-->>U: Logged in Welcome User
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Setup["Google Cloud Console Setup"]
+        S1[1. Create Project]
+        S2[2. Enable OAuth consent screen]
+        S3[3. Create OAuth 2.0 credentials]
+        S4[4. Get Client ID and Secret]
+        S5[5. Add authorized redirect URIs]
+    end
+    
+    subgraph Scopes["Common Google Scopes"]
+        SC1[openid - Basic identity]
+        SC2[email - Email address]
+        SC3[profile - Name and picture]
+        SC4[calendar - Google Calendar]
+        SC5[drive - Google Drive]
+    end
+    
+    subgraph URLs["Google OAuth URLs"]
+        U1[Authorization: accounts.google.com/o/oauth2/auth]
+        U2[Token: oauth2.googleapis.com/token]
+        U3[UserInfo: googleapis.com/oauth2/v2/userinfo]
+    end
+    
+    S1 --> S2 --> S3 --> S4 --> S5
+    
+    style Setup fill:#4285f4
+    style Scopes fill:#34a853
+    style URLs fill:#fbbc05
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>Login with Google Implementation</h3>
+        <ul>
+          <li><strong>1. Google Console</strong>: Create project at console.cloud.google.com</li>
+          <li><strong>2. Credentials</strong>: Create OAuth 2.0 Client ID (Web application)</li>
+          <li><strong>3. Redirect URI</strong>: Add http://localhost:3000/auth/google/callback</li>
+          <li><strong>4. Scopes</strong>: Request openid, email, profile for basic login</li>
+          <li><strong>5. Frontend</strong>: Redirect user to Google auth URL with params</li>
+          <li><strong>6. Backend</strong>: Handle callback, exchange code, get user info</li>
+        </ul>
+      </div>
+
+      <!-- More OAuth Real World Examples -->
+      <h3 style="color: #10b981; margin: 2rem 0 1rem">More Real-World OAuth Examples</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as Developer
+    participant APP as CI/CD Tool
+    participant GH as GitHub OAuth
+    participant API as GitHub API
+    
+    Note over U,API: GitHub OAuth for CI/CD Access
+    U->>APP: Connect GitHub to Jenkins/CircleCI
+    APP->>GH: Request repo and workflow scope
+    GH->>U: Authorize access to repositories
+    U->>GH: Allow access
+    GH-->>APP: Access token with repo scope
+    
+    APP->>API: GET /user/repos with token
+    API-->>APP: List of repositories
+    APP->>API: POST /repos/owner/repo/hooks
+    API-->>APP: Webhook created
+    APP-->>U: GitHub connected successfully
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant APP as Music App
+    participant SP as Spotify OAuth
+    participant API as Spotify API
+    
+    Note over U,API: Spotify OAuth for Playlist Access
+    U->>APP: Login with Spotify
+    APP->>SP: Request playlist-read and user-library scope
+    SP->>U: Allow App to access your playlists
+    U->>SP: Agree
+    SP-->>APP: Access token + refresh token
+    
+    APP->>API: GET /me/playlists with token
+    API-->>APP: User playlists
+    APP->>API: GET /me/top/tracks
+    API-->>APP: Top tracks
+    APP-->>U: Show personalized music dashboard
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph OAuth["OAuth 2.0 Real World Use Cases"]
+        direction TB
+        L[Login/Social Auth]
+        A[API Access]
+        I[Integration]
+    end
+    
+    subgraph Login["Social Login Examples"]
+        L1[Login with Google]
+        L2[Login with GitHub]
+        L3[Login with Facebook]
+        L4[Login with Apple]
+    end
+    
+    subgraph API["API Access Examples"]
+        A1[Read Gmail emails]
+        A2[Post to Twitter]
+        A3[Access Dropbox files]
+        A4[Read Fitbit data]
+    end
+    
+    subgraph Integration["Integration Examples"]
+        I1[Slack to Google Calendar]
+        I2[Zapier automations]
+        I3[CI/CD with GitHub]
+        I4[CRM with Email]
+    end
+    
+    L --> Login
+    A --> API
+    I --> Integration
+    
+    style OAuth fill:#f59e0b
+    style Login fill:#ea4335
+    style API fill:#10b981
+    style Integration fill:#6366f1
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>OAuth vs OIDC - When to Use What</h3>
+        <ul>
+          <li><strong>OAuth for API Access</strong>: Spotify playlists, GitHub repos, Google Drive files</li>
+          <li><strong>OAuth for Integrations</strong>: Slack bots, Zapier, CI/CD pipelines</li>
+          <li><strong>OIDC for Login</strong>: When you need user identity (Login with Google)</li>
+          <li><strong>Key Difference</strong>: OAuth = Authorization (access), OIDC = Authentication (identity)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SSO (Single Sign-On) -->
+    <div id="sso" class="diagram-section">
+      <h2>Single Sign-On (SSO)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    U[👤 User]
+    
+    subgraph IDP["🔐 Identity Provider (IdP)"]
+        AUTH[Central Authentication]
+        SESS[SSO Session]
+    end
+    
+    subgraph Apps["Service Providers (SP)"]
+        A1[📧 Email App]
+        A2[📊 Analytics App]
+        A3[💬 Chat App]
+        A4[📁 Drive App]
+    end
+    
+    U -->|1. Login once| IDP
+    AUTH --> SESS
+    
+    SESS -->|Token/Assertion| A1
+    SESS -->|Token/Assertion| A2
+    SESS -->|Token/Assertion| A3
+    SESS -->|Token/Assertion| A4
+    
+    U -.->|Access without re-login| A1
+    U -.->|Access without re-login| A2
+    U -.->|Access without re-login| A3
+    U -.->|Access without re-login| A4
+    
+    style IDP fill:#f59e0b
+    style Apps fill:#10b981
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as 👤 User
+    participant SP1 as 📧 App 1
+    participant IDP as 🔐 Identity Provider
+    participant SP2 as 📊 App 2
+    
+    Note over U,SP2: First Application Access
+    U->>SP1: Access App 1
+    SP1->>IDP: Redirect to IdP
+    IDP->>U: Show login page
+    U->>IDP: Enter credentials
+    IDP->>IDP: Create SSO session
+    IDP->>SP1: Redirect with token
+    SP1->>SP1: Create local session
+    SP1-->>U: Access granted ✓
+    
+    Note over U,SP2: Second Application (No Re-login)
+    U->>SP2: Access App 2
+    SP2->>IDP: Redirect to IdP
+    IDP->>IDP: SSO session exists!
+    IDP->>SP2: Redirect with token (no login)
+    SP2->>SP2: Create local session
+    SP2-->>U: Access granted ✓ (seamless)
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>SSO Benefits</h3>
+        <ul>
+          <li><strong>User Experience</strong>: One login for all applications</li>
+          <li><strong>Security</strong>: Centralized authentication, fewer passwords</li>
+          <li><strong>IT Management</strong>: Single point for user provisioning/deprovisioning</li>
+          <li><strong>Protocols</strong>: SAML, OIDC, or proprietary solutions</li>
+        </ul>
+      </div>
+
+      <!-- Real World SSO Examples -->
+      <h3 style="color: #f59e0b; margin: 2rem 0 1rem">Real-World Examples</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Google["Google Workspace SSO"]
+        GU[Employee logs into Google]
+        GM[Gmail]
+        GD[Google Drive]
+        GC[Google Calendar]
+        GM2[Google Meet]
+    end
+    
+    GU -->|One login| GM
+    GU -->|No re-login| GD
+    GU -->|No re-login| GC
+    GU -->|No re-login| GM2
+    
+    style Google fill:#ea4335
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Microsoft["Microsoft 365 SSO"]
+        MU[Employee logs into Microsoft]
+        OUT[Outlook]
+        TEA[Teams]
+        ONE[OneDrive]
+        SHA[SharePoint]
+    end
+    
+    MU -->|One login| OUT
+    MU -->|No re-login| TEA
+    MU -->|No re-login| ONE
+    MU -->|No re-login| SHA
+    
+    style Microsoft fill:#0078d4
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Enterprise["Corporate SSO Example"]
+        EMP[Employee]
+        OKTA[Okta Dashboard]
+    end
+    
+    subgraph Apps["Connected Apps"]
+        SLACK[Slack]
+        JIRA[Jira]
+        AWS[AWS Console]
+        SF[Salesforce]
+        ZOOM[Zoom]
+        GH[GitHub]
+    end
+    
+    EMP -->|Login once| OKTA
+    OKTA --> SLACK
+    OKTA --> JIRA
+    OKTA --> AWS
+    OKTA --> SF
+    OKTA --> ZOOM
+    OKTA --> GH
+    
+    style Enterprise fill:#007dc1
+    style Apps fill:#10b981
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>Common SSO Scenarios</h3>
+        <ul>
+          <li><strong>Google Workspace</strong>: Login to Gmail, access Drive, Calendar, Meet without re-login</li>
+          <li><strong>Microsoft 365</strong>: Login to Outlook, access Teams, OneDrive, SharePoint seamlessly</li>
+          <li><strong>Enterprise Okta</strong>: Single dashboard to access Slack, Jira, AWS, Salesforce, etc.</li>
+          <li><strong>University Portal</strong>: Student logs in once, accesses LMS, Email, Library, Registration</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SAML -->
+    <div id="saml" class="diagram-section">
+      <h2>SAML 2.0 (Security Assertion Markup Language)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Components["SAML Components"]
+        U[👤 Principal<br/>User/Subject]
+        IDP[🔐 Identity Provider<br/>Okta, ADFS, etc.]
+        SP[📱 Service Provider<br/>Your Application]
+    end
+    
+    subgraph Assertion["SAML Assertion (XML)"]
+        A1[Subject<br/>User identifier]
+        A2[Conditions<br/>Validity period]
+        A3[AuthnStatement<br/>How user authenticated]
+        A4[AttributeStatement<br/>User attributes]
+    end
+    
+    U -->|Uses| SP
+    SP -->|Trusts| IDP
+    IDP -->|Issues| Assertion
+    Assertion -->|Consumed by| SP
+    
+    style IDP fill:#f59e0b
+    style SP fill:#10b981
+    style Assertion fill:#8b5cf6
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as 👤 User
+    participant SP as 📱 Service Provider
+    participant IDP as 🔐 Identity Provider
+    
+    Note over U,IDP: SP-Initiated SSO Flow
+    
+    U->>SP: Access protected resource
+    SP->>SP: User not authenticated
+    SP->>IDP: SAML AuthnRequest (redirect)
+    
+    IDP->>U: Login page
+    U->>IDP: Submit credentials
+    IDP->>IDP: Authenticate user
+    IDP->>IDP: Generate SAML Assertion
+    IDP->>IDP: Sign assertion with private key
+    
+    IDP->>SP: SAML Response (POST)
+    SP->>SP: Validate signature
+    SP->>SP: Verify conditions
+    SP->>SP: Extract user attributes
+    SP->>SP: Create session
+    
+    SP-->>U: Access granted ✓
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>SAML Key Concepts</h3>
+        <ul>
+          <li><strong>XML-based</strong>: Uses XML for assertions (verbose)</li>
+          <li><strong>Browser-based</strong>: Works via HTTP redirects/POST</li>
+          <li><strong>Enterprise Standard</strong>: Common in corporate environments</li>
+          <li><strong>Metadata</strong>: XML files describe SP/IdP configuration</li>
+          <li><strong>Bindings</strong>: HTTP-Redirect, HTTP-POST, HTTP-Artifact</li>
+        </ul>
+      </div>
+
+      <!-- Real World SAML Examples -->
+      <h3 style="color: #8b5cf6; margin: 2rem 0 1rem">Real-World Examples</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant E as Employee
+    participant SF as Salesforce
+    participant ADFS as Company ADFS
+    
+    Note over E,ADFS: Salesforce with Active Directory
+    E->>SF: Access salesforce.com/company
+    SF->>SF: User not logged in
+    SF->>ADFS: Redirect to corporate ADFS
+    ADFS->>E: Show company login page
+    E->>ADFS: Enter corporate credentials
+    ADFS->>ADFS: Validate against Active Directory
+    ADFS->>SF: SAML Response with user info
+    SF->>SF: Create Salesforce session
+    SF-->>E: Access CRM dashboard
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Corp["Corporate Identity (ADFS/Okta)"]
+        IDP[Identity Provider]
+        AD[(Active Directory)]
+    end
+    
+    subgraph SaaS["Enterprise SaaS Apps using SAML"]
+        SF[Salesforce]
+        WD[Workday]
+        SN[ServiceNow]
+        BOX[Box]
+        ZEN[Zendesk]
+        CON[Confluence]
+    end
+    
+    IDP --> AD
+    IDP -->|SAML| SF
+    IDP -->|SAML| WD
+    IDP -->|SAML| SN
+    IDP -->|SAML| BOX
+    IDP -->|SAML| ZEN
+    IDP -->|SAML| CON
+    
+    style Corp fill:#0078d4
+    style SaaS fill:#10b981
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant S as Student
+    participant LMS as Canvas LMS
+    participant UNI as University IdP
+    
+    Note over S,UNI: University accessing Canvas LMS
+    S->>LMS: Access canvas.university.edu
+    LMS->>UNI: Redirect to Shibboleth IdP
+    UNI->>S: University login page
+    S->>UNI: Enter student ID and password
+    UNI->>UNI: Validate student credentials
+    UNI->>LMS: SAML Assertion with student info
+    Note right of LMS: name email student_id courses
+    LMS-->>S: Welcome to your courses
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>Common SAML Use Cases</h3>
+        <ul>
+          <li>
+            <strong>Salesforce + ADFS</strong>: Employees access Salesforce CRM using corporate Active Directory
+            credentials
+          </li>
+          <li><strong>Workday + Okta</strong>: HR system integrated with company identity provider</li>
+          <li><strong>AWS Console + Corporate IdP</strong>: Developers access AWS using company login</li>
+          <li>
+            <strong>University + Canvas/Blackboard</strong>: Students access LMS using university credentials
+            (Shibboleth)
+          </li>
+          <li><strong>Healthcare + Epic</strong>: Hospital staff access patient records with hospital SSO</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- OIDC (OpenID Connect) -->
+    <div id="oidc" class="diagram-section">
+      <h2>OpenID Connect (OIDC)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Stack["OIDC = OAuth 2.0 + Identity Layer"]
+        direction TB
+        OIDC[🆔 OpenID Connect<br/>Identity Layer]
+        OAUTH[🔐 OAuth 2.0<br/>Authorization Framework]
+        HTTP[🌐 HTTP<br/>Transport Layer]
+    end
+    
+    OIDC --> OAUTH
+    OAUTH --> HTTP
+    
+    subgraph Tokens["OIDC Tokens"]
+        AT[Access Token<br/>API access]
+        RT[Refresh Token<br/>Get new tokens]
+        IDT[ID Token 🆕<br/>User identity JWT]
+    end
+    
+    subgraph IDTokenClaims["ID Token Claims"]
+        C1[sub: user id]
+        C2[name: full name]
+        C3[email: email]
+        C4[picture: avatar URL]
+        C5[iss: issuer]
+        C6[aud: audience]
+        C7[exp: expiration]
+    end
+    
+    IDT --> IDTokenClaims
+    
+    style OIDC fill:#6366f1
+    style OAUTH fill:#f59e0b
+    style IDT fill:#10b981
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as 👤 User
+    participant C as 📱 Client App
+    participant OP as 🔐 OpenID Provider
+    participant API as 📦 API Server
+    
+    U->>C: Click Login
+    C->>OP: /authorize?<br/>scope=openid profile email<br/>response_type=code
+    OP->>U: Login & Consent
+    U->>OP: Approve
+    OP->>C: Authorization code
+    
+    C->>OP: POST /token (code + secret)
+    OP-->>C: access_token + id_token + refresh_token
+    
+    Note over C: Parse ID Token (JWT)
+    C->>C: Verify ID token signature
+    C->>C: Extract user info from claims
+    
+    Note over C: Optional: Get more user info
+    C->>OP: GET /userinfo + access_token
+    OP-->>C: { name, email, picture, ... }
+    
+    C->>API: API call + access_token
+    API-->>C: Protected data
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>OIDC vs OAuth 2.0</h3>
+        <ul>
+          <li><strong>OAuth 2.0</strong>: Authorization only (delegated access)</li>
+          <li><strong>OIDC</strong>: Adds authentication (identity verification)</li>
+          <li><strong>ID Token</strong>: JWT containing user identity claims</li>
+          <li><strong>UserInfo Endpoint</strong>: Additional user attributes</li>
+          <li><strong>Discovery</strong>: /.well-known/openid-configuration</li>
+        </ul>
+      </div>
+
+      <!-- Real World OIDC Examples -->
+      <h3 style="color: #6366f1; margin: 2rem 0 1rem">Real-World Examples</h3>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant APP as Mobile Banking App
+    participant OIDC as Bank OIDC Provider
+    participant API as Banking API
+    
+    Note over U,API: Mobile Banking App Login
+    U->>APP: Open banking app
+    APP->>OIDC: Redirect to bank login
+    OIDC->>U: Bank login page with MFA
+    U->>OIDC: Enter credentials + OTP
+    OIDC-->>APP: id_token + access_token
+    
+    Note over APP: Parse ID Token
+    APP->>APP: Extract customer_id name email
+    APP->>APP: Display Welcome John
+    
+    APP->>API: GET /accounts Bearer access_token
+    API-->>APP: Account balances
+    APP-->>U: Show account dashboard
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph Providers["OIDC Providers in Real World"]
+        G[Google OIDC]
+        MS[Microsoft Azure AD]
+        AP[Apple Sign In]
+        OK[Okta]
+        A0[Auth0]
+        KC[Keycloak]
+    end
+    
+    subgraph Apps["Apps Using OIDC"]
+        MOB[Mobile Apps]
+        SPA[Single Page Apps]
+        WEB[Web Applications]
+        API[APIs]
+    end
+    
+    subgraph Benefits["Why OIDC"]
+        B1[Standard JWT format]
+        B2[User info in token]
+        B3[No extra API call needed]
+        B4[Works on mobile]
+    end
+    
+    Providers --> Apps
+    Apps --> Benefits
+    
+    style Providers fill:#6366f1
+    style Apps fill:#10b981
+    style Benefits fill:#f59e0b
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant SPA as React SPA
+    participant AUTH0 as Auth0 OIDC
+    participant API as Your API
+    
+    Note over U,API: SPA with Auth0 OIDC
+    U->>SPA: Visit app.example.com
+    SPA->>AUTH0: Redirect with PKCE challenge
+    AUTH0->>U: Universal login page
+    U->>AUTH0: Login or use social Google GitHub
+    AUTH0-->>SPA: id_token access_token in URL fragment
+    
+    SPA->>SPA: Store tokens in memory
+    SPA->>SPA: Decode id_token get user profile
+    
+    SPA->>API: GET /api/data with access_token
+    API->>API: Validate JWT signature
+    API-->>SPA: Protected data
+    SPA-->>U: Render dashboard
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>Common OIDC Use Cases</h3>
+        <ul>
+          <li><strong>Login with Google/Apple</strong>: Social login returns ID token with user identity</li>
+          <li><strong>Mobile Banking Apps</strong>: Secure login with ID token containing customer info</li>
+          <li><strong>SPAs with Auth0</strong>: React/Vue apps using OIDC + PKCE for secure auth</li>
+          <li><strong>Microservices</strong>: ID token passed between services to identify user</li>
+          <li><strong>Azure AD for Enterprise</strong>: Corporate apps using Microsoft identity platform</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Auth Providers -->
+    <div id="providers" class="diagram-section">
+      <h2>Auth Providers (Auth0, Okta, etc.)</h2>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph YourApp["📱 Your Application"]
+        FE[Frontend]
+        BE[Backend API]
+    end
+    
+    subgraph AuthProvider["☁️ Auth Provider (Auth0/Okta)"]
+        UL[Universal Login Page]
+        UM[User Management]
+        MFA[Multi-Factor Auth]
+        SC[Social Connections]
+        RL[Rules/Actions]
+        API[Management API]
+        LOGS[Logs & Analytics]
+    end
+    
+    subgraph Features["Provider Features"]
+        F1[🔐 Passwordless]
+        F2[🔗 Social Login]
+        F3[🏢 Enterprise SSO]
+        F4[📱 MFA/2FA]
+        F5[🛡️ Anomaly Detection]
+        F6[📊 User Analytics]
+    end
+    
+    FE -->|SDK/Redirect| UL
+    UL -->|Tokens| FE
+    FE -->|API calls| BE
+    BE -->|Validate tokens| AuthProvider
+    
+    UM --> Features
+    
+    style AuthProvider fill:#f59e0b
+    style YourApp fill:#10b981
+    style Features fill:#6366f1
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph Providers["Popular Auth Providers"]
+        AUTH0[Auth0<br/>by Okta]
+        OKTA[Okta]
+        COGNITO[AWS Cognito]
+        FIREBASE[Firebase Auth]
+        AZURE[Azure AD B2C]
+        KEYCLOAK[Keycloak<br/>Self-hosted]
+    end
+    
+    subgraph Protocols["Supported Protocols"]
+        P1[OAuth 2.0]
+        P2[OIDC]
+        P3[SAML]
+        P4[LDAP]
+        P5[WS-Fed]
+    end
+    
+    subgraph Integrations["Social/Enterprise"]
+        I1[Google]
+        I2[GitHub]
+        I3[Microsoft]
+        I4[Apple]
+        I5[LDAP/AD]
+        I6[Okta]
+    end
+    
+    Providers --> Protocols
+    Providers --> Integrations
+    
+    style AUTH0 fill:#eb5424
+    style OKTA fill:#007dc1
+    style COGNITO fill:#ff9900
+    style FIREBASE fill:#ffca28
+    style AZURE fill:#0078d4
+    style KEYCLOAK fill:#4d4d4d
+        </pre>
+      </div>
+      <div class="diagram-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant U as 👤 User
+    participant A as 📱 Your App
+    participant P as ☁️ Auth Provider
+    participant API as 📦 Your API
+    
+    U->>A: Click Login
+    A->>P: Redirect to Universal Login
+    P->>U: Show login options
+    
+    alt Password Login
+        U->>P: Enter email + password
+        P->>P: Validate credentials
+    else Social Login
+        U->>P: Click "Login with Google"
+        P->>P: OAuth flow with Google
+    else Enterprise SSO
+        U->>P: Enter corporate email
+        P->>P: SAML/OIDC with company IdP
+    end
+    
+    P->>P: Run custom rules/actions
+    P->>P: Generate tokens
+    P->>A: Return tokens via callback
+    
+    A->>API: Request + access_token
+    API->>P: Validate token (or local validation)
+    P-->>API: Token valid
+    API-->>A: Protected data
+    A-->>U: Show content
+        </pre>
+      </div>
+      <div class="info-box">
+        <h3>Auth Provider Comparison</h3>
+        <ul>
+          <li><strong>Auth0</strong>: Developer-friendly, extensive docs, flexible</li>
+          <li><strong>Okta</strong>: Enterprise-focused, workforce identity</li>
+          <li><strong>AWS Cognito</strong>: AWS-native, cost-effective for AWS users</li>
+          <li><strong>Firebase Auth</strong>: Simple, great for mobile apps</li>
+          <li><strong>Azure AD B2C</strong>: Microsoft ecosystem integration</li>
+          <li><strong>Keycloak</strong>: Open-source, self-hosted option</li>
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'dark',
+        themeVariables: {
+          primaryColor: '#6366f1',
+          primaryTextColor: '#fff',
+          primaryBorderColor: '#818cf8',
+          lineColor: '#a78bfa',
+          secondaryColor: '#1e1e2e',
+          tertiaryColor: '#2d2d44',
+        },
+      });
+
+      const renderedTabs = new Set();
+      let activeAnimations = [];
+
+      async function showTab(tabId) {
+        activeAnimations.forEach((id) => cancelAnimationFrame(id));
+        activeAnimations = [];
+        document.querySelectorAll('.flow-dot').forEach((d) => d.remove());
+        document.querySelectorAll('.diagram-section').forEach((s) => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+        if (!renderedTabs.has(tabId)) {
+          const section = document.getElementById(tabId);
+          const pres = section.querySelectorAll('pre.mermaid');
+          for (const pre of pres) {
+            if (!pre.dataset.processed) {
+              await mermaid.run({ nodes: [pre] });
+              pre.dataset.processed = 'true';
+            }
+          }
+          renderedTabs.add(tabId);
+        }
+        setTimeout(() => startFlowAnimation(tabId), 300);
+      }
+
+      function startFlowAnimation(tabId) {
+        const section = document.getElementById(tabId);
+        if (!section) return;
+        const containers = section.querySelectorAll('.diagram-container');
+        containers.forEach((container) => {
+          const svg = container.querySelector('svg');
+          if (!svg) return;
+          container.style.position = 'relative';
+          const paths = svg.querySelectorAll(
+            '.edge-pattern-normal, .flowchart-link, [class*="edge"] path, .messageLine0, .messageLine1',
+          );
+          if (paths.length === 0) return;
+          paths.forEach((path, index) => {
+            const dot = document.createElement('div');
+            dot.className = 'flow-dot active';
+            container.appendChild(dot);
+            animateDotAlongPath(dot, path, svg, container, index * 400);
+          });
+        });
+      }
+
+      function animateDotAlongPath(dot, path, svg, container, delay) {
+        const duration = 2500;
+        let pathLength;
+        try {
+          pathLength = path.getTotalLength();
+          if (!pathLength || pathLength < 10) return;
+        } catch (e) {
+          return;
+        }
+        function animate() {
+          const startTime = performance.now();
+          function step(currentTime) {
+            if (!document.body.contains(dot)) return;
+            const elapsed = currentTime - startTime;
+            const progress = (elapsed % duration) / duration;
+            try {
+              const point = path.getPointAtLength(progress * pathLength);
+              const ctm = svg.getScreenCTM();
+              const containerRect = container.getBoundingClientRect();
+              if (ctm && point.x !== undefined && point.y !== undefined) {
+                const screenX = point.x * ctm.a + ctm.e;
+                const screenY = point.y * ctm.d + ctm.f;
+                dot.style.left = screenX - containerRect.left - 6 + 'px';
+                dot.style.top = screenY - containerRect.top - 6 + 'px';
+                dot.style.opacity = Math.sin(progress * Math.PI) * 0.9;
+              }
+            } catch (e) {
+              return;
+            }
+            const animId = requestAnimationFrame(step);
+            activeAnimations.push(animId);
+          }
+          requestAnimationFrame(step);
+        }
+        setTimeout(animate, delay);
+      }
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        const firstTab = document.getElementById('overview');
+        const pres = firstTab.querySelectorAll('pre.mermaid');
+        for (const pre of pres) {
+          await mermaid.run({ nodes: [pre] });
+          pre.dataset.processed = 'true';
+        }
+        renderedTabs.add('overview');
+        setTimeout(() => startFlowAnimation('overview'), 500);
+      });
+    </script>
+  </body>
+</html>

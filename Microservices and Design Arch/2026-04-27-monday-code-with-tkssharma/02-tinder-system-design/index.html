@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Design: Tinder-like Dating App</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1a0a2e 0%, #3d1a5c 50%, #1a0a2e 100%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Animated Background Hearts */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+    
+    .heart {
+      position: absolute;
+      font-size: 20px;
+      animation: floatUp 15s linear infinite;
+      opacity: 0.1;
+    }
+    
+    @keyframes floatUp {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.1; }
+      90% { opacity: 0.1; }
+      100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 3rem 2rem;
+      background: linear-gradient(180deg, rgba(255,75,110,0.2) 0%, transparent 100%);
+    }
+    
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #ff4b6e, #ff8a5c, #ffcc5c, #ff4b6e);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 5s ease infinite;
+    }
+    
+    @keyframes gradient {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    .subtitle {
+      color: #ff8a5c;
+      font-size: 1.3rem;
+      margin-top: 0.5rem;
+    }
+    
+    .tech-stack {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .tech-badge {
+      padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      border: 1px solid rgba(255,75,110,0.3);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 0 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .tab {
+      padding: 1rem 1.5rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .tab:hover {
+      background: rgba(255,75,110,0.3);
+      transform: translateY(-2px);
+    }
+    
+    .tab.active {
+      background: linear-gradient(135deg, #ff4b6e, #ff8a5c);
+      border: none;
+      box-shadow: 0 10px 40px rgba(255,75,110,0.5);
+    }
+
+    /* Content */
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      color: #ff4b6e;
+      text-shadow: 0 0 30px rgba(255,75,110,0.5);
+    }
+
+    /* Diagram Container */
+    .diagram-container {
+      background: rgba(15, 5, 25, 0.8);
+      border-radius: 24px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(255,75,110,0.3);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .diagram-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #ff4b6e, #ff8a5c, #ffcc5c);
+    }
+    
+    .diagram-title {
+      font-size: 1.5rem;
+      color: #ff8a5c;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Architecture Diagram */
+    .architecture {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      align-items: center;
+    }
+    
+    .arch-row {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    
+    .arch-node {
+      padding: 1.5rem 2rem;
+      border-radius: 16px;
+      text-align: center;
+      min-width: 150px;
+      position: relative;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .arch-node:hover {
+      transform: scale(1.05);
+      z-index: 10;
+    }
+    
+    .arch-node-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .arch-node-label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    
+    .arch-node-sub {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin-top: 0.25rem;
+    }
+
+    /* Node Colors */
+    .node-client { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 40px rgba(59,130,246,0.4); }
+    .node-gateway { background: linear-gradient(135deg, #ff4b6e, #dc2626); box-shadow: 0 10px 40px rgba(255,75,110,0.4); }
+    .node-lambda { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 40px rgba(245,158,11,0.4); }
+    .node-db { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 40px rgba(16,185,129,0.4); }
+    .node-cache { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 10px 40px rgba(239,68,68,0.4); }
+    .node-storage { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 40px rgba(139,92,246,0.4); }
+    .node-queue { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 10px 40px rgba(6,182,212,0.4); }
+    .node-ml { background: linear-gradient(135deg, #ec4899, #be185d); box-shadow: 0 10px 40px rgba(236,72,153,0.4); }
+    .node-ws { background: linear-gradient(135deg, #14b8a6, #0d9488); box-shadow: 0 10px 40px rgba(20,184,166,0.4); }
+
+    /* Animated Connectors */
+    .connector-v {
+      width: 4px;
+      height: 40px;
+      background: linear-gradient(180deg, #ff4b6e, transparent);
+      position: relative;
+      margin: 0 auto;
+    }
+    
+    .connector-v::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      background: #ff4b6e;
+      border-radius: 50%;
+      animation: pulse-down 1.5s ease infinite;
+    }
+    
+    @keyframes pulse-down {
+      0% { top: 0; opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* Flow Steps */
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      border-left: 4px solid;
+      animation: slideIn 0.5s ease forwards;
+      opacity: 0;
+    }
+    
+    .flow-step:nth-child(1) { border-color: #ff4b6e; animation-delay: 0.1s; }
+    .flow-step:nth-child(2) { border-color: #ff8a5c; animation-delay: 0.2s; }
+    .flow-step:nth-child(3) { border-color: #ffcc5c; animation-delay: 0.3s; }
+    .flow-step:nth-child(4) { border-color: #10b981; animation-delay: 0.4s; }
+    .flow-step:nth-child(5) { border-color: #3b82f6; animation-delay: 0.5s; }
+    .flow-step:nth-child(6) { border-color: #8b5cf6; animation-delay: 0.6s; }
+    .flow-step:nth-child(7) { border-color: #ec4899; animation-delay: 0.7s; }
+    .flow-step:nth-child(8) { border-color: #06b6d4; animation-delay: 0.8s; }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .step-number {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    
+    .step-content h4 { color: #fff; margin-bottom: 0.25rem; }
+    .step-content p { color: #a78bfa; font-size: 0.9rem; }
+
+    /* Info Grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    
+    .info-card {
+      background: linear-gradient(135deg, rgba(255,75,110,0.15), rgba(255,138,92,0.1));
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255,75,110,0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .info-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(255,75,110,0.2);
+    }
+    
+    .info-card h4 {
+      color: #ff8a5c;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .info-card p {
+      color: #d1d5db;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    /* Metrics */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    .metric-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .metric-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #ff4b6e, #ff8a5c);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .metric-label {
+      color: #a78bfa;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Service Box */
+    .services-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    .service-box {
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .service-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .service-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    
+    .service-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    
+    .service-tech {
+      font-size: 0.8rem;
+      color: #a78bfa;
+    }
+    
+    .service-features {
+      list-style: none;
+    }
+    
+    .service-features li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .service-features li:last-child { border-bottom: none; }
+
+    /* Data Flow Animation */
+    .data-flow {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 2rem 0;
+      position: relative;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .flow-node {
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .flow-arrow {
+      width: 60px;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #ff4b6e, transparent);
+      position: relative;
+    }
+    
+    .flow-arrow::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 10px solid #ff4b6e;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+    }
+    
+    .flow-arrow .dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #ff4b6e;
+      border-radius: 50%;
+      top: 50%;
+      transform: translateY(-50%);
+      animation: moveDot 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes moveDot {
+      0% { left: 0; opacity: 0; }
+      20% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { left: calc(100% - 10px); opacity: 0; }
+    }
+
+    /* AWS Colors */
+    .aws-orange { background: linear-gradient(135deg, #ff9900, #cc7a00); }
+    .aws-blue { background: linear-gradient(135deg, #232f3e, #1a242f); border: 2px solid #ff9900; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1 { font-size: 2rem; }
+      .arch-row { flex-direction: column; align-items: center; }
+      .data-flow { flex-direction: column; }
+      .flow-arrow { 
+        transform: rotate(90deg); 
+        margin: 1rem 0;
+      }
+    }
+
+    /* Swipe Animation */
+    .swipe-demo {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      padding: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .card-stack {
+      position: relative;
+      width: 200px;
+      height: 280px;
+    }
+    
+    .profile-card {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    
+    .profile-card:nth-child(1) {
+      background: linear-gradient(135deg, #ff4b6e, #ff8a5c);
+      z-index: 3;
+      animation: swipeRight 3s ease-in-out infinite;
+    }
+    
+    .profile-card:nth-child(2) {
+      background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+      z-index: 2;
+      transform: scale(0.95) translateY(10px);
+    }
+    
+    .profile-card:nth-child(3) {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      z-index: 1;
+      transform: scale(0.9) translateY(20px);
+    }
+    
+    @keyframes swipeRight {
+      0%, 40% { transform: translateX(0) rotate(0deg); opacity: 1; }
+      50% { transform: translateX(150px) rotate(15deg); opacity: 0; }
+      51% { transform: translateX(-150px) rotate(-15deg); opacity: 0; }
+      60%, 100% { transform: translateX(0) rotate(0deg); opacity: 1; }
+    }
+    
+    .swipe-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .swipe-btn:hover { transform: scale(1.1); }
+    .swipe-btn.nope { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .swipe-btn.like { background: linear-gradient(135deg, #10b981, #059669); }
+    .swipe-btn.super { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animation">
+    <span class="heart" style="left: 10%; animation-delay: 0s;">💕</span>
+    <span class="heart" style="left: 20%; animation-delay: 2s;">❤️</span>
+    <span class="heart" style="left: 30%; animation-delay: 4s;">💖</span>
+    <span class="heart" style="left: 40%; animation-delay: 1s;">💗</span>
+    <span class="heart" style="left: 50%; animation-delay: 3s;">💘</span>
+    <span class="heart" style="left: 60%; animation-delay: 5s;">💝</span>
+    <span class="heart" style="left: 70%; animation-delay: 2s;">❤️</span>
+    <span class="heart" style="left: 80%; animation-delay: 4s;">💕</span>
+    <span class="heart" style="left: 90%; animation-delay: 1s;">💖</span>
+  </div>
+
+  <header>
+    <h1>💘 System Design: Tinder App</h1>
+    <p class="subtitle">Scalable Dating App Architecture</p>
+    <div class="tech-stack">
+      <span class="tech-badge">☁️ AWS Lambda</span>
+      <span class="tech-badge">🚪 API Gateway</span>
+      <span class="tech-badge">⚡ SSR/Next.js</span>
+      <span class="tech-badge">🗄️ DynamoDB</span>
+      <span class="tech-badge">📦 S3</span>
+      <span class="tech-badge">🔴 Redis</span>
+      <span class="tech-badge">🔌 WebSocket</span>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">System Overview</button>
+    <button class="tab" data-tab="architecture">Architecture</button>
+    <button class="tab" data-tab="matching">Matching System</button>
+    <button class="tab" data-tab="messaging">Real-time Chat</button>
+    <button class="tab" data-tab="services">Microservices</button>
+    <button class="tab" data-tab="scaling">Scaling & DB</button>
+  </div>
+
+  <!-- System Overview -->
+  <div id="overview" class="content active">
+    <h2 class="section-title">📱 System Overview</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">🎯 Core Features</div>
+      <div class="swipe-demo">
+        <button class="swipe-btn nope">✕</button>
+        <div class="card-stack">
+          <div class="profile-card">👤</div>
+          <div class="profile-card">👤</div>
+          <div class="profile-card">👤</div>
+        </div>
+        <button class="swipe-btn like">❤️</button>
+        <button class="swipe-btn super">⭐</button>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>👆 Swipe Mechanics</h4>
+          <p>Left = Pass, Right = Like, Up = Super Like. Simple gesture-based interaction</p>
+        </div>
+        <div class="info-card">
+          <h4>💕 Matching</h4>
+          <p>When two users like each other, it's a match! Enable chat between them</p>
+        </div>
+        <div class="info-card">
+          <h4>📍 Location-Based</h4>
+          <p>Show profiles within user's preferred distance radius using geolocation</p>
+        </div>
+        <div class="info-card">
+          <h4>💬 Messaging</h4>
+          <p>Real-time chat with matches using WebSocket connections</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Scale Requirements</div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">75M+</div>
+          <div class="metric-label">Monthly Active Users</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">2B+</div>
+          <div class="metric-label">Swipes Per Day</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">1M+</div>
+          <div class="metric-label">Matches Daily</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">50ms</div>
+          <div class="metric-label">Response Time</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🔑 Key Challenges</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-number node-gateway">1</div>
+          <div class="step-content">
+            <h4>High Read/Write Volume</h4>
+            <p>Billions of swipes, profile views, and location updates daily</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-lambda">2</div>
+          <div class="step-content">
+            <h4>Real-time Matching</h4>
+            <p>Instant match detection when two users like each other</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-db">3</div>
+          <div class="step-content">
+            <h4>Geospatial Queries</h4>
+            <p>Efficiently find users within radius using geo-indexing</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-storage">4</div>
+          <div class="step-content">
+            <h4>Media Storage</h4>
+            <p>Store and serve millions of photos with low latency</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-ws">5</div>
+          <div class="step-content">
+            <h4>Real-time Messaging</h4>
+            <p>WebSocket connections for instant chat delivery</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Architecture -->
+  <div id="architecture" class="content">
+    <h2 class="section-title">🏗️ High-Level Architecture</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">☁️ AWS Serverless Architecture</div>
+      <div class="architecture">
+        <!-- Clients -->
+        <div class="arch-row">
+          <div class="arch-node node-client">
+            <div class="arch-node-icon">📱</div>
+            <div class="arch-node-label">iOS App</div>
+            <div class="arch-node-sub">React Native</div>
+          </div>
+          <div class="arch-node node-client">
+            <div class="arch-node-icon">📱</div>
+            <div class="arch-node-label">Android App</div>
+            <div class="arch-node-sub">React Native</div>
+          </div>
+          <div class="arch-node node-client">
+            <div class="arch-node-icon">🌐</div>
+            <div class="arch-node-label">Web App</div>
+            <div class="arch-node-sub">Next.js SSR</div>
+          </div>
+        </div>
+        
+        <div class="connector-v"></div>
+        
+        <!-- CDN & Load Balancer -->
+        <div class="arch-row">
+          <div class="arch-node aws-orange">
+            <div class="arch-node-icon">🌍</div>
+            <div class="arch-node-label">CloudFront CDN</div>
+            <div class="arch-node-sub">Global Edge</div>
+          </div>
+        </div>
+        
+        <div class="connector-v"></div>
+        
+        <!-- API Gateway -->
+        <div class="arch-row">
+          <div class="arch-node node-gateway">
+            <div class="arch-node-icon">🚪</div>
+            <div class="arch-node-label">API Gateway</div>
+            <div class="arch-node-sub">REST + WebSocket</div>
+          </div>
+          <div class="arch-node node-ws">
+            <div class="arch-node-icon">🔌</div>
+            <div class="arch-node-label">WebSocket API</div>
+            <div class="arch-node-sub">Real-time</div>
+          </div>
+        </div>
+        
+        <div class="connector-v"></div>
+        
+        <!-- Lambda Functions -->
+        <div class="arch-row">
+          <div class="arch-node node-lambda">
+            <div class="arch-node-icon">⚡</div>
+            <div class="arch-node-label">Auth Lambda</div>
+            <div class="arch-node-sub">Cognito</div>
+          </div>
+          <div class="arch-node node-lambda">
+            <div class="arch-node-icon">⚡</div>
+            <div class="arch-node-label">Profile Lambda</div>
+            <div class="arch-node-sub">CRUD</div>
+          </div>
+          <div class="arch-node node-lambda">
+            <div class="arch-node-icon">⚡</div>
+            <div class="arch-node-label">Swipe Lambda</div>
+            <div class="arch-node-sub">Match Logic</div>
+          </div>
+          <div class="arch-node node-lambda">
+            <div class="arch-node-icon">⚡</div>
+            <div class="arch-node-label">Chat Lambda</div>
+            <div class="arch-node-sub">Messages</div>
+          </div>
+          <div class="arch-node node-lambda">
+            <div class="arch-node-icon">⚡</div>
+            <div class="arch-node-label">Feed Lambda</div>
+            <div class="arch-node-sub">Discovery</div>
+          </div>
+        </div>
+        
+        <div class="connector-v"></div>
+        
+        <!-- Data Layer -->
+        <div class="arch-row">
+          <div class="arch-node node-db">
+            <div class="arch-node-icon">🗄️</div>
+            <div class="arch-node-label">DynamoDB</div>
+            <div class="arch-node-sub">Users, Swipes</div>
+          </div>
+          <div class="arch-node node-cache">
+            <div class="arch-node-icon">🔴</div>
+            <div class="arch-node-label">ElastiCache</div>
+            <div class="arch-node-sub">Redis</div>
+          </div>
+          <div class="arch-node node-storage">
+            <div class="arch-node-icon">📦</div>
+            <div class="arch-node-label">S3</div>
+            <div class="arch-node-sub">Photos</div>
+          </div>
+          <div class="arch-node node-ml">
+            <div class="arch-node-icon">🧠</div>
+            <div class="arch-node-label">SageMaker</div>
+            <div class="arch-node-sub">ML Models</div>
+          </div>
+          <div class="arch-node node-queue">
+            <div class="arch-node-icon">📨</div>
+            <div class="arch-node-label">SQS/SNS</div>
+            <div class="arch-node-sub">Events</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🔄 Request Flow</div>
+      <div class="data-flow">
+        <div class="flow-node node-client">
+          <div>📱</div>
+          <div style="font-size: 0.8rem;">User Swipes</div>
+        </div>
+        <div class="flow-arrow"><div class="dot"></div></div>
+        <div class="flow-node node-gateway">
+          <div>🚪</div>
+          <div style="font-size: 0.8rem;">API Gateway</div>
+        </div>
+        <div class="flow-arrow"><div class="dot"></div></div>
+        <div class="flow-node node-lambda">
+          <div>⚡</div>
+          <div style="font-size: 0.8rem;">Lambda</div>
+        </div>
+        <div class="flow-arrow"><div class="dot"></div></div>
+        <div class="flow-node node-db">
+          <div>🗄️</div>
+          <div style="font-size: 0.8rem;">DynamoDB</div>
+        </div>
+        <div class="flow-arrow"><div class="dot"></div></div>
+        <div class="flow-node node-queue">
+          <div>📨</div>
+          <div style="font-size: 0.8rem;">Match Event</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Matching System -->
+  <div id="matching" class="content">
+    <h2 class="section-title">💕 Matching Algorithm</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">🔍 How Matching Works</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-number node-gateway">1</div>
+          <div class="step-content">
+            <h4>User A Swipes Right on User B</h4>
+            <p>Store: swipes/{userA}/liked/{userB} = true</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-lambda">2</div>
+          <div class="step-content">
+            <h4>Check Reverse Swipe</h4>
+            <p>Query: Does swipes/{userB}/liked/{userA} exist?</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-db">3</div>
+          <div class="step-content">
+            <h4>If Yes → It's a Match!</h4>
+            <p>Create match record, enable chat, send notifications</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-queue">4</div>
+          <div class="step-content">
+            <h4>Publish Match Event</h4>
+            <p>SNS triggers notifications to both users</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">📍 Geolocation & Discovery</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>🗺️ Geohashing</h4>
+          <p>Divide world into grid cells. Store user's geohash prefix for fast nearby lookups. Example: "u4pruydqqvj" → London area</p>
+        </div>
+        <div class="info-card">
+          <h4>📏 Distance Calculation</h4>
+          <p>Haversine formula for accurate distance. Filter by user's max distance preference (1-100 miles)</p>
+        </div>
+        <div class="info-card">
+          <h4>🔄 Location Updates</h4>
+          <p>Update location when app opens or every 15 mins in background. Batch updates to reduce writes</p>
+        </div>
+        <div class="info-card">
+          <h4>⚡ Caching Strategy</h4>
+          <p>Cache nearby users in Redis. TTL based on activity. Invalidate on location change</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🧠 Recommendation Engine</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-number node-ml">1</div>
+          <div class="step-content">
+            <h4>ELO Score System</h4>
+            <p>Each user has a desirability score based on swipe patterns</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-ml">2</div>
+          <div class="step-content">
+            <h4>Collaborative Filtering</h4>
+            <p>Users with similar swipe patterns → similar recommendations</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-ml">3</div>
+          <div class="step-content">
+            <h4>Active User Boost</h4>
+            <p>Recently active users shown more frequently</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-ml">4</div>
+          <div class="step-content">
+            <h4>Diversity Injection</h4>
+            <p>Mix different profile types to avoid echo chambers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Swipe Data Model</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>📋 DynamoDB Schema</h4>
+          <p><strong>PK:</strong> USER#{userId}<br><strong>SK:</strong> SWIPE#{targetId}<br><strong>Attributes:</strong> action, timestamp, location</p>
+        </div>
+        <div class="info-card">
+          <h4>🔍 GSI for Matching</h4>
+          <p><strong>GSI-PK:</strong> TARGET#{targetId}<br><strong>GSI-SK:</strong> USER#{userId}<br>Enables reverse lookup for match detection</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Real-time Chat -->
+  <div id="messaging" class="content">
+    <h2 class="section-title">💬 Real-time Messaging</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">🔌 WebSocket Architecture</div>
+      <div class="architecture">
+        <div class="arch-row">
+          <div class="arch-node node-client">
+            <div class="arch-node-icon">📱</div>
+            <div class="arch-node-label">User A</div>
+          </div>
+          <div class="arch-node node-client">
+            <div class="arch-node-icon">📱</div>
+            <div class="arch-node-label">User B</div>
+          </div>
+        </div>
+        
+        <div class="connector-v"></div>
+        
+        <div class="arch-row">
+          <div class="arch-node node-ws">
+            <div class="arch-node-icon">🔌</div>
+            <div class="arch-node-label">API Gateway WebSocket</div>
+            <div class="arch-node-sub">Manages Connections</div>
+          </div>
+        </div>
+        
+        <div class="connector-v"></div>
+        
+        <div class="arch-row">
+          <div class="arch-node node-lambda">
+            <div class="arch-node-icon">⚡</div>
+            <div class="arch-node-label">$connect</div>
+            <div class="arch-node-sub">Auth & Store</div>
+          </div>
+          <div class="arch-node node-lambda">
+            <div class="arch-node-icon">⚡</div>
+            <div class="arch-node-label">sendMessage</div>
+            <div class="arch-node-sub">Process</div>
+          </div>
+          <div class="arch-node node-lambda">
+            <div class="arch-node-icon">⚡</div>
+            <div class="arch-node-label">$disconnect</div>
+            <div class="arch-node-sub">Cleanup</div>
+          </div>
+        </div>
+        
+        <div class="connector-v"></div>
+        
+        <div class="arch-row">
+          <div class="arch-node node-db">
+            <div class="arch-node-icon">🗄️</div>
+            <div class="arch-node-label">DynamoDB</div>
+            <div class="arch-node-sub">Messages</div>
+          </div>
+          <div class="arch-node node-cache">
+            <div class="arch-node-icon">🔴</div>
+            <div class="arch-node-label">Redis</div>
+            <div class="arch-node-sub">Connection Map</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">📨 Message Flow</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-number node-client">1</div>
+          <div class="step-content">
+            <h4>User A Sends Message</h4>
+            <p>WebSocket frame: { action: "sendMessage", to: "userB", text: "Hey!" }</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-lambda">2</div>
+          <div class="step-content">
+            <h4>Lambda Processes</h4>
+            <p>Validate, sanitize, store in DynamoDB with timestamp</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-cache">3</div>
+          <div class="step-content">
+            <h4>Find Recipient Connection</h4>
+            <p>Redis lookup: connections/{userB} → connectionId</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-ws">4</div>
+          <div class="step-content">
+            <h4>Push to User B</h4>
+            <p>API Gateway Management API → postToConnection</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-queue">5</div>
+          <div class="step-content">
+            <h4>If Offline → Push Notification</h4>
+            <p>SNS → Firebase/APNs for mobile push</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">💾 Message Storage</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>📋 Messages Table</h4>
+          <p><strong>PK:</strong> CONV#{sorted_user_ids}<br><strong>SK:</strong> MSG#{timestamp}<br><strong>Data:</strong> sender, text, read, attachments</p>
+        </div>
+        <div class="info-card">
+          <h4>🔔 Read Receipts</h4>
+          <p>Update lastRead timestamp per conversation. Send read event via WebSocket to sender</p>
+        </div>
+        <div class="info-card">
+          <h4>📸 Media Messages</h4>
+          <p>Upload to S3, store URL in message. Generate presigned URLs for viewing</p>
+        </div>
+        <div class="info-card">
+          <h4>⏰ Message TTL</h4>
+          <p>Optional: Auto-delete messages after X days using DynamoDB TTL</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Microservices -->
+  <div id="services" class="content">
+    <h2 class="section-title">🔧 Microservices</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">📦 Service Breakdown</div>
+      <div class="services-container">
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-gateway">🔐</div>
+            <div>
+              <div class="service-name">Auth Service</div>
+              <div class="service-tech">Lambda + Cognito</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Phone/Email verification</li>
+            <li>✓ Social login (Google, Facebook)</li>
+            <li>✓ JWT token management</li>
+            <li>✓ Session handling</li>
+          </ul>
+        </div>
+        
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-lambda">👤</div>
+            <div>
+              <div class="service-name">Profile Service</div>
+              <div class="service-tech">Lambda + DynamoDB</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Create/Update profile</li>
+            <li>✓ Photo management</li>
+            <li>✓ Preferences settings</li>
+            <li>✓ Verification badges</li>
+          </ul>
+        </div>
+        
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-ml">💕</div>
+            <div>
+              <div class="service-name">Matching Service</div>
+              <div class="service-tech">Lambda + Redis</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Swipe processing</li>
+            <li>✓ Match detection</li>
+            <li>✓ Recommendation engine</li>
+            <li>✓ ELO score calculation</li>
+          </ul>
+        </div>
+        
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-db">📍</div>
+            <div>
+              <div class="service-name">Location Service</div>
+              <div class="service-tech">Lambda + ElasticSearch</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Geolocation updates</li>
+            <li>✓ Nearby user queries</li>
+            <li>✓ Distance calculations</li>
+            <li>✓ Geohash indexing</li>
+          </ul>
+        </div>
+        
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-ws">💬</div>
+            <div>
+              <div class="service-name">Chat Service</div>
+              <div class="service-tech">WebSocket + DynamoDB</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Real-time messaging</li>
+            <li>✓ Read receipts</li>
+            <li>✓ Typing indicators</li>
+            <li>✓ Media sharing</li>
+          </ul>
+        </div>
+        
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-queue">🔔</div>
+            <div>
+              <div class="service-name">Notification Service</div>
+              <div class="service-tech">SNS + Firebase</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Push notifications</li>
+            <li>✓ Email notifications</li>
+            <li>✓ In-app notifications</li>
+            <li>✓ Notification preferences</li>
+          </ul>
+        </div>
+        
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-storage">📸</div>
+            <div>
+              <div class="service-name">Media Service</div>
+              <div class="service-tech">S3 + Lambda@Edge</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Photo upload/resize</li>
+            <li>✓ CDN delivery</li>
+            <li>✓ Image moderation</li>
+            <li>✓ Face detection</li>
+          </ul>
+        </div>
+        
+        <div class="service-box">
+          <div class="service-header">
+            <div class="service-icon node-cache">🛡️</div>
+            <div>
+              <div class="service-name">Safety Service</div>
+              <div class="service-tech">Lambda + ML</div>
+            </div>
+          </div>
+          <ul class="service-features">
+            <li>✓ Content moderation</li>
+            <li>✓ Spam detection</li>
+            <li>✓ Report handling</li>
+            <li>✓ User blocking</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scaling & Database -->
+  <div id="scaling" class="content">
+    <h2 class="section-title">📈 Scaling & Database Design</h2>
+    
+    <div class="diagram-container">
+      <div class="diagram-title">🗄️ Database Strategy</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>📊 DynamoDB - Primary</h4>
+          <p><strong>Users:</strong> Profiles, preferences<br><strong>Swipes:</strong> Like/Pass records<br><strong>Matches:</strong> Mutual likes<br><strong>Messages:</strong> Chat history</p>
+        </div>
+        <div class="info-card">
+          <h4>🔴 Redis - Caching</h4>
+          <p><strong>Sessions:</strong> Auth tokens<br><strong>Connections:</strong> WebSocket map<br><strong>Nearby:</strong> User feed cache<br><strong>Rate Limits:</strong> Swipe throttling</p>
+        </div>
+        <div class="info-card">
+          <h4>🔍 ElasticSearch - Geo</h4>
+          <p><strong>Geo Index:</strong> User locations<br><strong>Search:</strong> Discovery queries<br><strong>Filters:</strong> Age, distance, gender</p>
+        </div>
+        <div class="info-card">
+          <h4>📦 S3 - Media</h4>
+          <p><strong>Photos:</strong> Profile images<br><strong>Thumbnails:</strong> Resized versions<br><strong>Chat Media:</strong> Shared files</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">⚡ Scaling Strategies</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-number node-lambda">1</div>
+          <div class="step-content">
+            <h4>Lambda Auto-Scaling</h4>
+            <p>Concurrent executions scale automatically. Set reserved concurrency for critical paths</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-db">2</div>
+          <div class="step-content">
+            <h4>DynamoDB On-Demand</h4>
+            <p>Auto-scales read/write capacity. Use DAX for microsecond latency reads</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-cache">3</div>
+          <div class="step-content">
+            <h4>Redis Cluster</h4>
+            <p>ElastiCache cluster mode for horizontal scaling. Multi-AZ for high availability</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-storage">4</div>
+          <div class="step-content">
+            <h4>CloudFront CDN</h4>
+            <p>Edge caching for static assets. Reduce origin load by 90%+</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number node-queue">5</div>
+          <div class="step-content">
+            <h4>Async Processing</h4>
+            <p>SQS for background jobs: notifications, analytics, cleanup</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">🔐 Security Considerations</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>🔒 Authentication</h4>
+          <p>Cognito + JWT tokens. Short-lived access tokens, refresh token rotation</p>
+        </div>
+        <div class="info-card">
+          <h4>🛡️ API Security</h4>
+          <p>Rate limiting, WAF rules, input validation, SQL injection prevention</p>
+        </div>
+        <div class="info-card">
+          <h4>📍 Privacy</h4>
+          <p>Fuzzy location (not exact). Hide distance when incognito. GDPR compliance</p>
+        </div>
+        <div class="info-card">
+          <h4>🔍 Content Moderation</h4>
+          <p>Rekognition for image moderation. ML for text toxicity detection</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <div class="diagram-title">💰 Cost Optimization</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>⚡ Lambda</h4>
+          <p>Optimize memory allocation. Use Provisioned Concurrency for predictable traffic</p>
+        </div>
+        <div class="info-card">
+          <h4>🗄️ DynamoDB</h4>
+          <p>Use TTL for old data. Archive to S3 Glacier for compliance</p>
+        </div>
+        <div class="info-card">
+          <h4>📦 S3</h4>
+          <p>Intelligent Tiering for photos. Lifecycle policies for old media</p>
+        </div>
+        <div class="info-card">
+          <h4>📊 Monitoring</h4>
+          <p>CloudWatch metrics, X-Ray tracing, Cost Explorer alerts</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

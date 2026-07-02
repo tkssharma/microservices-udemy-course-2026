@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Gateway Pattern - Microservices</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+    .bg-animation { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+    .bg-animation span { position: absolute; display: block; width: 20px; height: 20px; background: rgba(59,130,246,0.1); animation: move 25s linear infinite; bottom: -150px; border-radius: 50%; }
+    .bg-animation span:nth-child(1) { left: 25%; width: 80px; height: 80px; }
+    .bg-animation span:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; }
+    .bg-animation span:nth-child(3) { left: 70%; width: 30px; height: 30px; animation-delay: 4s; }
+    .bg-animation span:nth-child(4) { left: 40%; width: 60px; height: 60px; animation-delay: 0s; }
+    .bg-animation span:nth-child(5) { left: 65%; width: 20px; height: 20px; animation-delay: 0s; }
+    @keyframes move { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-1000px); opacity: 0; } }
+    header { text-align: center; padding: 3rem 2rem; }
+    h1 { font-size: 3rem; font-weight: 700; background: linear-gradient(90deg, #3b82f6, #06b6d4, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: #60a5fa; font-size: 1.2rem; margin-top: 0.5rem; }
+    .tabs { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; padding: 0 2rem; margin-bottom: 2rem; }
+    .tab { padding: 1rem 1.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+    .tab:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+    .tab.active { background: linear-gradient(135deg, #3b82f6, #06b6d4); border: none; }
+    .content { display: none; padding: 0 2rem 3rem; }
+    .content.active { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 2rem; color: #3b82f6; }
+    .diagram-container { background: rgba(15,23,42,0.8); border-radius: 24px; padding: 2rem; margin-bottom: 2rem; border: 1px solid rgba(59,130,246,0.3); position: relative; }
+    .diagram-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #06b6d4, #10b981); }
+    .diagram-title { font-size: 1.5rem; color: #f59e0b; margin-bottom: 1.5rem; }
+    .gateway-visual { display: flex; flex-direction: column; align-items: center; gap: 2rem; padding: 2rem; }
+    .clients-row, .services-row { display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center; }
+    .node { padding: 1rem 1.5rem; border-radius: 12px; font-weight: 600; text-align: center; transition: transform 0.3s ease; min-width: 120px; }
+    .node:hover { transform: scale(1.05); }
+    .node-icon { font-size: 2rem; margin-bottom: 0.5rem; display: block; }
+    .node-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 30px rgba(59,130,246,0.4); }
+    .node-green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 30px rgba(16,185,129,0.4); }
+    .node-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); box-shadow: 0 10px 30px rgba(139,92,246,0.4); }
+    .node-orange { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 10px 30px rgba(245,158,11,0.4); }
+    .node-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); box-shadow: 0 10px 30px rgba(6,182,212,0.4); }
+    .node-red { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 10px 30px rgba(239,68,68,0.4); }
+    .gateway-node { padding: 1.5rem 3rem; font-size: 1.3rem; background: linear-gradient(135deg, #f59e0b, #ea580c); box-shadow: 0 15px 50px rgba(245,158,11,0.5); }
+    .arrows { color: #60a5fa; font-size: 2rem; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .info-card { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(6,182,212,0.1)); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(59,130,246,0.3); transition: transform 0.3s ease; }
+    .info-card:hover { transform: translateY(-5px); }
+    .info-card h4 { color: #06b6d4; font-size: 1.2rem; margin-bottom: 0.75rem; }
+    .info-card p { color: #d1d5db; line-height: 1.6; }
+    .feature-list { list-style: none; }
+    .feature-list li { padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 0.5rem; }
+    .feature-list li:last-child { border-bottom: none; }
+    .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .tool-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s ease; }
+    .tool-card:hover { transform: translateY(-5px); border-color: #3b82f6; }
+    .tool-card h4 { color: #fff; margin-bottom: 0.5rem; }
+    .tool-card p { color: #94a3b8; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="bg-animation"><span></span><span></span><span></span><span></span><span></span></div>
+  <header>
+    <h1>🚪 API Gateway Pattern</h1>
+    <p class="subtitle">Single Entry Point for Microservices Architecture</p>
+  </header>
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="features">Features</button>
+    <button class="tab" data-tab="patterns">Patterns</button>
+    <button class="tab" data-tab="tools">Tools</button>
+  </div>
+
+  <div id="overview" class="content active">
+    <h2 class="section-title">🎯 What is API Gateway?</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">📊 Architecture Overview</div>
+      <div class="gateway-visual">
+        <div class="clients-row">
+          <div class="node node-blue"><span class="node-icon">📱</span>Mobile</div>
+          <div class="node node-purple"><span class="node-icon">💻</span>Web</div>
+          <div class="node node-cyan"><span class="node-icon">🔗</span>3rd Party</div>
+        </div>
+        <div class="arrows">⬇️ ⬇️ ⬇️</div>
+        <div class="node gateway-node"><span class="node-icon">🚪</span>API Gateway</div>
+        <div class="arrows">⬇️ ⬇️ ⬇️</div>
+        <div class="services-row">
+          <div class="node node-green"><span class="node-icon">👤</span>Users</div>
+          <div class="node node-orange"><span class="node-icon">📦</span>Orders</div>
+          <div class="node node-red"><span class="node-icon">💳</span>Payments</div>
+          <div class="node node-cyan"><span class="node-icon">📧</span>Notifications</div>
+        </div>
+      </div>
+    </div>
+    <div class="diagram-container">
+      <div class="diagram-title">🎯 Why API Gateway?</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>🔐 Single Entry Point</h4><p>All client requests go through one place. Simplifies security, monitoring, and management.</p></div>
+        <div class="info-card"><h4>🛡️ Security Layer</h4><p>Handle authentication, authorization, rate limiting, and threat protection in one place.</p></div>
+        <div class="info-card"><h4>🔄 Request Routing</h4><p>Route requests to appropriate microservices based on path, headers, or other criteria.</p></div>
+        <div class="info-card"><h4>📊 Aggregation</h4><p>Combine data from multiple services into single response. Reduce client round-trips.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="features" class="content">
+    <h2 class="section-title">⚡ Key Features</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🛠️ Core Capabilities</div>
+      <ul class="feature-list">
+        <li>🔐 <strong>Authentication & Authorization:</strong> JWT validation, OAuth, API keys</li>
+        <li>⚖️ <strong>Load Balancing:</strong> Distribute traffic across service instances</li>
+        <li>🚦 <strong>Rate Limiting:</strong> Protect services from abuse and overload</li>
+        <li>💾 <strong>Caching:</strong> Cache responses to reduce backend load</li>
+        <li>🔄 <strong>Request/Response Transformation:</strong> Modify headers, body, format</li>
+        <li>📊 <strong>Logging & Monitoring:</strong> Centralized observability</li>
+        <li>🔌 <strong>Circuit Breaker:</strong> Handle failures gracefully</li>
+        <li>🌐 <strong>SSL Termination:</strong> Handle HTTPS at the gateway</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="patterns" class="content">
+    <h2 class="section-title">📐 Gateway Patterns</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🏗️ Common Patterns</div>
+      <div class="info-grid">
+        <div class="info-card"><h4>🚪 Single Gateway</h4><p>One gateway for all clients. Simple but can become bottleneck.</p></div>
+        <div class="info-card"><h4>📱 BFF (Backend for Frontend)</h4><p>Separate gateway per client type. Mobile, Web, IoT each get optimized API.</p></div>
+        <div class="info-card"><h4>🔀 Gateway Routing</h4><p>Route based on path prefix: /users → User Service, /orders → Order Service</p></div>
+        <div class="info-card"><h4>📦 Gateway Aggregation</h4><p>Combine multiple service calls into single response for client.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tools" class="content">
+    <h2 class="section-title">🔧 Popular API Gateways</h2>
+    <div class="diagram-container">
+      <div class="diagram-title">🛠️ Tools & Platforms</div>
+      <div class="tools-grid">
+        <div class="tool-card"><h4>Kong</h4><p>Open source, plugin-based, Lua/Go</p></div>
+        <div class="tool-card"><h4>AWS API Gateway</h4><p>Serverless, managed, AWS native</p></div>
+        <div class="tool-card"><h4>NGINX</h4><p>High performance, reverse proxy</p></div>
+        <div class="tool-card"><h4>Traefik</h4><p>Cloud native, auto-discovery</p></div>
+        <div class="tool-card"><h4>Envoy</h4><p>Service mesh, L7 proxy</p></div>
+        <div class="tool-card"><h4>Azure API Management</h4><p>Enterprise, Azure native</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

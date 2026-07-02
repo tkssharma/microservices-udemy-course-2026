@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Orchestration Tools - Microservices</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+        .flow-line { stroke-dasharray: 5; animation: dash 20s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -100; } }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .tab-btn { transition: all 0.3s ease; }
+        .tab-btn.active { background: white; color: #7c3aed; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-16">
+        <div class="container mx-auto px-6 text-center">
+            <h1 class="text-5xl font-bold mb-4">🔄 Workflow Orchestration</h1>
+            <p class="text-xl opacity-90 max-w-3xl mx-auto">Automated coordination of services, tasks, and processes to execute complex business workflows reliably in microservices architecture</p>
+        </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <div class="bg-purple-100 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto px-6">
+            <div class="flex justify-center gap-4 py-4">
+                <button onclick="showTab('overview')" id="tab-overview" class="tab-btn active px-6 py-3 rounded-xl font-semibold text-purple-600 bg-purple-50 hover:bg-white">📋 Overview</button>
+                <button onclick="showTab('temporal-camunda')" id="tab-temporal-camunda" class="tab-btn px-6 py-3 rounded-xl font-semibold text-purple-600 bg-purple-50 hover:bg-white">⚡ Temporal vs Camunda</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="container mx-auto px-6 py-12">
+        <!-- Overview Tab -->
+        <div id="content-overview" class="tab-content active">
+        <!-- What is Workflow Orchestration -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">What is Workflow Orchestration?</h2>
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-semibold text-purple-600 mb-4">The Problem</h3>
+                        <ul class="space-y-3 text-gray-600">
+                            <li class="flex items-start"><span class="text-red-500 mr-2">❌</span> How to handle failures mid-workflow?</li>
+                            <li class="flex items-start"><span class="text-red-500 mr-2">❌</span> How to retry failed steps automatically?</li>
+                            <li class="flex items-start"><span class="text-red-500 mr-2">❌</span> How to track workflow state across services?</li>
+                            <li class="flex items-start"><span class="text-red-500 mr-2">❌</span> How to handle long-running processes?</li>
+                            <li class="flex items-start"><span class="text-red-500 mr-2">❌</span> How to implement compensating transactions?</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-green-600 mb-4">The Solution</h3>
+                        <ul class="space-y-3 text-gray-600">
+                            <li class="flex items-start"><span class="text-green-500 mr-2">✅</span> Central orchestrator manages entire workflow</li>
+                            <li class="flex items-start"><span class="text-green-500 mr-2">✅</span> Built-in retry mechanisms & error handling</li>
+                            <li class="flex items-start"><span class="text-green-500 mr-2">✅</span> Persistent state & workflow history</li>
+                            <li class="flex items-start"><span class="text-green-500 mr-2">✅</span> Support for workflows spanning days/months</li>
+                            <li class="flex items-start"><span class="text-green-500 mr-2">✅</span> Saga pattern with automatic rollbacks</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Orchestration vs Choreography -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Orchestration vs Choreography</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-2xl shadow-lg p-8 border-t-4 border-orange-500">
+                    <h3 class="text-2xl font-bold text-orange-600 mb-4">🎭 Choreography</h3>
+                    <p class="text-gray-600 mb-4">Each service reacts to events independently - decentralized control</p>
+                    <svg viewBox="0 0 400 120" class="w-full mb-4">
+                        <rect x="10" y="40" width="80" height="40" rx="5" fill="#f97316" opacity="0.2" stroke="#f97316" stroke-width="2"/>
+                        <text x="50" y="65" text-anchor="middle" font-size="10" fill="#f97316">Order</text>
+                        <path d="M90,60 L130,60" stroke="#f97316" stroke-width="2" marker-end="url(#arrow-orange)"/>
+                        <text x="110" y="52" text-anchor="middle" font-size="8" fill="#666">event</text>
+                        <rect x="130" y="40" width="80" height="40" rx="5" fill="#f97316" opacity="0.2" stroke="#f97316" stroke-width="2"/>
+                        <text x="170" y="65" text-anchor="middle" font-size="10" fill="#f97316">Payment</text>
+                        <path d="M210,60 L250,60" stroke="#f97316" stroke-width="2" marker-end="url(#arrow-orange)"/>
+                        <text x="230" y="52" text-anchor="middle" font-size="8" fill="#666">event</text>
+                        <rect x="250" y="40" width="80" height="40" rx="5" fill="#f97316" opacity="0.2" stroke="#f97316" stroke-width="2"/>
+                        <text x="290" y="65" text-anchor="middle" font-size="10" fill="#f97316">Inventory</text>
+                        <defs><marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#f97316"/></marker></defs>
+                    </svg>
+                    <div class="text-sm text-gray-500">
+                        <p><strong>Pros:</strong> Loose coupling, service independence</p>
+                        <p><strong>Cons:</strong> Hard to debug, complex error handling</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg p-8 border-t-4 border-purple-500">
+                    <h3 class="text-2xl font-bold text-purple-600 mb-4">🎼 Orchestration</h3>
+                    <p class="text-gray-600 mb-4">Central orchestrator controls the entire workflow - centralized control</p>
+                    <svg viewBox="0 0 400 140" class="w-full mb-4">
+                        <rect x="140" y="10" width="120" height="35" rx="5" fill="#9333ea" opacity="0.3" stroke="#9333ea" stroke-width="2"/>
+                        <text x="200" y="32" text-anchor="middle" font-size="10" fill="#9333ea" font-weight="bold">ORCHESTRATOR</text>
+                        <path d="M160,45 L60,90" stroke="#9333ea" stroke-width="2" marker-end="url(#arrow-purple)"/>
+                        <path d="M200,45 L200,90" stroke="#9333ea" stroke-width="2" marker-end="url(#arrow-purple)"/>
+                        <path d="M240,45 L340,90" stroke="#9333ea" stroke-width="2" marker-end="url(#arrow-purple)"/>
+                        <rect x="20" y="90" width="80" height="35" rx="5" fill="#9333ea" opacity="0.2" stroke="#9333ea" stroke-width="2"/>
+                        <text x="60" y="112" text-anchor="middle" font-size="10" fill="#9333ea">Order</text>
+                        <rect x="160" y="90" width="80" height="35" rx="5" fill="#9333ea" opacity="0.2" stroke="#9333ea" stroke-width="2"/>
+                        <text x="200" y="112" text-anchor="middle" font-size="10" fill="#9333ea">Payment</text>
+                        <rect x="300" y="90" width="80" height="35" rx="5" fill="#9333ea" opacity="0.2" stroke="#9333ea" stroke-width="2"/>
+                        <text x="340" y="112" text-anchor="middle" font-size="10" fill="#9333ea">Inventory</text>
+                        <defs><marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#9333ea"/></marker></defs>
+                    </svg>
+                    <div class="text-sm text-gray-500">
+                        <p><strong>Pros:</strong> Easy debugging, clear visibility, centralized control</p>
+                        <p><strong>Cons:</strong> Single point of coordination, potential bottleneck</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tools Grid -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Top Workflow Orchestration Tools</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Temporal -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 card-hover border-l-4 border-blue-500">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                            <span class="text-2xl">⚡</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Temporal</h3>
+                            <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">Code-First</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Open-source platform from Uber for fault-tolerant workflows. Best for complex business logic.</p>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Go, Java, TypeScript, Python</div>
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Long-running workflows</div>
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Built-in retries & fault tolerance</div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <span class="text-xs text-gray-500">Best for: Mission-critical business processes</span>
+                    </div>
+                </div>
+
+                <!-- Camunda -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 card-hover border-l-4 border-orange-500">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
+                            <span class="text-2xl">📊</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Camunda</h3>
+                            <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded">BPMN Visual</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">BPMN 2.0 workflow automation with visual modeling. Great for business analysts.</p>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Visual BPMN modeler</div>
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Human task management</div>
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> DMN decision tables</div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <span class="text-xs text-gray-500">Best for: Enterprise workflows, compliance</span>
+                    </div>
+                </div>
+
+                <!-- AWS Step Functions -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 card-hover border-l-4 border-yellow-500">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
+                            <span class="text-2xl">☁️</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Step Functions</h3>
+                            <span class="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded">AWS Managed</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Serverless workflow service by AWS. Perfect for AWS-native applications.</p>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Fully managed serverless</div>
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Native AWS integrations</div>
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Visual workflow designer</div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <span class="text-xs text-gray-500">Best for: Serverless AWS architectures</span>
+                    </div>
+                </div>
+
+                <!-- Apache Airflow -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 card-hover border-l-4 border-green-500">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                            <span class="text-2xl">🌬️</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Apache Airflow</h3>
+                            <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">Data Pipelines</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Python-based platform for batch workflows and ETL pipelines.</p>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Python DAG definitions</div>
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Rich operator library</div>
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Extensive connectors</div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <span class="text-xs text-gray-500">Best for: ETL, data engineering, ML pipelines</span>
+                    </div>
+                </div>
+
+                <!-- Netflix Conductor -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 card-hover border-l-4 border-red-500">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
+                            <span class="text-2xl">🎬</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Netflix Conductor</h3>
+                            <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded">Microservices</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">JSON-based orchestration engine built for Netflix-scale microservices.</p>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> JSON workflow definitions</div>
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Dynamic workflows</div>
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Battle-tested at scale</div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <span class="text-xs text-gray-500">Best for: Large-scale microservices, media</span>
+                    </div>
+                </div>
+
+                <!-- Prefect -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 card-hover border-l-4 border-indigo-500">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
+                            <span class="text-2xl">🔮</span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Prefect</h3>
+                            <span class="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded">Modern Python</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Modern workflow orchestration for data teams with Python-native approach.</p>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Pythonic, decorator-based</div>
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Hybrid execution model</div>
+                        <div class="flex items-center"><span class="text-green-500 mr-2">✓</span> Modern UI/UX</div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t">
+                        <span class="text-xs text-gray-500">Best for: Modern data teams, ML workflows</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison Table -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">📊 Detailed Comparison</h2>
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+                            <tr>
+                                <th class="px-6 py-4 text-left">Feature</th>
+                                <th class="px-6 py-4 text-center">Temporal</th>
+                                <th class="px-6 py-4 text-center">Camunda</th>
+                                <th class="px-6 py-4 text-center">Step Functions</th>
+                                <th class="px-6 py-4 text-center">Airflow</th>
+                                <th class="px-6 py-4 text-center">Conductor</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Workflow Definition</td>
+                                <td class="px-6 py-4 text-center"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-sm">Code</span></td>
+                                <td class="px-6 py-4 text-center"><span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-sm">BPMN</span></td>
+                                <td class="px-6 py-4 text-center"><span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-sm">JSON (ASL)</span></td>
+                                <td class="px-6 py-4 text-center"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-sm">Python</span></td>
+                                <td class="px-6 py-4 text-center"><span class="bg-red-100 text-red-700 px-2 py-1 rounded text-sm">JSON</span></td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Deployment</td>
+                                <td class="px-6 py-4 text-center">Self-hosted / Cloud</td>
+                                <td class="px-6 py-4 text-center">Self-hosted / Cloud</td>
+                                <td class="px-6 py-4 text-center">AWS Managed</td>
+                                <td class="px-6 py-4 text-center">Self-hosted / Cloud</td>
+                                <td class="px-6 py-4 text-center">Self-hosted</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Primary Use Case</td>
+                                <td class="px-6 py-4 text-center">Complex Logic</td>
+                                <td class="px-6 py-4 text-center">Visual Design</td>
+                                <td class="px-6 py-4 text-center">AWS Native</td>
+                                <td class="px-6 py-4 text-center">Data Pipelines</td>
+                                <td class="px-6 py-4 text-center">Microservices</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Learning Curve</td>
+                                <td class="px-6 py-4 text-center">🟡 Medium</td>
+                                <td class="px-6 py-4 text-center">🟡 Medium</td>
+                                <td class="px-6 py-4 text-center">🟢 Low</td>
+                                <td class="px-6 py-4 text-center">🟡 Medium</td>
+                                <td class="px-6 py-4 text-center">🟢 Low</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Scalability</td>
+                                <td class="px-6 py-4 text-center">🟢 High</td>
+                                <td class="px-6 py-4 text-center">🟢 High</td>
+                                <td class="px-6 py-4 text-center">🟢 Very High</td>
+                                <td class="px-6 py-4 text-center">🟡 Medium</td>
+                                <td class="px-6 py-4 text-center">🟢 High</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Human Tasks</td>
+                                <td class="px-6 py-4 text-center">🟡 Limited</td>
+                                <td class="px-6 py-4 text-center">🟢 Excellent</td>
+                                <td class="px-6 py-4 text-center">🟡 Limited</td>
+                                <td class="px-6 py-4 text-center">🔴 N/A</td>
+                                <td class="px-6 py-4 text-center">🟡 Limited</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Long-running</td>
+                                <td class="px-6 py-4 text-center">🟢 Excellent</td>
+                                <td class="px-6 py-4 text-center">🟢 Good</td>
+                                <td class="px-6 py-4 text-center">🟢 Good</td>
+                                <td class="px-6 py-4 text-center">🔴 Poor</td>
+                                <td class="px-6 py-4 text-center">🟢 Good</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Pricing</td>
+                                <td class="px-6 py-4 text-center">Free (OSS)</td>
+                                <td class="px-6 py-4 text-center">Free / Paid</td>
+                                <td class="px-6 py-4 text-center">Pay per transition</td>
+                                <td class="px-6 py-4 text-center">Free (OSS)</td>
+                                <td class="px-6 py-4 text-center">Free (OSS)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Decision Tree -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">🎯 Which Tool Should You Choose?</h2>
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="p-6 bg-blue-50 rounded-xl border-2 border-blue-200">
+                        <h4 class="font-bold text-blue-700 mb-3">⚡ Choose Temporal When:</h4>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li>• Complex business logic requiring code-first</li>
+                            <li>• Long-running workflows (days/months)</li>
+                            <li>• Need strong consistency guarantees</li>
+                            <li>• Team is comfortable with code</li>
+                        </ul>
+                    </div>
+                    <div class="p-6 bg-orange-50 rounded-xl border-2 border-orange-200">
+                        <h4 class="font-bold text-orange-700 mb-3">📊 Choose Camunda When:</h4>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li>• Need visual BPMN workflow modeling</li>
+                            <li>• Human-in-the-loop workflows</li>
+                            <li>• Compliance & audit requirements</li>
+                            <li>• Business analysts define workflows</li>
+                        </ul>
+                    </div>
+                    <div class="p-6 bg-yellow-50 rounded-xl border-2 border-yellow-200">
+                        <h4 class="font-bold text-yellow-700 mb-3">☁️ Choose Step Functions When:</h4>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li>• Already on AWS ecosystem</li>
+                            <li>• Want serverless/managed solution</li>
+                            <li>• Simple to medium complexity</li>
+                            <li>• Need quick setup</li>
+                        </ul>
+                    </div>
+                    <div class="p-6 bg-green-50 rounded-xl border-2 border-green-200">
+                        <h4 class="font-bold text-green-700 mb-3">🌬️ Choose Airflow When:</h4>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li>• Data engineering & ETL workflows</li>
+                            <li>• Batch/scheduled processing</li>
+                            <li>• Data science pipelines</li>
+                            <li>• Need extensive data connectors</li>
+                        </ul>
+                    </div>
+                    <div class="p-6 bg-red-50 rounded-xl border-2 border-red-200">
+                        <h4 class="font-bold text-red-700 mb-3">🎬 Choose Conductor When:</h4>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li>• Building Netflix-scale microservices</li>
+                            <li>• Need dynamic workflow composition</li>
+                            <li>• JSON-based definition preferred</li>
+                            <li>• Media processing workflows</li>
+                        </ul>
+                    </div>
+                    <div class="p-6 bg-indigo-50 rounded-xl border-2 border-indigo-200">
+                        <h4 class="font-bold text-indigo-700 mb-3">🔮 Choose Prefect When:</h4>
+                        <ul class="text-sm text-gray-600 space-y-2">
+                            <li>• Modern Python data team</li>
+                            <li>• Want simpler Airflow alternative</li>
+                            <li>• ML/AI pipeline orchestration</li>
+                            <li>• Hybrid cloud execution needed</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Flow -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">📦 E-commerce Order Workflow Example</h2>
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <svg viewBox="0 0 800 200" class="w-full">
+                    <!-- Flow boxes -->
+                    <rect x="50" y="70" width="100" height="60" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                    <text x="100" y="95" text-anchor="middle" font-size="11" fill="#4338ca" font-weight="bold">Validate</text>
+                    <text x="100" y="110" text-anchor="middle" font-size="11" fill="#4338ca">Order</text>
+                    
+                    <rect x="200" y="70" width="100" height="60" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                    <text x="250" y="95" text-anchor="middle" font-size="11" fill="#1d4ed8" font-weight="bold">Reserve</text>
+                    <text x="250" y="110" text-anchor="middle" font-size="11" fill="#1d4ed8">Inventory</text>
+                    
+                    <rect x="350" y="70" width="100" height="60" rx="8" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+                    <text x="400" y="95" text-anchor="middle" font-size="11" fill="#047857" font-weight="bold">Process</text>
+                    <text x="400" y="110" text-anchor="middle" font-size="11" fill="#047857">Payment</text>
+                    
+                    <rect x="500" y="70" width="100" height="60" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                    <text x="550" y="95" text-anchor="middle" font-size="11" fill="#b45309" font-weight="bold">Ship</text>
+                    <text x="550" y="110" text-anchor="middle" font-size="11" fill="#b45309">Order</text>
+                    
+                    <rect x="650" y="70" width="100" height="60" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2"/>
+                    <text x="700" y="95" text-anchor="middle" font-size="11" fill="#6d28d9" font-weight="bold">Send</text>
+                    <text x="700" y="110" text-anchor="middle" font-size="11" fill="#6d28d9">Notification</text>
+                    
+                    <!-- Arrows -->
+                    <path d="M150,100 L195,100" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow-main)"/>
+                    <path d="M300,100 L345,100" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-main)"/>
+                    <path d="M450,100 L495,100" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-main)"/>
+                    <path d="M600,100 L645,100" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-main)"/>
+                    
+                    <!-- Compensation path -->
+                    <path d="M400,130 L400,160 L100,160 L100,130" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,5" fill="none" marker-end="url(#arrow-red)"/>
+                    <text x="250" y="178" text-anchor="middle" font-size="10" fill="#ef4444">Compensate on Failure (Rollback)</text>
+                    
+                    <!-- Start/End -->
+                    <circle cx="20" cy="100" r="10" fill="#22c55e"/>
+                    <circle cx="780" cy="100" r="10" fill="#ef4444" stroke="#ef4444" stroke-width="3"/>
+                    <circle cx="780" cy="100" r="6" fill="white"/>
+                    
+                    <defs>
+                        <marker id="arrow-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#6366f1"/>
+                        </marker>
+                        <marker id="arrow-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Key Takeaways -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">💡 Key Takeaways</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-2xl p-8">
+                    <h3 class="text-xl font-bold mb-4">Why Workflow Orchestration?</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start"><span class="mr-2">🎯</span> Centralized control & visibility</li>
+                        <li class="flex items-start"><span class="mr-2">🔄</span> Automatic retries & error handling</li>
+                        <li class="flex items-start"><span class="mr-2">📊</span> Audit trails & debugging</li>
+                        <li class="flex items-start"><span class="mr-2">⏰</span> Long-running process support</li>
+                        <li class="flex items-start"><span class="mr-2">↩️</span> Compensating transactions (Saga)</li>
+                    </ul>
+                </div>
+                <div class="bg-gradient-to-br from-green-500 to-teal-600 text-white rounded-2xl p-8">
+                    <h3 class="text-xl font-bold mb-4">Best Practices</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start"><span class="mr-2">✅</span> Choose based on team skills</li>
+                        <li class="flex items-start"><span class="mr-2">✅</span> Start simple, don't over-engineer</li>
+                        <li class="flex items-start"><span class="mr-2">✅</span> Consider cloud vs self-hosted</li>
+                        <li class="flex items-start"><span class="mr-2">✅</span> Plan for observability</li>
+                        <li class="flex items-start"><span class="mr-2">✅</span> Design idempotent activities</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        </div>
+
+        <!-- Temporal vs Camunda Tab -->
+        <div id="content-temporal-camunda" class="tab-content">
+            <!-- Hero Section -->
+            <section class="mb-12">
+                <div class="bg-gradient-to-r from-blue-600 to-orange-500 rounded-3xl p-8 text-white text-center">
+                    <h2 class="text-4xl font-bold mb-4">⚡ Temporal vs 📊 Camunda</h2>
+                    <p class="text-xl opacity-90">Deep Dive Comparison - Code-First vs Visual BPMN</p>
+                </div>
+            </section>
+
+            <!-- Overview Cards -->
+            <section class="mb-12">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Temporal Card -->
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-blue-500">
+                        <div class="bg-blue-50 p-6">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center text-3xl">⚡</div>
+                                <div>
+                                    <h3 class="text-2xl font-bold text-blue-700">Temporal</h3>
+                                    <p class="text-blue-600">Code-First Workflow Platform</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-gray-600 mb-4">Originally built at Uber as Cadence, Temporal is a <strong>code-first</strong> platform where workflows are defined in programming languages.</p>
+                            <div class="space-y-3">
+                                <div class="flex items-center text-sm"><span class="w-24 font-semibold text-gray-500">Founded:</span> 2019 (Cadence: 2017)</div>
+                                <div class="flex items-center text-sm"><span class="w-24 font-semibold text-gray-500">Languages:</span> Go, Java, TypeScript, Python, PHP</div>
+                                <div class="flex items-center text-sm"><span class="w-24 font-semibold text-gray-500">Approach:</span> Code-as-Workflow</div>
+                                <div class="flex items-center text-sm"><span class="w-24 font-semibold text-gray-500">Storage:</span> PostgreSQL, MySQL, Cassandra</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Camunda Card -->
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-orange-500">
+                        <div class="bg-orange-50 p-6">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center text-3xl">📊</div>
+                                <div>
+                                    <h3 class="text-2xl font-bold text-orange-700">Camunda</h3>
+                                    <p class="text-orange-600">BPMN Visual Workflow Platform</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <p class="text-gray-600 mb-4">Enterprise workflow platform using <strong>BPMN 2.0</strong> standard with visual modeling. Perfect for business analysts and compliance.</p>
+                            <div class="space-y-3">
+                                <div class="flex items-center text-sm"><span class="w-24 font-semibold text-gray-500">Founded:</span> 2013</div>
+                                <div class="flex items-center text-sm"><span class="w-24 font-semibold text-gray-500">Languages:</span> Java, Node.js, C#, Go, Python</div>
+                                <div class="flex items-center text-sm"><span class="w-24 font-semibold text-gray-500">Approach:</span> BPMN-as-Workflow</div>
+                                <div class="flex items-center text-sm"><span class="w-24 font-semibold text-gray-500">Storage:</span> Elasticsearch (Zeebe)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture Comparison -->
+            <section class="mb-12">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏗️ Architecture Comparison</h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Temporal Architecture -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <h4 class="text-xl font-bold text-blue-600 mb-4">Temporal Architecture</h4>
+                        <svg viewBox="0 0 400 280" class="w-full">
+                            <rect x="50" y="10" width="300" height="120" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                            <text x="200" y="35" text-anchor="middle" font-size="12" fill="#1d4ed8" font-weight="bold">TEMPORAL CLUSTER</text>
+                            <rect x="70" y="50" width="70" height="35" rx="5" fill="#93c5fd" stroke="#3b82f6"/>
+                            <text x="105" y="72" text-anchor="middle" font-size="9" fill="#1e40af">Frontend</text>
+                            <rect x="160" y="50" width="70" height="35" rx="5" fill="#93c5fd" stroke="#3b82f6"/>
+                            <text x="195" y="72" text-anchor="middle" font-size="9" fill="#1e40af">History</text>
+                            <rect x="250" y="50" width="70" height="35" rx="5" fill="#93c5fd" stroke="#3b82f6"/>
+                            <text x="285" y="72" text-anchor="middle" font-size="9" fill="#1e40af">Matching</text>
+                            <rect x="140" y="95" width="120" height="25" rx="5" fill="#60a5fa" stroke="#2563eb"/>
+                            <text x="200" y="112" text-anchor="middle" font-size="9" fill="white">PostgreSQL/Cassandra</text>
+                            <path d="M200,130 L200,160" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr-blue)"/>
+                            <rect x="80" y="170" width="100" height="40" rx="5" fill="#bfdbfe" stroke="#3b82f6" stroke-width="2"/>
+                            <text x="130" y="185" text-anchor="middle" font-size="10" fill="#1d4ed8" font-weight="bold">Worker</text>
+                            <text x="130" y="200" text-anchor="middle" font-size="8" fill="#3b82f6">(Your Code)</text>
+                            <rect x="220" y="170" width="100" height="40" rx="5" fill="#bfdbfe" stroke="#3b82f6" stroke-width="2"/>
+                            <text x="270" y="185" text-anchor="middle" font-size="10" fill="#1d4ed8" font-weight="bold">Worker</text>
+                            <text x="270" y="200" text-anchor="middle" font-size="8" fill="#3b82f6">(Your Code)</text>
+                            <text x="200" y="240" text-anchor="middle" font-size="10" fill="#64748b">Workers poll for tasks & execute activities</text>
+                            <defs><marker id="arr-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6"/></marker></defs>
+                        </svg>
+                    </div>
+
+                    <!-- Camunda Architecture -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <h4 class="text-xl font-bold text-orange-600 mb-4">Camunda 8 (Zeebe) Architecture</h4>
+                        <svg viewBox="0 0 400 280" class="w-full">
+                            <rect x="50" y="10" width="300" height="120" rx="10" fill="#ffedd5" stroke="#f97316" stroke-width="2"/>
+                            <text x="200" y="35" text-anchor="middle" font-size="12" fill="#c2410c" font-weight="bold">ZEEBE CLUSTER</text>
+                            <rect x="80" y="50" width="70" height="35" rx="5" fill="#fdba74" stroke="#f97316"/>
+                            <text x="115" y="72" text-anchor="middle" font-size="9" fill="#9a3412">Broker 1</text>
+                            <rect x="165" y="50" width="70" height="35" rx="5" fill="#fdba74" stroke="#f97316"/>
+                            <text x="200" y="72" text-anchor="middle" font-size="9" fill="#9a3412">Broker 2</text>
+                            <rect x="250" y="50" width="70" height="35" rx="5" fill="#fdba74" stroke="#f97316"/>
+                            <text x="285" y="72" text-anchor="middle" font-size="9" fill="#9a3412">Broker 3</text>
+                            <rect x="140" y="95" width="120" height="25" rx="5" fill="#fb923c" stroke="#ea580c"/>
+                            <text x="200" y="112" text-anchor="middle" font-size="9" fill="white">Elasticsearch</text>
+                            <path d="M130,130 L100,160" stroke="#f97316" stroke-width="2"/>
+                            <path d="M200,130 L200,160" stroke="#f97316" stroke-width="2"/>
+                            <path d="M270,130 L300,160" stroke="#f97316" stroke-width="2"/>
+                            <rect x="60" y="165" width="70" height="35" rx="5" fill="#fed7aa" stroke="#f97316"/>
+                            <text x="95" y="187" text-anchor="middle" font-size="9" fill="#9a3412">Operate</text>
+                            <rect x="165" y="165" width="70" height="35" rx="5" fill="#fed7aa" stroke="#f97316"/>
+                            <text x="200" y="187" text-anchor="middle" font-size="9" fill="#9a3412">Tasklist</text>
+                            <rect x="270" y="165" width="70" height="35" rx="5" fill="#fed7aa" stroke="#f97316"/>
+                            <text x="305" y="187" text-anchor="middle" font-size="9" fill="#9a3412">Optimize</text>
+                            <text x="200" y="230" text-anchor="middle" font-size="10" fill="#64748b">Raft-based distributed log with partitions</text>
+                        </svg>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Workflow Definition Comparison -->
+            <section class="mb-12">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">📝 Workflow Definition Comparison</h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Temporal Code -->
+                    <div class="bg-gray-900 rounded-2xl overflow-hidden">
+                        <div class="bg-blue-600 px-4 py-2 flex items-center gap-2">
+                            <span class="text-white font-semibold">⚡ Temporal (TypeScript)</span>
+                        </div>
+                        <pre class="p-4 text-sm text-gray-100 overflow-x-auto"><code>// workflow.ts
+import { proxyActivities } from '@temporalio/workflow';
+import type * as activities from './activities';
+
+const { reserveInventory, processPayment, 
+        shipOrder, sendNotification } = 
+  proxyActivities<typeof activities>({
+    startToCloseTimeout: '1 minute',
+    retry: { maximumAttempts: 3 }
+  });
+
+export async function orderWorkflow(
+  orderId: string
+): Promise<string> {
+  
+  // Step 1: Reserve inventory
+  await reserveInventory(orderId);
+  
+  // Step 2: Process payment
+  await processPayment(orderId);
+  
+  // Step 3: Ship the order
+  const trackingId = await shipOrder(orderId);
+  
+  // Step 4: Send notification
+  await sendNotification(orderId, trackingId);
+  
+  return `Order ${orderId} completed!`;
+}</code></pre>
+                    </div>
+
+                    <!-- Camunda BPMN -->
+                    <div class="bg-gray-900 rounded-2xl overflow-hidden">
+                        <div class="bg-orange-600 px-4 py-2 flex items-center gap-2">
+                            <span class="text-white font-semibold">📊 Camunda (BPMN XML)</span>
+                        </div>
+                        <pre class="p-4 text-sm text-gray-100 overflow-x-auto"><code>&lt;bpmn:process id="order-process"&gt;
+  &lt;bpmn:startEvent id="start"/&gt;
+  
+  &lt;bpmn:serviceTask id="reserve" 
+    name="Reserve Inventory"&gt;
+    &lt;bpmn:extensionElements&gt;
+      &lt;zeebe:taskDefinition 
+        type="reserve-inventory"/&gt;
+    &lt;/bpmn:extensionElements&gt;
+  &lt;/bpmn:serviceTask&gt;
+  
+  &lt;bpmn:serviceTask id="payment" 
+    name="Process Payment"&gt;
+    &lt;zeebe:taskDefinition 
+      type="process-payment"/&gt;
+  &lt;/bpmn:serviceTask&gt;
+  
+  &lt;bpmn:serviceTask id="ship" 
+    name="Ship Order"&gt;
+    &lt;zeebe:taskDefinition type="ship"/&gt;
+  &lt;/bpmn:serviceTask&gt;
+  
+  &lt;bpmn:endEvent id="end"/&gt;
+&lt;/bpmn:process&gt;</code></pre>
+                    </div>
+                </div>
+                <div class="mt-6 bg-white rounded-xl p-6 shadow-lg">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="border-l-4 border-blue-500 pl-4">
+                            <h5 class="font-bold text-blue-700">Temporal Approach</h5>
+                            <p class="text-sm text-gray-600">Write workflows as regular code. Full IDE support, type checking, unit testing. Complex logic is natural.</p>
+                        </div>
+                        <div class="border-l-4 border-orange-500 pl-4">
+                            <h5 class="font-bold text-orange-700">Camunda Approach</h5>
+                            <p class="text-sm text-gray-600">Visual BPMN diagrams. Business analysts can design flows. Standard notation understood across industries.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Detailed Comparison Table -->
+            <section class="mb-12">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">📊 Detailed Feature Comparison</h3>
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gradient-to-r from-blue-600 to-orange-500 text-white">
+                                <th class="px-6 py-4 text-left">Feature</th>
+                                <th class="px-6 py-4 text-center">⚡ Temporal</th>
+                                <th class="px-6 py-4 text-center">📊 Camunda</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Workflow Definition</td>
+                                <td class="px-6 py-4 text-center"><span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">Code (Go/Java/TS/Python)</span></td>
+                                <td class="px-6 py-4 text-center"><span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm">BPMN 2.0 Visual</span></td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Workflow Versioning</td>
+                                <td class="px-6 py-4 text-center">✅ Deterministic replay + patching</td>
+                                <td class="px-6 py-4 text-center">✅ Process version migration</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Long-running Workflows</td>
+                                <td class="px-6 py-4 text-center"><span class="text-green-600 font-semibold">⭐ Excellent (months/years)</span></td>
+                                <td class="px-6 py-4 text-center"><span class="text-green-600">Good (days/weeks)</span></td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Human Tasks</td>
+                                <td class="px-6 py-4 text-center"><span class="text-yellow-600">⚠️ Limited (via signals)</span></td>
+                                <td class="px-6 py-4 text-center"><span class="text-green-600 font-semibold">⭐ Excellent (Tasklist UI)</span></td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Decision Tables (DMN)</td>
+                                <td class="px-6 py-4 text-center">❌ Not built-in</td>
+                                <td class="px-6 py-4 text-center"><span class="text-green-600 font-semibold">✅ Native DMN support</span></td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Visual Modeler</td>
+                                <td class="px-6 py-4 text-center">❌ Code only</td>
+                                <td class="px-6 py-4 text-center"><span class="text-green-600 font-semibold">✅ Camunda Modeler</span></td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Testing</td>
+                                <td class="px-6 py-4 text-center"><span class="text-green-600 font-semibold">⭐ Unit tests (native)</span></td>
+                                <td class="px-6 py-4 text-center">✅ Test containers</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Complex Business Logic</td>
+                                <td class="px-6 py-4 text-center"><span class="text-green-600 font-semibold">⭐ Natural in code</span></td>
+                                <td class="px-6 py-4 text-center"><span class="text-yellow-600">⚠️ Script tasks required</span></td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Compliance & Audit</td>
+                                <td class="px-6 py-4 text-center">✅ Event history</td>
+                                <td class="px-6 py-4 text-center"><span class="text-green-600 font-semibold">⭐ Optimize analytics</span></td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Deployment</td>
+                                <td class="px-6 py-4 text-center">Self-hosted / Temporal Cloud</td>
+                                <td class="px-6 py-4 text-center">Self-hosted / Camunda SaaS</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium">Pricing</td>
+                                <td class="px-6 py-4 text-center">Free OSS / Cloud paid</td>
+                                <td class="px-6 py-4 text-center">Free OSS / Enterprise paid</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- When to Choose -->
+            <section class="mb-12">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">🎯 When to Choose Which?</h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Choose Temporal -->
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-8 text-white">
+                        <h4 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                            <span class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">⚡</span>
+                            Choose Temporal When
+                        </h4>
+                        <ul class="space-y-4">
+                            <li class="flex items-start gap-3">
+                                <span class="text-green-300 text-xl">✓</span>
+                                <span><strong>Developer-centric team</strong> - Engineers write and own workflows</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-green-300 text-xl">✓</span>
+                                <span><strong>Complex business logic</strong> - Loops, conditionals, error handling</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-green-300 text-xl">✓</span>
+                                <span><strong>Long-running processes</strong> - Workflows lasting months/years</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-green-300 text-xl">✓</span>
+                                <span><strong>Strong testing needs</strong> - Unit test workflows like regular code</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-green-300 text-xl">✓</span>
+                                <span><strong>Type safety required</strong> - Full IDE support & compile-time checks</span>
+                            </li>
+                        </ul>
+                        <div class="mt-6 pt-6 border-t border-white/20">
+                            <p class="text-sm opacity-80"><strong>Example:</strong> Uber trip lifecycle, DoorDash order processing, Netflix content encoding</p>
+                        </div>
+                    </div>
+
+                    <!-- Choose Camunda -->
+                    <div class="bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl p-8 text-white">
+                        <h4 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                            <span class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">📊</span>
+                            Choose Camunda When
+                        </h4>
+                        <ul class="space-y-4">
+                            <li class="flex items-start gap-3">
+                                <span class="text-green-300 text-xl">✓</span>
+                                <span><strong>Business analyst involvement</strong> - Non-technical workflow design</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-green-300 text-xl">✓</span>
+                                <span><strong>Human task workflows</strong> - Approvals, reviews, manual steps</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-green-300 text-xl">✓</span>
+                                <span><strong>Compliance requirements</strong> - BPMN standard, audit trails</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-green-300 text-xl">✓</span>
+                                <span><strong>Decision tables (DMN)</strong> - Complex rule-based decisions</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="text-green-300 text-xl">✓</span>
+                                <span><strong>Visual documentation</strong> - Diagrams as living documentation</span>
+                            </li>
+                        </ul>
+                        <div class="mt-6 pt-6 border-t border-white/20">
+                            <p class="text-sm opacity-80"><strong>Example:</strong> Insurance claims, loan approvals, HR onboarding, compliance workflows</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pros & Cons -->
+            <section class="mb-12">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">⚖️ Pros & Cons Summary</h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Temporal Pros/Cons -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="bg-blue-600 text-white px-6 py-4">
+                            <h4 class="text-xl font-bold">⚡ Temporal</h4>
+                        </div>
+                        <div class="p-6">
+                            <div class="mb-6">
+                                <h5 class="font-bold text-green-600 mb-3">✅ Pros</h5>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li>• Full power of programming languages</li>
+                                    <li>• Excellent for complex business logic</li>
+                                    <li>• Best-in-class long-running workflow support</li>
+                                    <li>• Native unit testing support</li>
+                                    <li>• Type-safe workflow definitions</li>
+                                    <li>• Deterministic execution replay</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h5 class="font-bold text-red-600 mb-3">❌ Cons</h5>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li>• No visual workflow designer</li>
+                                    <li>• Limited human task support</li>
+                                    <li>• Requires developer skills</li>
+                                    <li>• No built-in DMN decision tables</li>
+                                    <li>• Steeper learning curve for non-devs</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Camunda Pros/Cons -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="bg-orange-600 text-white px-6 py-4">
+                            <h4 class="text-xl font-bold">📊 Camunda</h4>
+                        </div>
+                        <div class="p-6">
+                            <div class="mb-6">
+                                <h5 class="font-bold text-green-600 mb-3">✅ Pros</h5>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li>• Visual BPMN modeling</li>
+                                    <li>• Excellent human task management</li>
+                                    <li>• Industry-standard notation</li>
+                                    <li>• Built-in DMN decision tables</li>
+                                    <li>• Business analyst friendly</li>
+                                    <li>• Great compliance & audit tools</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h5 class="font-bold text-red-600 mb-3">❌ Cons</h5>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li>• Complex logic requires script tasks</li>
+                                    <li>• BPMN can get cluttered for complex flows</li>
+                                    <li>• Less flexible than code-first</li>
+                                    <li>• Testing is more complex</li>
+                                    <li>• Enterprise features are paid</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Final Verdict -->
+            <section class="mb-12">
+                <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-8 text-white text-center">
+                    <h3 class="text-2xl font-bold mb-4">🏆 Final Verdict</h3>
+                    <p class="text-lg mb-6 opacity-90">Both are excellent tools - the right choice depends on your team and use case</p>
+                    <div class="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+                        <div class="bg-white/10 rounded-xl p-4">
+                            <span class="text-3xl">⚡</span>
+                            <p class="font-bold mt-2">Temporal</p>
+                            <p class="text-sm opacity-80">Best for developer-led teams building complex, long-running microservices workflows</p>
+                        </div>
+                        <div class="bg-white/10 rounded-xl p-4">
+                            <span class="text-3xl">📊</span>
+                            <p class="font-bold mt-2">Camunda</p>
+                            <p class="text-sm opacity-80">Best for enterprises needing visual design, human tasks, and compliance features</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-lg font-semibold mb-2">Code with TK Sharma</p>
+            <p class="text-gray-400">Workflow Orchestration in Microservices - 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            // Remove active from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Show selected tab content
+            document.getElementById('content-' + tabName).classList.add('active');
+            // Add active to selected button
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+    </script>
+</body>
+</html>
